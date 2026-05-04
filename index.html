@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ニュース多角メガネ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+    padding: 16px;
+    line-height: 1.6;
+  }
+  .app {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+  header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    padding: 24px;
+    text-align: center;
+  }
+  header h1 { font-size: 26px; letter-spacing: 0.05em; }
+  header p { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+  .screen { padding: 28px 24px; }
+  .screen.hidden { display: none; }
+  h2 { font-size: 20px; margin-bottom: 16px; color: #4a3a8a; }
+  p.lead { margin-bottom: 16px; font-size: 15px; }
+  .topic-box {
+    background: #f5f3ff;
+    border: 2px solid #c4b5fd;
+    border-radius: 14px;
+    padding: 20px;
+    margin: 16px 0;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    color: #4c1d95;
+  }
+  .stance-row {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+  .stance-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 14px 8px;
+    border: 2px solid #c4b5fd;
+    background: #fff;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+    color: #555;
+  }
+  .stance-btn:hover { background: #f5f3ff; }
+  .stance-btn.selected {
+    background: #7c3aed;
+    color: #fff;
+    border-color: #7c3aed;
+  }
+  textarea, input[type=text], input[type=password] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    resize: vertical;
+  }
+  textarea:focus, input:focus { outline: none; border-color: #7c3aed; }
+  .btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 16px;
+    transition: 0.2s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(118,75,162,0.3); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn.secondary {
+    background: #fff;
+    color: #7c3aed;
+    border: 2px solid #7c3aed;
+  }
+  .npc-card {
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 2px solid;
+    background: #fff;
+  }
+  .npc-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 15px;
+  }
+  .npc-emoji { font-size: 28px; }
+  .npc-msg { font-size: 14px; color: #333; min-height: 22px; }
+  .npc-emotion { border-color: #fda4af; background: #fff1f2; }
+  .npc-emotion .npc-name { color: #be123c; }
+  .npc-logic   { border-color: #93c5fd; background: #eff6ff; }
+  .npc-logic   .npc-name { color: #1d4ed8; }
+  .npc-careful { border-color: #fcd34d; background: #fffbeb; }
+  .npc-careful .npc-name { color: #b45309; }
+  .npc-positive { border-color: #86efac; background: #f0fdf4; }
+  .npc-positive .npc-name { color: #15803d; }
+  .loading {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid #999;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .result-card {
+    text-align: center;
+    padding: 24px;
+    background: linear-gradient(135deg, #fef3c7, #fce7f3);
+    border-radius: 16px;
+    margin: 16px 0;
+  }
+  .result-emoji { font-size: 64px; margin-bottom: 8px; }
+  .result-type { font-size: 24px; font-weight: bold; color: #4c1d95; margin: 8px 0; }
+  .result-desc { font-size: 14px; color: #555; }
+  .change-box {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 14px;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  .change-box .label { font-weight: bold; color: #7c3aed; font-size: 12px; margin-bottom: 4px; }
+  .api-setup {
+    background: #fef3c7;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .api-setup label { display: block; font-weight: bold; margin-bottom: 6px; color: #92400e; }
+  .api-setup small { display: block; margin-top: 6px; color: #78350f; }
+  .share-row { display: flex; gap: 8px; margin-top: 12px; }
+  .share-row .btn { margin-top: 0; font-size: 14px; padding: 10px; }
+  .err { color: #b91c1c; font-size: 13px; margin-top: 8px; }
+  label.field-label { display:block; font-weight:bold; margin: 12px 0 6px; font-size:14px; color:#4a3a8a; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>🔍 ニュース多角メガネ</h1>
+    <p>答えのない問いを、4つの視点で考えよう</p>
+  </header>
+
+  <!-- Screen 0: API Key -->
+  <div class="screen" id="screen-start">
+    <h2>はじめに</h2>
+    <p class="lead">このゲームでは、AIが演じる4キャラの意見を聞きながら、自分なりの答えを探していきます。</p>
+    <div class="api-setup">
+      <label for="apikey">Anthropic APIキー</label>
+      <input type="password" id="apikey" placeholder="sk-ant-...">
+      <small>※ ブラウザ内のみで使用。送信先は api.anthropic.com です。</small>
+    </div>
+    <button class="btn" id="btn-start">スタート</button>
+    <div class="err" id="start-err"></div>
+  </div>
+
+  <!-- Screen 1: Topic + first opinion -->
+  <div class="screen hidden" id="screen-topic">
+    <h2>① お題</h2>
+    <div class="topic-box" id="topic-text"></div>
+    <label class="field-label">あなたの最初の立場は？</label>
+    <div class="stance-row" id="stance1">
+      <button class="stance-btn" data-stance="賛成">👍 賛成</button>
+      <button class="stance-btn" data-stance="反対">👎 反対</button>
+      <button class="stance-btn" data-stance="どちらでもない">🤔 どちらでもない</button>
+    </div>
+    <label class="field-label">理由を一言で</label>
+    <textarea id="reason1" rows="3" placeholder="例：自由が大事だと思うから"></textarea>
+    <button class="btn" id="btn-to-npc">NPCの意見を聞く →</button>
+    <div class="err" id="topic-err"></div>
+  </div>
+
+  <!-- Screen 2: NPC opinions -->
+  <div class="screen hidden" id="screen-npc">
+    <h2>② 4キャラの意見</h2>
+    <p class="lead">それぞれの視点を読んで、自分の考えを深めよう。</p>
+    <div id="npc-list"></div>
+    <button class="btn" id="btn-to-final" disabled>最終回答へ →</button>
+  </div>
+
+  <!-- Screen 3: Final opinion -->
+  <div class="screen hidden" id="screen-final">
+    <h2>③ あなたの最終回答</h2>
+    <div class="topic-box" id="topic-text2"></div>
+    <label class="field-label">最終的な立場</label>
+    <div class="stance-row" id="stance2">
+      <button class="stance-btn" data-stance="賛成">👍 賛成</button>
+      <button class="stance-btn" data-stance="反対">👎 反対</button>
+      <button class="stance-btn" data-stance="どちらでもない">🤔 どちらでもない</button>
+    </div>
+    <label class="field-label">最終的な理由（NPCの意見をふまえて）</label>
+    <textarea id="reason2" rows="4" placeholder="考えがどう変わった？"></textarea>
+    <button class="btn" id="btn-to-result">結果を見る →</button>
+    <div class="err" id="final-err"></div>
+  </div>
+
+  <!-- Screen 4: Result -->
+  <div class="screen hidden" id="screen-result">
+    <h2>④ あなたの思考タイプ</h2>
+    <div class="result-card">
+      <div class="result-emoji" id="r-emoji">🎉</div>
+      <div class="result-type" id="r-type"></div>
+      <div class="result-desc" id="r-desc"></div>
+    </div>
+    <div class="change-box">
+      <div class="label">最初の意見</div>
+      <div id="r-first"></div>
+    </div>
+    <div class="change-box">
+      <div class="label">最終の意見</div>
+      <div id="r-final"></div>
+    </div>
+    <div class="change-box">
+      <div class="label">変化のポイント</div>
+      <div id="r-change"></div>
+    </div>
+    <div class="share-row">
+      <button class="btn" id="btn-share">📱 シェア</button>
+      <button class="btn secondary" id="btn-restart">もう一度</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOPICS = [
+  "学校のスマホ使用を全面禁止すべきか？",
+  "制服は必要か？",
+  "宿題は廃止すべきか？",
+  "SNSの年齢制限を16歳以上にすべきか？",
+  "校則は生徒が決めるべきか？",
+  "テストは廃止してレポート評価にすべきか？",
+  "AIで宿題をやるのはありか？",
+  "告白はLINEでもありか？",
+  "授業中に寝るのはありか？"
+];
+
+const NPCS = [
+  { id:"emotion",  name:"ココロ",  type:"感情タイプ",  emoji:"💗", cls:"npc-emotion",
+    persona:"共感や気持ちを最優先にする高校生。みんなの気持ちや人間関係を大事にする。「〜な気持ちになるよね」「つらいと思う」など感情豊かに語る。" },
+  { id:"logic",    name:"ロジー",  type:"論理タイプ",  emoji:"📊", cls:"npc-logic",
+    persona:"データや事実、論理を重視する高校生。「統計的には」「効率を考えると」「根拠は」など冷静に分析する。" },
+  { id:"careful",  name:"カシコ",  type:"慎重タイプ",  emoji:"🛡️", cls:"npc-careful",
+    persona:"リスクや安全を最も重視する高校生。「もし〜だったら危険」「ルールには理由がある」など慎重に考える。" },
+  { id:"positive", name:"ハレル",  type:"楽観タイプ",  emoji:"☀️", cls:"npc-positive",
+    persona:"可能性やチャレンジを重視する明るい高校生。「やってみよう！」「新しい時代だし」など前向きに語る。" }
+];
+
+const state = {
+  apiKey: "",
+  topic: "",
+  stance1: "",
+  reason1: "",
+  stance2: "",
+  reason2: "",
+  npcOpinions: {}
+};
+
+const $ = (id) => document.getElementById(id);
+const show = (id) => {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  $(id).classList.remove('hidden');
+  window.scrollTo(0,0);
+};
+
+// Stance buttons
+function bindStance(rowId, key) {
+  document.querySelectorAll(`#${rowId} .stance-btn`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(`#${rowId} .stance-btn`).forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state[key] = btn.dataset.stance;
+    });
+  });
+}
+bindStance('stance1', 'stance1');
+bindStance('stance2', 'stance2');
+
+// Start
+$('btn-start').addEventListener('click', () => {
+  const key = $('apikey').value.trim();
+  if (!key.startsWith('sk-')) {
+    $('start-err').textContent = "APIキーを入力してください。";
+    return;
+  }
+  state.apiKey = key;
+  state.topic = TOPICS[Math.floor(Math.random()*TOPICS.length)];
+  $('topic-text').textContent = state.topic;
+  $('topic-text2').textContent = state.topic;
+  show('screen-topic');
+});
+
+// To NPC
+$('btn-to-npc').addEventListener('click', () => {
+  if (!state.stance1) { $('topic-err').textContent = "立場を選んでください。"; return; }
+  state.reason1 = $('reason1').value.trim();
+  if (!state.reason1) { $('topic-err').textContent = "理由を入力してください。"; return; }
+  $('topic-err').textContent = "";
+  show('screen-npc');
+  renderNpcs();
+  fetchAllNpcs();
+});
+
+function renderNpcs() {
+  const list = $('npc-list');
+  list.innerHTML = "";
+  NPCS.forEach(n => {
+    const card = document.createElement('div');
+    card.className = `npc-card ${n.cls}`;
+    card.innerHTML = `
+      <div class="npc-head">
+        <span class="npc-emoji">${n.emoji}</span>
+        <span class="npc-name">${n.name}（${n.type}）</span>
+      </div>
+      <div class="npc-msg" id="npc-msg-${n.id}">考え中<span class="loading"></span></div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+async function callClaude(systemPrompt, userPrompt) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': state.apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 300,
+      system: systemPrompt,
+      messages: [{ role:'user', content: userPrompt }]
+    })
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`API error: ${res.status} ${t}`);
+  }
+  const data = await res.json();
+  return data.content[0].text.trim();
+}
+
+async function fetchAllNpcs() {
+  const tasks = NPCS.map(async (n) => {
+    const sys = `あなたは「${n.name}」という${n.type}の高校生キャラです。${n.persona}\n2〜3文（80〜120字程度）で、自分のキャラ性をしっかり出して意見を述べてください。語尾もキャラらしく。`;
+    const user = `お題：「${state.topic}」\nユーザーの最初の意見：${state.stance1}（理由：${state.reason1}）\n\nあなたの意見を述べてください。`;
+    try {
+      const txt = await callClaude(sys, user);
+      state.npcOpinions[n.id] = txt;
+      $(`npc-msg-${n.id}`).textContent = txt;
+    } catch (e) {
+      $(`npc-msg-${n.id}`).textContent = "（取得失敗：" + e.message + "）";
+      state.npcOpinions[n.id] = "";
+    }
+  });
+  await Promise.all(tasks);
+  $('btn-to-final').disabled = false;
+}
+
+$('btn-to-final').addEventListener('click', () => show('screen-final'));
+
+// Final
+$('btn-to-result').addEventListener('click', async () => {
+  if (!state.stance2) { $('final-err').textContent = "立場を選んでください。"; return; }
+  state.reason2 = $('reason2').value.trim();
+  if (!state.reason2) { $('final-err').textContent = "理由を入力してください。"; return; }
+  $('final-err').textContent = "";
+  $('btn-to-result').disabled = true;
+  $('btn-to-result').textContent = "判定中...";
+  try {
+    await judge();
+    show('screen-result');
+  } catch (e) {
+    $('final-err').textContent = "判定エラー: " + e.message;
+  } finally {
+    $('btn-to-result').disabled = false;
+    $('btn-to-result').textContent = "結果を見る →";
+  }
+});
+
+async function judge() {
+  const sys = `あなたは思考タイプ判定AIです。ユーザーの最初と最後の意見を分析し、4タイプ（感情/論理/慎重/楽観）のうち最も近いものを判定してください。
+必ず以下のJSON形式のみで返答（前後に説明文を入れない）:
+{"type":"感情|論理|慎重|楽観","reason":"判定理由を50字程度","change":"考えの変化を60字程度で要約"}`;
+  const user = `お題：「${state.topic}」
+最初：${state.stance1} / 理由：${state.reason1}
+最終：${state.stance2} / 理由：${state.reason2}`;
+  const txt = await callClaude(sys, user);
+  let parsed;
+  try {
+    const m = txt.match(/\{[\s\S]*\}/);
+    parsed = JSON.parse(m[0]);
+  } catch {
+    parsed = { type:"論理", reason:"判定に失敗", change:"-" };
+  }
+  const map = {
+    "感情": NPCS[0], "論理": NPCS[1], "慎重": NPCS[2], "楽観": NPCS[3]
+  };
+  const npc = map[parsed.type] || NPCS[1];
+  $('r-emoji').textContent = npc.emoji;
+  $('r-type').textContent = `${parsed.type}タイプ（${npc.name}と似てる！）`;
+  $('r-desc').textContent = parsed.reason;
+  $('r-first').textContent = `${state.stance1} — ${state.reason1}`;
+  $('r-final').textContent = `${state.stance2} — ${state.reason2}`;
+  $('r-change').textContent = parsed.change;
+  state.resultType = parsed.type;
+  state.resultNpc = npc.name;
+}
+
+$('btn-share').addEventListener('click', () => {
+  const text = `🔍ニュース多角メガネで考えてみた！\nお題：${state.topic}\n私は『${state.resultType}タイプ』(${state.resultNpc}と似てる!)\n#ニュース多角メガネ`;
+  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  if (navigator.share) {
+    navigator.share({ text }).catch(()=>window.open(url,'_blank'));
+  } else {
+    window.open(url,'_blank');
+  }
+});
+
+$('btn-restart').addEventListener('click', () => {
+  state.topic = TOPICS[Math.floor(Math.random()*TOPICS.length)];
+  state.stance1 = ""; state.stance2 = "";
+  state.reason1 = ""; state.reason2 = "";
+  state.npcOpinions = {};
+  $('reason1').value = ""; $('reason2').value = "";
+  document.querySelectorAll('.stance-btn').forEach(b=>b.classList.remove('selected'));
+  $('topic-text').textContent = state.topic;
+  $('topic-text2').textContent = state.topic;
+  $('btn-to-final').disabled = true;
+  show('screen-topic');
+});
+</script>
+</body>
+</html>
