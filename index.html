@@ -70,7 +70,7 @@
     color: #fff;
     border-color: #7c3aed;
   }
-  textarea, input[type=text], input[type=password] {
+  textarea {
     width: 100%;
     padding: 12px;
     border: 2px solid #ddd;
@@ -79,7 +79,7 @@
     font-family: inherit;
     resize: vertical;
   }
-  textarea:focus, input:focus { outline: none; border-color: #7c3aed; }
+  textarea:focus { outline: none; border-color: #7c3aed; }
   .btn {
     background: linear-gradient(135deg, #667eea, #764ba2);
     color: #fff;
@@ -106,7 +106,11 @@
     margin-bottom: 12px;
     border: 2px solid;
     background: #fff;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s, transform 0.4s;
   }
+  .npc-card.visible { opacity: 1; transform: translateY(0); }
   .npc-head {
     display: flex;
     align-items: center;
@@ -116,26 +120,15 @@
     font-size: 15px;
   }
   .npc-emoji { font-size: 28px; }
-  .npc-msg { font-size: 14px; color: #333; min-height: 22px; }
-  .npc-emotion { border-color: #fda4af; background: #fff1f2; }
-  .npc-emotion .npc-name { color: #be123c; }
-  .npc-logic   { border-color: #93c5fd; background: #eff6ff; }
-  .npc-logic   .npc-name { color: #1d4ed8; }
-  .npc-careful { border-color: #fcd34d; background: #fffbeb; }
-  .npc-careful .npc-name { color: #b45309; }
+  .npc-msg { font-size: 14px; color: #333; }
+  .npc-emotion  { border-color: #fda4af; background: #fff1f2; }
+  .npc-emotion  .npc-name { color: #be123c; }
+  .npc-logic    { border-color: #93c5fd; background: #eff6ff; }
+  .npc-logic    .npc-name { color: #1d4ed8; }
+  .npc-careful  { border-color: #fcd34d; background: #fffbeb; }
+  .npc-careful  .npc-name { color: #b45309; }
   .npc-positive { border-color: #86efac; background: #f0fdf4; }
   .npc-positive .npc-name { color: #15803d; }
-  .loading {
-    display: inline-block;
-    width: 14px; height: 14px;
-    border: 2px solid #999;
-    border-top-color: transparent;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    vertical-align: middle;
-    margin-left: 4px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
   .result-card {
     text-align: center;
     padding: 24px;
@@ -154,19 +147,42 @@
     font-size: 14px;
   }
   .change-box .label { font-weight: bold; color: #7c3aed; font-size: 12px; margin-bottom: 4px; }
-  .api-setup {
-    background: #fef3c7;
-    padding: 16px;
-    border-radius: 12px;
-    margin-bottom: 16px;
-    font-size: 13px;
-  }
-  .api-setup label { display: block; font-weight: bold; margin-bottom: 6px; color: #92400e; }
-  .api-setup small { display: block; margin-top: 6px; color: #78350f; }
   .share-row { display: flex; gap: 8px; margin-top: 12px; }
   .share-row .btn { margin-top: 0; font-size: 14px; padding: 10px; }
   .err { color: #b91c1c; font-size: 13px; margin-top: 8px; }
   label.field-label { display:block; font-weight:bold; margin: 12px 0 6px; font-size:14px; color:#4a3a8a; }
+
+  /* Start screen */
+  .intro-box {
+    background: #f5f3ff;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #4a3a8a;
+  }
+  .intro-box ul { padding-left: 1.2em; margin-top: 8px; }
+  .intro-box li { margin-bottom: 4px; }
+  .char-preview {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 16px 0;
+  }
+  .char-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .chip-emotion  { background: #fff1f2; color: #be123c; }
+  .chip-logic    { background: #eff6ff; color: #1d4ed8; }
+  .chip-careful  { background: #fffbeb; color: #b45309; }
+  .chip-positive { background: #f0fdf4; color: #15803d; }
+  .chip-emoji { font-size: 22px; }
 </style>
 </head>
 <body>
@@ -176,17 +192,25 @@
     <p>答えのない問いを、4つの視点で考えよう</p>
   </header>
 
-  <!-- Screen 0: API Key -->
+  <!-- Screen 0: Start -->
   <div class="screen" id="screen-start">
     <h2>はじめに</h2>
-    <p class="lead">このゲームでは、AIが演じる4キャラの意見を聞きながら、自分なりの答えを探していきます。</p>
-    <div class="api-setup">
-      <label for="apikey">Anthropic APIキー</label>
-      <input type="password" id="apikey" placeholder="sk-ant-...">
-      <small>※ ブラウザ内のみで使用。送信先は api.anthropic.com です。</small>
+    <div class="intro-box">
+      <strong>こんなゲームです</strong>
+      <ul>
+        <li>ランダムなお題に対して最初の意見を入力</li>
+        <li>4キャラの視点を読んで考えを深める</li>
+        <li>最終回答で自分の思考タイプがわかる！</li>
+      </ul>
     </div>
-    <button class="btn" id="btn-start">スタート</button>
-    <div class="err" id="start-err"></div>
+    <p class="lead" style="font-weight:bold; color:#4a3a8a;">登場キャラクター</p>
+    <div class="char-preview">
+      <div class="char-chip chip-emotion"><span class="chip-emoji">😢</span>エモ（感情タイプ）</div>
+      <div class="char-chip chip-logic"><span class="chip-emoji">🧠</span>ロン（論理タイプ）</div>
+      <div class="char-chip chip-careful"><span class="chip-emoji">😰</span>シン（慎重タイプ）</div>
+      <div class="char-chip chip-positive"><span class="chip-emoji">😄</span>ラク（楽観タイプ）</div>
+    </div>
+    <button class="btn" id="btn-start">スタート！</button>
   </div>
 
   <!-- Screen 1: Topic + first opinion -->
@@ -201,7 +225,7 @@
     </div>
     <label class="field-label">理由を一言で</label>
     <textarea id="reason1" rows="3" placeholder="例：自由が大事だと思うから"></textarea>
-    <button class="btn" id="btn-to-npc">NPCの意見を聞く →</button>
+    <button class="btn" id="btn-to-npc">4キャラの意見を見る →</button>
     <div class="err" id="topic-err"></div>
   </div>
 
@@ -210,7 +234,7 @@
     <h2>② 4キャラの意見</h2>
     <p class="lead">それぞれの視点を読んで、自分の考えを深めよう。</p>
     <div id="npc-list"></div>
-    <button class="btn" id="btn-to-final" disabled>最終回答へ →</button>
+    <button class="btn" id="btn-to-final">最終回答へ →</button>
   </div>
 
   <!-- Screen 3: Final opinion -->
@@ -223,8 +247,8 @@
       <button class="stance-btn" data-stance="反対">👎 反対</button>
       <button class="stance-btn" data-stance="どちらでもない">🤔 どちらでもない</button>
     </div>
-    <label class="field-label">最終的な理由（NPCの意見をふまえて）</label>
-    <textarea id="reason2" rows="4" placeholder="考えがどう変わった？"></textarea>
+    <label class="field-label">最終的な理由（キャラの意見をふまえて）</label>
+    <textarea id="reason2" rows="4" placeholder="考えがどう変わった？または変わらなかった理由は？"></textarea>
     <button class="btn" id="btn-to-result">結果を見る →</button>
     <div class="err" id="final-err"></div>
   </div>
@@ -233,7 +257,7 @@
   <div class="screen hidden" id="screen-result">
     <h2>④ あなたの思考タイプ</h2>
     <div class="result-card">
-      <div class="result-emoji" id="r-emoji">🎉</div>
+      <div class="result-emoji" id="r-emoji"></div>
       <div class="result-type" id="r-type"></div>
       <div class="result-desc" id="r-desc"></div>
     </div>
@@ -270,34 +294,145 @@ const TOPICS = [
 ];
 
 const NPCS = [
-  { id:"emotion",  name:"ココロ",  type:"感情タイプ",  emoji:"💗", cls:"npc-emotion",
-    persona:"共感や気持ちを最優先にする高校生。みんなの気持ちや人間関係を大事にする。「〜な気持ちになるよね」「つらいと思う」など感情豊かに語る。" },
-  { id:"logic",    name:"ロジー",  type:"論理タイプ",  emoji:"📊", cls:"npc-logic",
-    persona:"データや事実、論理を重視する高校生。「統計的には」「効率を考えると」「根拠は」など冷静に分析する。" },
-  { id:"careful",  name:"カシコ",  type:"慎重タイプ",  emoji:"🛡️", cls:"npc-careful",
-    persona:"リスクや安全を最も重視する高校生。「もし〜だったら危険」「ルールには理由がある」など慎重に考える。" },
-  { id:"positive", name:"ハレル",  type:"楽観タイプ",  emoji:"☀️", cls:"npc-positive",
-    persona:"可能性やチャレンジを重視する明るい高校生。「やってみよう！」「新しい時代だし」など前向きに語る。" }
+  { id:"emotion",  name:"エモ", type:"感情タイプ", emoji:"😢", cls:"npc-emotion" },
+  { id:"logic",    name:"ロン", type:"論理タイプ", emoji:"🧠", cls:"npc-logic" },
+  { id:"careful",  name:"シン", type:"慎重タイプ", emoji:"😰", cls:"npc-careful" },
+  { id:"positive", name:"ラク", type:"楽観タイプ", emoji:"😄", cls:"npc-positive" }
 ];
 
+// Fixed lines indexed by topic index, then by NPC id
+const LINES = [
+  // 0: 学校のスマホ使用を全面禁止すべきか？
+  {
+    emotion:  "スマホで友達と繋がれる時間って大事じゃん、それを奪うのはかわいそうだよ",
+    logic:    "フランスでは禁止後に学力が上がったデータがある、効果は証明されてる",
+    careful:  "緊急時に連絡できないのは危険、禁止は行きすぎだと思う",
+    positive: "スマホを上手く使う練習をする方が将来役に立つんじゃない？"
+  },
+  // 1: 制服は必要か？
+  {
+    emotion:  "毎朝何着るか悩まなくていいの、地味に助かってる人も多いと思う",
+    logic:    "制服がある学校の方が学習に集中できるという研究結果もある",
+    careful:  "私服だといじめや格差が生まれやすい、制服はそれを防いでる",
+    positive: "私服にしたら個性が伸びて、もっと面白い学校になると思う！"
+  },
+  // 2: 宿題は廃止すべきか？
+  {
+    emotion:  "宿題多すぎて好きなことする時間なくなるの、マジでしんどい",
+    logic:    "復習の効果は科学的に証明されてる、宿題ゼロは学力低下につながる",
+    careful:  "宿題がなくなったら自分で勉強できる子とできない子の差が広がりそう",
+    positive: "宿題なくして自分でやりたい勉強をやる方が絶対伸びる！"
+  },
+  // 3: SNSの年齢制限を16歳以上にすべきか？
+  {
+    emotion:  "中学生でも傷ついてる子いっぱいいる、守るためには必要だと思う",
+    logic:    "オーストラリアが16歳制限を導入、世界的に規制強化の流れがある",
+    careful:  "年齢確認をすり抜ける方法はいくらでもある、実効性が疑問",
+    positive: "制限するより正しい使い方を教える方が絶対いい！"
+  },
+  // 4: 校則は生徒が決めるべきか？
+  {
+    emotion:  "自分たちで決めた校則なら納得して守れるじゃん、絶対その方がいい",
+    logic:    "生徒会が校則を決めた学校では違反率が下がったデータがある",
+    careful:  "生徒だけで決めると収拾がつかなくなる、先生の関与は必要だと思う",
+    positive: "全部生徒で決めたら責任感も育つし一石二鳥じゃん！"
+  },
+  // 5: テストは廃止してレポート評価にすべきか？
+  {
+    emotion:  "テストの点数だけで評価されるのって、なんか悲しくない？",
+    logic:    "記憶力より思考力を問う評価の方が社会で役立つ能力を測れる",
+    careful:  "レポートは写すのが簡単、公平な評価ができるか疑問",
+    positive: "レポートなら自分の得意なやり方で勝負できるから好き！"
+  },
+  // 6: AIで宿題をやるのはありか？
+  {
+    emotion:  "AIに頼りすぎて自分で考える力なくなったら将来困らない？",
+    logic:    "電卓が普及しても数学は残った、AIも道具として使いこなせばいい",
+    careful:  "今は良くても試験本番で自分の力がなかったら終わり",
+    positive: "AIをうまく使えるスキル自体が将来の武器になる！"
+  },
+  // 7: 告白はLINEでもありか？
+  {
+    emotion:  "直接言われた方が絶対嬉しい、LINEだと気持ちが伝わりにくい",
+    logic:    "相手が断りやすい環境を作る方が双方にとって合理的とも言える",
+    careful:  "LINEだとスクショされたり広まったりするリスクがある",
+    positive: "形より気持ちが大事！LINEでも全然いいと思う！"
+  },
+  // 8: 授業中に寝るのはありか？
+  {
+    emotion:  "眠いのを我慢し続けるのって体にも悪いし、正直かわいそう",
+    logic:    "睡眠不足は学習効率を著しく下げる、仮眠の方が結果的に効果的",
+    careful:  "寝てる姿が先生や周りへの失礼になる、場の空気を乱す",
+    positive: "短い仮眠で頭がリセットされる、戦略的な睡眠だと思う！"
+  }
+];
+
+// Type descriptions
+const TYPE_INFO = {
+  "感情": {
+    emoji: "😢",
+    npc: "エモ",
+    desc: "人の気持ちや共感を大切にして考えるタイプ。感情的なつながりを重視する。"
+  },
+  "論理": {
+    emoji: "🧠",
+    npc: "ロン",
+    desc: "データや根拠をもとに冷静に判断するタイプ。筋道を立てて考える。"
+  },
+  "慎重": {
+    emoji: "😰",
+    npc: "シン",
+    desc: "リスクや安全を最優先に考えるタイプ。慎重に物事を判断する。"
+  },
+  "楽観": {
+    emoji: "😄",
+    npc: "ラク",
+    desc: "可能性やチャレンジを重視するタイプ。前向きに物事を捉える。"
+  }
+};
+
+// Keywords for type judgment
+const TYPE_KEYWORDS = {
+  "感情": ["気持ち","感情","かわいそう","つらい","嬉しい","悲しい","心","仲間","友達","ひとり","孤独","共感","大事","好き","辛い","楽しい","幸せ","寂しい"],
+  "論理": ["データ","統計","根拠","証明","研究","効果","効率","合理","論理","科学","調査","事実","結果","分析","情報","比較","数字"],
+  "慎重": ["危険","リスク","心配","不安","安全","怖い","問題","トラブル","失敗","注意","守る","ルール","規則","防ぐ","慎重","確認","疑問"],
+  "楽観": ["可能性","チャレンジ","挑戦","面白い","楽しそう","伸びる","成長","未来","前向き","絶対","ポジティブ","夢","希望","好奇心","どんどん","試して"]
+};
+
+function judgeType(text) {
+  const scores = { "感情": 0, "論理": 0, "慎重": 0, "楽観": 0 };
+  Object.entries(TYPE_KEYWORDS).forEach(([type, words]) => {
+    words.forEach(w => { if (text.includes(w)) scores[type]++; });
+  });
+  return Object.entries(scores).sort((a,b) => b[1]-a[1])[0][0];
+}
+
+function describeChange(s1, s2) {
+  if (s1 === s2) return "最初から最後まで一貫した立場を保った。ぶれない信念がある！";
+  if (s1 === "賛成" && s2 === "反対") return "賛成から反対へ、大きく考えが変わった。いろんな視点を取り込んだ結果かも。";
+  if (s1 === "反対" && s2 === "賛成") return "反対から賛成へ、意見が転換した。新しい気づきがあったんだね。";
+  if (s2 === "どちらでもない") return "どちらとも言えない複雑さに気づいた。多角的に考えられてる証拠！";
+  return "考えが揺れ動いた。それが「考えた」ということ。";
+}
+
 const state = {
-  apiKey: "",
+  topicIndex: 0,
   topic: "",
   stance1: "",
   reason1: "",
   stance2: "",
   reason2: "",
-  npcOpinions: {}
+  resultType: "",
+  resultNpc: ""
 };
 
 const $ = (id) => document.getElementById(id);
 const show = (id) => {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
   $(id).classList.remove('hidden');
-  window.scrollTo(0,0);
+  window.scrollTo(0, 0);
 };
 
-// Stance buttons
 function bindStance(rowId, key) {
   document.querySelectorAll(`#${rowId} .stance-btn`).forEach(btn => {
     btn.addEventListener('click', () => {
@@ -310,35 +445,29 @@ function bindStance(rowId, key) {
 bindStance('stance1', 'stance1');
 bindStance('stance2', 'stance2');
 
-// Start
 $('btn-start').addEventListener('click', () => {
-  const key = $('apikey').value.trim();
-  if (!key.startsWith('sk-')) {
-    $('start-err').textContent = "APIキーを入力してください。";
-    return;
-  }
-  state.apiKey = key;
-  state.topic = TOPICS[Math.floor(Math.random()*TOPICS.length)];
+  state.topicIndex = Math.floor(Math.random() * TOPICS.length);
+  state.topic = TOPICS[state.topicIndex];
   $('topic-text').textContent = state.topic;
   $('topic-text2').textContent = state.topic;
   show('screen-topic');
 });
 
-// To NPC
 $('btn-to-npc').addEventListener('click', () => {
   if (!state.stance1) { $('topic-err').textContent = "立場を選んでください。"; return; }
   state.reason1 = $('reason1').value.trim();
   if (!state.reason1) { $('topic-err').textContent = "理由を入力してください。"; return; }
   $('topic-err').textContent = "";
-  show('screen-npc');
-  renderNpcs();
-  fetchAllNpcs();
+  showNpcScreen();
 });
 
-function renderNpcs() {
+function showNpcScreen() {
+  show('screen-npc');
   const list = $('npc-list');
   list.innerHTML = "";
-  NPCS.forEach(n => {
+  const lines = LINES[state.topicIndex];
+
+  NPCS.forEach((n, i) => {
     const card = document.createElement('div');
     card.className = `npc-card ${n.cls}`;
     card.innerHTML = `
@@ -346,123 +475,60 @@ function renderNpcs() {
         <span class="npc-emoji">${n.emoji}</span>
         <span class="npc-name">${n.name}（${n.type}）</span>
       </div>
-      <div class="npc-msg" id="npc-msg-${n.id}">考え中<span class="loading"></span></div>
+      <div class="npc-msg">「${lines[n.id]}」</div>
     `;
     list.appendChild(card);
+    // Staggered fade-in
+    setTimeout(() => card.classList.add('visible'), i * 180);
   });
-}
-
-async function callClaude(systemPrompt, userPrompt) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': state.apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 300,
-      system: systemPrompt,
-      messages: [{ role:'user', content: userPrompt }]
-    })
-  });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`API error: ${res.status} ${t}`);
-  }
-  const data = await res.json();
-  return data.content[0].text.trim();
-}
-
-async function fetchAllNpcs() {
-  const tasks = NPCS.map(async (n) => {
-    const sys = `あなたは「${n.name}」という${n.type}の高校生キャラです。${n.persona}\n2〜3文（80〜120字程度）で、自分のキャラ性をしっかり出して意見を述べてください。語尾もキャラらしく。`;
-    const user = `お題：「${state.topic}」\nユーザーの最初の意見：${state.stance1}（理由：${state.reason1}）\n\nあなたの意見を述べてください。`;
-    try {
-      const txt = await callClaude(sys, user);
-      state.npcOpinions[n.id] = txt;
-      $(`npc-msg-${n.id}`).textContent = txt;
-    } catch (e) {
-      $(`npc-msg-${n.id}`).textContent = "（取得失敗：" + e.message + "）";
-      state.npcOpinions[n.id] = "";
-    }
-  });
-  await Promise.all(tasks);
-  $('btn-to-final').disabled = false;
 }
 
 $('btn-to-final').addEventListener('click', () => show('screen-final'));
 
-// Final
-$('btn-to-result').addEventListener('click', async () => {
+$('btn-to-result').addEventListener('click', () => {
   if (!state.stance2) { $('final-err').textContent = "立場を選んでください。"; return; }
   state.reason2 = $('reason2').value.trim();
   if (!state.reason2) { $('final-err').textContent = "理由を入力してください。"; return; }
   $('final-err').textContent = "";
-  $('btn-to-result').disabled = true;
-  $('btn-to-result').textContent = "判定中...";
-  try {
-    await judge();
-    show('screen-result');
-  } catch (e) {
-    $('final-err').textContent = "判定エラー: " + e.message;
-  } finally {
-    $('btn-to-result').disabled = false;
-    $('btn-to-result').textContent = "結果を見る →";
-  }
+  showResult();
+  show('screen-result');
 });
 
-async function judge() {
-  const sys = `あなたは思考タイプ判定AIです。ユーザーの最初と最後の意見を分析し、4タイプ（感情/論理/慎重/楽観）のうち最も近いものを判定してください。
-必ず以下のJSON形式のみで返答（前後に説明文を入れない）:
-{"type":"感情|論理|慎重|楽観","reason":"判定理由を50字程度","change":"考えの変化を60字程度で要約"}`;
-  const user = `お題：「${state.topic}」
-最初：${state.stance1} / 理由：${state.reason1}
-最終：${state.stance2} / 理由：${state.reason2}`;
-  const txt = await callClaude(sys, user);
-  let parsed;
-  try {
-    const m = txt.match(/\{[\s\S]*\}/);
-    parsed = JSON.parse(m[0]);
-  } catch {
-    parsed = { type:"論理", reason:"判定に失敗", change:"-" };
-  }
-  const map = {
-    "感情": NPCS[0], "論理": NPCS[1], "慎重": NPCS[2], "楽観": NPCS[3]
-  };
-  const npc = map[parsed.type] || NPCS[1];
-  $('r-emoji').textContent = npc.emoji;
-  $('r-type').textContent = `${parsed.type}タイプ（${npc.name}と似てる！）`;
-  $('r-desc').textContent = parsed.reason;
+function showResult() {
+  const combined = state.reason1 + " " + state.reason2;
+  const type = judgeType(combined);
+  const info = TYPE_INFO[type];
+
+  state.resultType = type;
+  state.resultNpc = info.npc;
+
+  $('r-emoji').textContent = info.emoji;
+  $('r-type').textContent = `${type}タイプ（${info.npc}と似てる！）`;
+  $('r-desc').textContent = info.desc;
   $('r-first').textContent = `${state.stance1} — ${state.reason1}`;
   $('r-final').textContent = `${state.stance2} — ${state.reason2}`;
-  $('r-change').textContent = parsed.change;
-  state.resultType = parsed.type;
-  state.resultNpc = npc.name;
+  $('r-change').textContent = describeChange(state.stance1, state.stance2);
 }
 
 $('btn-share').addEventListener('click', () => {
-  const text = `🔍ニュース多角メガネで考えてみた！\nお題：${state.topic}\n私は『${state.resultType}タイプ』(${state.resultNpc}と似てる!)\n#ニュース多角メガネ`;
+  const text = `🔍ニュース多角メガネで考えてみた！\nお題：${state.topic}\n私は『${state.resultType}タイプ』（${state.resultNpc}と似てる！）\n#ニュース多角メガネ`;
   const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
   if (navigator.share) {
-    navigator.share({ text }).catch(()=>window.open(url,'_blank'));
+    navigator.share({ text }).catch(() => window.open(url, '_blank'));
   } else {
-    window.open(url,'_blank');
+    window.open(url, '_blank');
   }
 });
 
 $('btn-restart').addEventListener('click', () => {
-  state.topic = TOPICS[Math.floor(Math.random()*TOPICS.length)];
   state.stance1 = ""; state.stance2 = "";
   state.reason1 = ""; state.reason2 = "";
-  state.npcOpinions = {};
   $('reason1').value = ""; $('reason2').value = "";
-  document.querySelectorAll('.stance-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.stance-btn').forEach(b => b.classList.remove('selected'));
+  state.topicIndex = Math.floor(Math.random() * TOPICS.length);
+  state.topic = TOPICS[state.topicIndex];
   $('topic-text').textContent = state.topic;
   $('topic-text2').textContent = state.topic;
-  $('btn-to-final').disabled = true;
   show('screen-topic');
 });
 </script>
