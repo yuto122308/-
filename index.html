@@ -3,48 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ニュース多角メガネ</title>
+<title>NEXUS 2047 — 市長シミュレーター</title>
 <style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0f1626;
+    --panel: rgba(15, 22, 38, 0.85);
+    --neon-cyan: #00f0ff;
+    --neon-green: #00ff9d;
+    --neon-pink: #ff00aa;
+    --neon-yellow: #ffe600;
+    --text: #d8e8ff;
+    --text-dim: #7a8aab;
+    --grid: rgba(0, 240, 255, 0.08);
+    --border: rgba(0, 240, 255, 0.4);
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: "Orbitron","Rajdhani","Yu Gothic", "Hiragino Sans", system-ui, sans-serif;
+    color: var(--text);
     min-height: 100vh;
-    color: #333;
-    padding: 16px;
     line-height: 1.6;
+    padding: 16px;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(0,240,255,0.12), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(0,255,157,0.10), transparent 40%),
+      linear-gradient(180deg, #060a14 0%, #0a0e1a 100%);
+    background-attachment: fixed;
+    position: relative;
+    overflow-x: hidden;
+  }
+  /* Grid background */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(circle at 50% 50%, black 60%, transparent);
+    z-index: 0;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0,240,255,0.025) 0,
+      rgba(0,240,255,0.025) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+    z-index: 1;
   }
   .app {
-    max-width: 720px;
+    max-width: 760px;
     margin: 0 auto;
-    background: #fff;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow:
+      0 0 40px rgba(0,240,255,0.15),
+      inset 0 0 40px rgba(0,240,255,0.05);
+    backdrop-filter: blur(8px);
+    position: relative;
+    z-index: 2;
     overflow: hidden;
   }
-  header {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: #fff;
-    padding: 24px;
-    text-align: center;
+  /* Corner decorations */
+  .app::before, .app::after {
+    content: "";
+    position: absolute;
+    width: 20px; height: 20px;
+    border: 2px solid var(--neon-cyan);
   }
-  header h1 { font-size: 26px; letter-spacing: 0.05em; }
-  header p { font-size: 13px; opacity: 0.9; margin-top: 4px; }
-  .screen { padding: 28px 24px; }
+  .app::before { top: 8px; left: 8px; border-right: none; border-bottom: none; }
+  .app::after  { bottom: 8px; right: 8px; border-left: none; border-top: none; }
+
+  header {
+    padding: 24px 24px 16px;
+    text-align: center;
+    border-bottom: 1px solid rgba(0,240,255,0.2);
+    position: relative;
+  }
+  header h1 {
+    font-size: 22px;
+    letter-spacing: 0.3em;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(0,240,255,0.7), 0 0 20px rgba(0,240,255,0.4);
+    font-weight: 900;
+  }
+  header .subtitle {
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--neon-green);
+    margin-top: 4px;
+    text-shadow: 0 0 6px rgba(0,255,157,0.6);
+  }
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 24px;
+    background: rgba(0,240,255,0.05);
+    border-bottom: 1px solid rgba(0,240,255,0.15);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+  }
+  .status-bar .live { color: var(--neon-green); }
+  .status-bar .live::before {
+    content: "●";
+    color: var(--neon-green);
+    animation: blink 1.5s infinite;
+    margin-right: 4px;
+  }
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  .screen { padding: 28px 24px; position: relative; }
   .screen.hidden { display: none; }
-  h2 { font-size: 20px; margin-bottom: 16px; color: #4a3a8a; }
-  p.lead { margin-bottom: 16px; font-size: 15px; }
-  .topic-box {
-    background: #f5f3ff;
-    border: 2px solid #c4b5fd;
-    border-radius: 14px;
-    padding: 20px;
-    margin: 16px 0;
+  h2 {
     font-size: 18px;
+    margin-bottom: 16px;
+    color: var(--neon-cyan);
+    letter-spacing: 0.2em;
+    text-shadow: 0 0 8px rgba(0,240,255,0.5);
+    border-left: 3px solid var(--neon-cyan);
+    padding-left: 10px;
+  }
+  p.lead { margin-bottom: 16px; font-size: 14px; color: var(--text); }
+
+  .topic-box {
+    background: rgba(0,240,255,0.06);
+    border: 1px solid var(--neon-cyan);
+    border-radius: 4px;
+    padding: 18px 16px;
+    margin: 16px 0;
+    font-size: 17px;
     font-weight: bold;
     text-align: center;
-    color: #4c1d95;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(0,240,255,0.5);
+    position: relative;
   }
+  .topic-box .alert-tag {
+    position: absolute;
+    top: -10px; left: 12px;
+    background: var(--bg);
+    color: var(--neon-pink);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    padding: 2px 8px;
+    border: 1px solid var(--neon-pink);
+    text-shadow: 0 0 5px var(--neon-pink);
+  }
+  .topic-box .citizen-line {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    letter-spacing: 0.05em;
+    font-weight: normal;
+  }
+
   .stance-row {
     display: flex;
     gap: 8px;
@@ -55,408 +180,722 @@
     flex: 1;
     min-width: 100px;
     padding: 14px 8px;
-    border: 2px solid #c4b5fd;
-    background: #fff;
-    border-radius: 12px;
-    font-size: 15px;
+    border: 1px solid var(--border);
+    background: rgba(0,240,255,0.04);
+    border-radius: 2px;
+    font-family: inherit;
+    font-size: 14px;
     font-weight: bold;
     cursor: pointer;
     transition: 0.2s;
-    color: #555;
+    color: var(--text);
+    letter-spacing: 0.1em;
   }
-  .stance-btn:hover { background: #f5f3ff; }
+  .stance-btn:hover {
+    background: rgba(0,240,255,0.15);
+    box-shadow: 0 0 12px rgba(0,240,255,0.3);
+  }
   .stance-btn.selected {
-    background: #7c3aed;
-    color: #fff;
-    border-color: #7c3aed;
+    background: var(--neon-cyan);
+    color: #021018;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 18px rgba(0,240,255,0.7);
+    text-shadow: none;
   }
-  textarea {
+
+  textarea, input[type=text] {
     width: 100%;
     padding: 12px;
-    border: 2px solid #ddd;
-    border-radius: 10px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text);
     font-size: 15px;
     font-family: inherit;
     resize: vertical;
+    letter-spacing: 0.05em;
   }
-  textarea:focus { outline: none; border-color: #7c3aed; }
+  textarea:focus, input:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 12px rgba(0,240,255,0.4);
+  }
+  input[type=text] { font-size: 16px; }
+
   .btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: #fff;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+    color: #021018;
     border: none;
     padding: 14px 24px;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: bold;
+    border-radius: 2px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 0.2em;
     cursor: pointer;
     width: 100%;
     margin-top: 16px;
     transition: 0.2s;
+    text-shadow: none;
+    box-shadow: 0 0 16px rgba(0,240,255,0.5);
+    position: relative;
   }
-  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(118,75,162,0.3); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgba(0,240,255,0.8); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
   .btn.secondary {
-    background: #fff;
-    color: #7c3aed;
-    border: 2px solid #7c3aed;
+    background: transparent;
+    color: var(--neon-cyan);
+    border: 1px solid var(--neon-cyan);
+    box-shadow: inset 0 0 10px rgba(0,240,255,0.1);
   }
+  .btn.secondary:hover { background: rgba(0,240,255,0.1); }
+
+  /* NPC cards */
   .npc-card {
-    border-radius: 14px;
-    padding: 16px;
+    border: 1px solid;
+    border-radius: 2px;
+    padding: 14px;
     margin-bottom: 12px;
-    border: 2px solid;
-    background: #fff;
+    background: rgba(255,255,255,0.02);
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateX(-20px);
     transition: opacity 0.4s, transform 0.4s;
+    position: relative;
   }
-  .npc-card.visible { opacity: 1; transform: translateY(0); }
+  .npc-card.visible { opacity: 1; transform: translateX(0); }
+  .npc-card::before {
+    content: ">";
+    position: absolute;
+    left: 4px; top: 8px;
+    color: var(--neon-cyan);
+    font-size: 12px;
+  }
   .npc-head {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-weight: bold;
-    font-size: 15px;
+    font-size: 13px;
+    padding-left: 12px;
+    letter-spacing: 0.1em;
   }
-  .npc-emoji { font-size: 28px; }
-  .npc-msg { font-size: 14px; color: #333; }
-  .npc-emotion  { border-color: #fda4af; background: #fff1f2; }
-  .npc-emotion  .npc-name { color: #be123c; }
-  .npc-logic    { border-color: #93c5fd; background: #eff6ff; }
-  .npc-logic    .npc-name { color: #1d4ed8; }
-  .npc-careful  { border-color: #fcd34d; background: #fffbeb; }
-  .npc-careful  .npc-name { color: #b45309; }
-  .npc-positive { border-color: #86efac; background: #f0fdf4; }
-  .npc-positive .npc-name { color: #15803d; }
+  .npc-emoji { font-size: 22px; }
+  .npc-msg { font-size: 14px; padding-left: 12px; color: var(--text); }
+
+  .npc-emotion  { border-color: #ff5599; box-shadow: 0 0 10px rgba(255,85,153,0.25); }
+  .npc-emotion  .npc-name, .npc-emotion::before  { color: #ff5599; text-shadow: 0 0 6px #ff5599; }
+  .npc-logic    { border-color: #00aaff; box-shadow: 0 0 10px rgba(0,170,255,0.25); }
+  .npc-logic    .npc-name, .npc-logic::before    { color: #00aaff; text-shadow: 0 0 6px #00aaff; }
+  .npc-careful  { border-color: #ffcc00; box-shadow: 0 0 10px rgba(255,204,0,0.25); }
+  .npc-careful  .npc-name, .npc-careful::before  { color: #ffcc00; text-shadow: 0 0 6px #ffcc00; }
+  .npc-positive { border-color: var(--neon-green); box-shadow: 0 0 10px rgba(0,255,157,0.25); }
+  .npc-positive .npc-name, .npc-positive::before { color: var(--neon-green); text-shadow: 0 0 6px var(--neon-green); }
+
+  /* Param panel (always visible during quiz) */
+  .param-panel {
+    padding: 12px 24px;
+    background: rgba(0,0,0,0.4);
+    border-bottom: 1px solid rgba(0,240,255,0.15);
+  }
+  .param-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .param-cell {
+    text-align: center;
+  }
+  .param-cell .label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .param-cell .bar {
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 1px;
+    overflow: hidden;
+    position: relative;
+  }
+  .param-cell .bar-fill {
+    height: 100%;
+    transition: width 0.6s;
+    box-shadow: 0 0 8px currentColor;
+  }
+  .param-cell .value {
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 2px;
+  }
+  .p-happy   .bar-fill, .p-happy   .value { background: #ff5599; color: #ff5599; }
+  .p-economy .bar-fill, .p-economy .value { background: var(--neon-yellow); color: var(--neon-yellow); }
+  .p-env     .bar-fill, .p-env     .value { background: var(--neon-green); color: var(--neon-green); }
+  .p-freedom .bar-fill, .p-freedom .value { background: var(--neon-cyan); color: var(--neon-cyan); }
+
+  /* Param change toast */
+  .delta-block {
+    margin: 16px 0;
+    padding: 14px;
+    border: 1px dashed var(--neon-green);
+    border-radius: 2px;
+    background: rgba(0,255,157,0.05);
+  }
+  .delta-block h3 {
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--neon-green);
+    margin-bottom: 8px;
+    text-shadow: 0 0 4px var(--neon-green);
+  }
+  .delta-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+    border-bottom: 1px dotted rgba(0,255,157,0.2);
+  }
+  .delta-row:last-child { border-bottom: none; }
+  .delta-up   { color: var(--neon-green); }
+  .delta-down { color: #ff5599; }
+  .delta-zero { color: var(--text-dim); }
+
+  /* Result */
   .result-card {
     text-align: center;
-    padding: 24px;
-    background: linear-gradient(135deg, #fef3c7, #fce7f3);
-    border-radius: 16px;
-    margin: 16px 0;
-  }
-  .result-emoji { font-size: 64px; margin-bottom: 8px; }
-  .result-type { font-size: 24px; font-weight: bold; color: #4c1d95; margin: 8px 0; }
-  .result-desc { font-size: 14px; color: #555; }
-  .change-box {
-    background: #f9fafb;
-    border-radius: 12px;
-    padding: 14px;
-    margin: 12px 0;
-    font-size: 14px;
-  }
-  .change-box .label { font-weight: bold; color: #7c3aed; font-size: 12px; margin-bottom: 4px; }
-  .share-row { display: flex; gap: 8px; margin-top: 12px; }
-  .share-row .btn { margin-top: 0; font-size: 14px; padding: 10px; }
-  .err { color: #b91c1c; font-size: 13px; margin-top: 8px; }
-  label.field-label { display:block; font-weight:bold; margin: 12px 0 6px; font-size:14px; color:#4a3a8a; }
-
-  /* Start screen */
-  .intro-box {
-    background: #f5f3ff;
-    border-radius: 14px;
     padding: 20px;
-    margin-bottom: 20px;
-    font-size: 14px;
-    color: #4a3a8a;
+    border: 1px solid var(--neon-cyan);
+    background: rgba(0,240,255,0.05);
+    border-radius: 2px;
+    margin: 16px 0;
+    box-shadow: 0 0 20px rgba(0,240,255,0.2);
   }
-  .intro-box ul { padding-left: 1.2em; margin-top: 8px; }
-  .intro-box li { margin-bottom: 4px; }
-  .char-preview {
+  .result-emoji { font-size: 56px; margin-bottom: 4px; filter: drop-shadow(0 0 8px var(--neon-cyan)); }
+  .result-type {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(0,240,255,0.7);
+    letter-spacing: 0.15em;
+    margin: 4px 0;
+  }
+  .result-desc { font-size: 13px; color: var(--text); margin-top: 6px; }
+
+  .result-graph {
+    margin: 20px 0;
+    padding: 18px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.4);
+    border-radius: 2px;
+  }
+  .result-graph h3 {
+    font-size: 12px;
+    color: var(--neon-green);
+    letter-spacing: 0.2em;
+    margin-bottom: 14px;
+    text-shadow: 0 0 5px var(--neon-green);
+  }
+  .gbar {
+    margin-bottom: 12px;
+  }
+  .gbar .label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 4px;
+    letter-spacing: 0.1em;
+  }
+  .gbar .track {
+    height: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .gbar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, transparent, currentColor);
+    box-shadow: 0 0 10px currentColor;
+    width: 0;
+    transition: width 1.2s ease-out;
+  }
+  .gbar.p-happy   .fill, .gbar.p-happy   .value { color: #ff5599; }
+  .gbar.p-economy .fill, .gbar.p-economy .value { color: var(--neon-yellow); }
+  .gbar.p-env     .fill, .gbar.p-env     .value { color: var(--neon-green); }
+  .gbar.p-freedom .fill, .gbar.p-freedom .value { color: var(--neon-cyan); }
+
+  .verdict {
+    text-align: center;
+    padding: 16px;
+    border: 1px solid var(--neon-green);
+    background: rgba(0,255,157,0.04);
+    margin: 16px 0;
+    color: var(--neon-green);
+    text-shadow: 0 0 5px var(--neon-green);
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    border-radius: 2px;
+  }
+
+  .share-row { display: flex; gap: 8px; margin-top: 12px; }
+  .share-row .btn { margin-top: 0; font-size: 13px; padding: 12px; }
+
+  .err {
+    color: var(--neon-pink);
+    font-size: 12px;
+    margin-top: 8px;
+    text-shadow: 0 0 4px var(--neon-pink);
+    letter-spacing: 0.05em;
+  }
+  label.field-label {
+    display: block;
+    font-weight: bold;
+    margin: 14px 0 6px;
+    font-size: 12px;
+    color: var(--neon-green);
+    letter-spacing: 0.2em;
+    text-shadow: 0 0 4px var(--neon-green);
+  }
+  label.field-label::before { content: "// "; color: var(--text-dim); }
+
+  /* Intro story */
+  .intro-text {
+    font-size: 15px;
+    line-height: 1.9;
+    padding: 24px 16px;
+    text-align: center;
+    border-top: 1px solid rgba(0,240,255,0.2);
+    border-bottom: 1px solid rgba(0,240,255,0.2);
+    color: var(--text);
+    margin: 12px 0;
+    letter-spacing: 0.05em;
+  }
+  .intro-text .accent { color: var(--neon-cyan); text-shadow: 0 0 8px var(--neon-cyan); font-weight: bold; }
+  .intro-text .accent2 { color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); font-weight: bold; }
+
+  /* Char preview */
+  .char-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    margin: 16px 0;
+    margin: 14px 0;
   }
   .char-chip {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: bold;
+    padding: 10px;
+    border: 1px solid;
+    border-radius: 2px;
+    font-size: 12px;
+    background: rgba(0,0,0,0.3);
+    letter-spacing: 0.05em;
   }
-  .chip-emotion  { background: #fff1f2; color: #be123c; }
-  .chip-logic    { background: #eff6ff; color: #1d4ed8; }
-  .chip-careful  { background: #fffbeb; color: #b45309; }
-  .chip-positive { background: #f0fdf4; color: #15803d; }
-  .chip-emoji { font-size: 22px; }
+  .char-chip .em { font-size: 18px; margin-right: 6px; }
+  .chip-emo  { border-color: #ff5599; color: #ff5599; }
+  .chip-ron  { border-color: #00aaff; color: #00aaff; }
+  .chip-shin { border-color: #ffcc00; color: #ffcc00; }
+  .chip-raku { border-color: var(--neon-green); color: var(--neon-green); }
+
+  /* Question counter */
+  .q-counter {
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--neon-green);
+    margin-bottom: 8px;
+    text-shadow: 0 0 5px var(--neon-green);
+  }
+
+  /* Glitch scan effect */
+  @keyframes scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+  .scan-line {
+    position: fixed;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+    opacity: 0.3;
+    animation: scan 6s linear infinite;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  @media (max-width: 480px) {
+    .param-grid { grid-template-columns: repeat(2, 1fr); }
+    header h1 { font-size: 18px; letter-spacing: 0.2em; }
+    .char-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
+<div class="scan-line"></div>
 <div class="app">
   <header>
-    <h1>🔍 ニュース多角メガネ</h1>
-    <p>答えのない問いを、4つの視点で考えよう</p>
+    <h1>NEXUS // 2047</h1>
+    <div class="subtitle">CITY GOVERNANCE SIMULATOR</div>
   </header>
 
-  <!-- Screen 0: Start -->
-  <div class="screen" id="screen-start">
-    <h2>はじめに</h2>
-    <div class="intro-box">
-      <strong>こんなゲームです</strong>
-      <ul>
-        <li>ランダムなお題に対して最初の意見を入力</li>
-        <li>4キャラの視点を読んで考えを深める</li>
-        <li>最終回答で自分の思考タイプがわかる！</li>
-      </ul>
-    </div>
-    <p class="lead" style="font-weight:bold; color:#4a3a8a;">登場キャラクター</p>
-    <div class="char-preview">
-      <div class="char-chip chip-emotion"><span class="chip-emoji">😢</span>エモ（感情タイプ）</div>
-      <div class="char-chip chip-logic"><span class="chip-emoji">🧠</span>ロン（論理タイプ）</div>
-      <div class="char-chip chip-careful"><span class="chip-emoji">😰</span>シン（慎重タイプ）</div>
-      <div class="char-chip chip-positive"><span class="chip-emoji">😄</span>ラク（楽観タイプ）</div>
-    </div>
-    <button class="btn" id="btn-start">スタート！</button>
+  <div class="status-bar">
+    <span class="live">SYSTEM ONLINE</span>
+    <span id="status-mayor">UNREGISTERED</span>
   </div>
 
-  <!-- Screen 1: Topic + first opinion -->
-  <div class="screen hidden" id="screen-topic">
-    <h2>① お題</h2>
-    <div class="topic-box" id="topic-text"></div>
-    <label class="field-label">あなたの最初の立場は？</label>
-    <div class="stance-row" id="stance1">
-      <button class="stance-btn" data-stance="賛成">👍 賛成</button>
-      <button class="stance-btn" data-stance="反対">👎 反対</button>
-      <button class="stance-btn" data-stance="どちらでもない">🤔 どちらでもない</button>
+  <!-- Param panel (visible after intro) -->
+  <div class="param-panel hidden" id="param-panel">
+    <div class="param-grid">
+      <div class="param-cell p-happy">
+        <div class="label">幸福度</div>
+        <div class="bar"><div class="bar-fill" id="bar-happy"></div></div>
+        <div class="value" id="val-happy">50</div>
+      </div>
+      <div class="param-cell p-economy">
+        <div class="label">経済力</div>
+        <div class="bar"><div class="bar-fill" id="bar-economy"></div></div>
+        <div class="value" id="val-economy">50</div>
+      </div>
+      <div class="param-cell p-env">
+        <div class="label">環境</div>
+        <div class="bar"><div class="bar-fill" id="bar-env"></div></div>
+        <div class="value" id="val-env">50</div>
+      </div>
+      <div class="param-cell p-freedom">
+        <div class="label">自由度</div>
+        <div class="bar"><div class="bar-fill" id="bar-freedom"></div></div>
+        <div class="value" id="val-freedom">50</div>
+      </div>
     </div>
-    <label class="field-label">理由を一言で</label>
-    <textarea id="reason1" rows="3" placeholder="例：自由が大事だと思うから"></textarea>
-    <button class="btn" id="btn-to-npc">4キャラの意見を見る →</button>
+  </div>
+
+  <!-- Screen 0: Name input -->
+  <div class="screen" id="screen-name">
+    <h2>// IDENTITY REGISTRATION</h2>
+    <p class="lead">市長候補者よ、まずは自身のIDを登録せよ。</p>
+    <label class="field-label">PLAYER NAME</label>
+    <input type="text" id="player-name" placeholder="例：シンタロウ" maxlength="12">
+    <button class="btn" id="btn-name">REGISTER ▶</button>
+    <div class="err" id="name-err"></div>
+  </div>
+
+  <!-- Screen 1: Intro story -->
+  <div class="screen hidden" id="screen-intro">
+    <h2>// SYSTEM BOOT</h2>
+    <div class="intro-text">
+      <span class="accent">2047年。</span><br>
+      テクノロジーが発展した都市<br>
+      <span class="accent2">『 NEXUS 』</span><br>
+      は、様々な社会問題を抱えていた。<br><br>
+      あなたはこの街の<span class="accent">新市長</span>に就任した。<br>
+      市民の声に耳を傾け、<br>
+      あなたの判断で街を変えていけ。
+    </div>
+    <p class="lead" style="font-size:12px; color:var(--text-dim); letter-spacing:0.1em;">
+      ▼ 諮問機関：4名のアナリストがあなたを補佐する
+    </p>
+    <div class="char-grid">
+      <div class="char-chip chip-emo"><span class="em">😢</span>エモ - 感情アナリスト</div>
+      <div class="char-chip chip-ron"><span class="em">🧠</span>ロン - 論理アナリスト</div>
+      <div class="char-chip chip-shin"><span class="em">😰</span>シン - リスク管理官</div>
+      <div class="char-chip chip-raku"><span class="em">😄</span>ラク - 戦略立案官</div>
+    </div>
+    <button class="btn" id="btn-intro">市政開始 ▶</button>
+  </div>
+
+  <!-- Screen 2: Topic / first opinion -->
+  <div class="screen hidden" id="screen-topic">
+    <div class="q-counter" id="q-counter"></div>
+    <h2>// CASE FILE</h2>
+    <div class="topic-box">
+      <span class="alert-tag">ALERT</span>
+      <div id="topic-text"></div>
+      <div class="citizen-line" id="topic-prefix"></div>
+    </div>
+    <label class="field-label">YOUR INITIAL STANCE</label>
+    <div class="stance-row" id="stance1">
+      <button class="stance-btn" data-stance="賛成">▲ 賛成</button>
+      <button class="stance-btn" data-stance="反対">▼ 反対</button>
+      <button class="stance-btn" data-stance="どちらでもない">◆ 保留</button>
+    </div>
+    <label class="field-label">REASON</label>
+    <textarea id="reason1" rows="2" placeholder="一言で理由を入力..."></textarea>
+    <button class="btn" id="btn-to-npc">諮問機関の意見を聞く ▶</button>
     <div class="err" id="topic-err"></div>
   </div>
 
-  <!-- Screen 2: NPC opinions -->
+  <!-- Screen 3: NPC opinions -->
   <div class="screen hidden" id="screen-npc">
-    <h2>② 4キャラの意見</h2>
-    <p class="lead">それぞれの視点を読んで、自分の考えを深めよう。</p>
+    <h2>// ADVISORY COUNCIL</h2>
+    <p class="lead" style="font-size:13px;">4名のアナリストから報告が上がっています。</p>
     <div id="npc-list"></div>
-    <button class="btn" id="btn-to-final">最終回答へ →</button>
+    <button class="btn" id="btn-to-final">最終決断へ ▶</button>
   </div>
 
-  <!-- Screen 3: Final opinion -->
+  <!-- Screen 4: Final stance -->
   <div class="screen hidden" id="screen-final">
-    <h2>③ あなたの最終回答</h2>
-    <div class="topic-box" id="topic-text2"></div>
-    <label class="field-label">最終的な立場</label>
-    <div class="stance-row" id="stance2">
-      <button class="stance-btn" data-stance="賛成">👍 賛成</button>
-      <button class="stance-btn" data-stance="反対">👎 反対</button>
-      <button class="stance-btn" data-stance="どちらでもない">🤔 どちらでもない</button>
+    <h2>// FINAL DECISION</h2>
+    <div class="topic-box">
+      <span class="alert-tag">DECISION</span>
+      <div id="topic-text2"></div>
     </div>
-    <label class="field-label">最終的な理由（キャラの意見をふまえて）</label>
-    <textarea id="reason2" rows="4" placeholder="考えがどう変わった？または変わらなかった理由は？"></textarea>
-    <button class="btn" id="btn-to-result">結果を見る →</button>
+    <label class="field-label">FINAL STANCE</label>
+    <div class="stance-row" id="stance2">
+      <button class="stance-btn" data-stance="賛成">▲ 賛成</button>
+      <button class="stance-btn" data-stance="反対">▼ 反対</button>
+      <button class="stance-btn" data-stance="どちらでもない">◆ 保留</button>
+    </div>
+    <label class="field-label">FINAL REASON</label>
+    <textarea id="reason2" rows="3" placeholder="判断理由を一言で..."></textarea>
+    <button class="btn" id="btn-to-delta">政策実行 ▶</button>
     <div class="err" id="final-err"></div>
   </div>
 
-  <!-- Screen 4: Result -->
+  <!-- Screen 5: Delta feedback -->
+  <div class="screen hidden" id="screen-delta">
+    <h2>// IMPACT REPORT</h2>
+    <p class="lead" style="font-size:13px;" id="delta-msg"></p>
+    <div class="delta-block">
+      <h3>▼ パラメーター変動</h3>
+      <div id="delta-list"></div>
+    </div>
+    <button class="btn" id="btn-next">次の案件へ ▶</button>
+  </div>
+
+  <!-- Screen 6: Result -->
   <div class="screen hidden" id="screen-result">
-    <h2>④ あなたの思考タイプ</h2>
+    <h2>// FINAL REPORT</h2>
+    <p class="lead" style="text-align:center; font-size:13px; color:var(--text-dim); letter-spacing:0.15em;" id="result-title"></p>
     <div class="result-card">
       <div class="result-emoji" id="r-emoji"></div>
       <div class="result-type" id="r-type"></div>
       <div class="result-desc" id="r-desc"></div>
     </div>
-    <div class="change-box">
-      <div class="label">最初の意見</div>
-      <div id="r-first"></div>
+    <div class="result-graph">
+      <h3>▼ NEXUS CITY STATUS</h3>
+      <div class="gbar p-happy">
+        <div class="label-row"><span>幸福度</span><span class="value" id="g-happy-val"></span></div>
+        <div class="track"><div class="fill" id="g-happy"></div></div>
+      </div>
+      <div class="gbar p-economy">
+        <div class="label-row"><span>経済力</span><span class="value" id="g-economy-val"></span></div>
+        <div class="track"><div class="fill" id="g-economy"></div></div>
+      </div>
+      <div class="gbar p-env">
+        <div class="label-row"><span>環境</span><span class="value" id="g-env-val"></span></div>
+        <div class="track"><div class="fill" id="g-env"></div></div>
+      </div>
+      <div class="gbar p-freedom">
+        <div class="label-row"><span>自由度</span><span class="value" id="g-freedom-val"></span></div>
+        <div class="track"><div class="fill" id="g-freedom"></div></div>
+      </div>
     </div>
-    <div class="change-box">
-      <div class="label">最終の意見</div>
-      <div id="r-final"></div>
-    </div>
-    <div class="change-box">
-      <div class="label">変化のポイント</div>
-      <div id="r-change"></div>
-    </div>
+    <div class="verdict" id="verdict"></div>
     <div class="share-row">
-      <button class="btn" id="btn-share">📱 シェア</button>
-      <button class="btn secondary" id="btn-restart">もう一度</button>
+      <button class="btn" id="btn-share">📡 SHARE</button>
+      <button class="btn secondary" id="btn-restart">RESTART</button>
     </div>
   </div>
 </div>
 
 <script>
+// ============== DATA ==============
 const TOPICS = [
-  "学校のスマホ使用を全面禁止すべきか？",
-  "制服は必要か？",
-  "宿題は廃止すべきか？",
-  "SNSの年齢制限を16歳以上にすべきか？",
-  "校則は生徒が決めるべきか？",
-  "テストは廃止してレポート評価にすべきか？",
-  "AIで宿題をやるのはありか？",
-  "告白はLINEでもありか？",
-  "授業中に寝るのはありか？"
+  { id:0, title:"学校のスマホ使用を全面禁止すべきか？",
+    prefix:"教育委員会から、学生のスマホ全面禁止案が提出されました。" },
+  { id:1, title:"制服は必要か？",
+    prefix:"市民団体から、制服廃止の請願が届いています。" },
+  { id:2, title:"宿題は廃止すべきか？",
+    prefix:"教育改革派から、宿題完全廃止の提案がありました。" },
+  { id:3, title:"SNSの年齢制限を16歳以上にすべきか？",
+    prefix:"保護者連盟がSNS年齢制限の強化を要請しています。" },
+  { id:4, title:"校則は生徒が決めるべきか？",
+    prefix:"生徒会連合から、校則決定権の譲渡が要求されました。" },
+  { id:5, title:"テストは廃止してレポート評価にすべきか？",
+    prefix:"教育評価制度の刷新案が議会に上程されました。" },
+  { id:6, title:"AIで宿題をやるのはありか？",
+    prefix:"AI使用ガイドライン策定の議論が始まっています。" },
+  { id:7, title:"告白はLINEでもありか？",
+    prefix:"若者文化研究所から、コミュニケーション様式の調査結果が報告されました。" },
+  { id:8, title:"授業中に寝るのはありか？",
+    prefix:"学校現場から、仮眠制度導入の声が上がっています。" }
 ];
 
 const NPCS = [
-  { id:"emotion",  name:"エモ", type:"感情タイプ", emoji:"😢", cls:"npc-emotion" },
-  { id:"logic",    name:"ロン", type:"論理タイプ", emoji:"🧠", cls:"npc-logic" },
-  { id:"careful",  name:"シン", type:"慎重タイプ", emoji:"😰", cls:"npc-careful" },
-  { id:"positive", name:"ラク", type:"楽観タイプ", emoji:"😄", cls:"npc-positive" }
+  { id:"emotion",  name:"エモ", type:"感情アナリスト",   emoji:"😢", cls:"npc-emotion" },
+  { id:"logic",    name:"ロン", type:"論理アナリスト",   emoji:"🧠", cls:"npc-logic" },
+  { id:"careful",  name:"シン", type:"リスク管理官",     emoji:"😰", cls:"npc-careful" },
+  { id:"positive", name:"ラク", type:"戦略立案官",       emoji:"😄", cls:"npc-positive" }
 ];
 
-// Fixed lines indexed by topic index, then by NPC id
 const LINES = [
-  // 0: 学校のスマホ使用を全面禁止すべきか？
-  {
-    emotion:  "スマホで友達と繋がれる時間って大事じゃん、それを奪うのはかわいそうだよ",
-    logic:    "フランスでは禁止後に学力が上がったデータがある、効果は証明されてる",
-    careful:  "緊急時に連絡できないのは危険、禁止は行きすぎだと思う",
-    positive: "スマホを上手く使う練習をする方が将来役に立つんじゃない？"
-  },
-  // 1: 制服は必要か？
-  {
-    emotion:  "毎朝何着るか悩まなくていいの、地味に助かってる人も多いと思う",
-    logic:    "制服がある学校の方が学習に集中できるという研究結果もある",
-    careful:  "私服だといじめや格差が生まれやすい、制服はそれを防いでる",
-    positive: "私服にしたら個性が伸びて、もっと面白い学校になると思う！"
-  },
-  // 2: 宿題は廃止すべきか？
-  {
-    emotion:  "宿題多すぎて好きなことする時間なくなるの、マジでしんどい",
-    logic:    "復習の効果は科学的に証明されてる、宿題ゼロは学力低下につながる",
-    careful:  "宿題がなくなったら自分で勉強できる子とできない子の差が広がりそう",
-    positive: "宿題なくして自分でやりたい勉強をやる方が絶対伸びる！"
-  },
-  // 3: SNSの年齢制限を16歳以上にすべきか？
-  {
-    emotion:  "中学生でも傷ついてる子いっぱいいる、守るためには必要だと思う",
-    logic:    "オーストラリアが16歳制限を導入、世界的に規制強化の流れがある",
-    careful:  "年齢確認をすり抜ける方法はいくらでもある、実効性が疑問",
-    positive: "制限するより正しい使い方を教える方が絶対いい！"
-  },
-  // 4: 校則は生徒が決めるべきか？
-  {
-    emotion:  "自分たちで決めた校則なら納得して守れるじゃん、絶対その方がいい",
-    logic:    "生徒会が校則を決めた学校では違反率が下がったデータがある",
-    careful:  "生徒だけで決めると収拾がつかなくなる、先生の関与は必要だと思う",
-    positive: "全部生徒で決めたら責任感も育つし一石二鳥じゃん！"
-  },
-  // 5: テストは廃止してレポート評価にすべきか？
-  {
-    emotion:  "テストの点数だけで評価されるのって、なんか悲しくない？",
-    logic:    "記憶力より思考力を問う評価の方が社会で役立つ能力を測れる",
-    careful:  "レポートは写すのが簡単、公平な評価ができるか疑問",
-    positive: "レポートなら自分の得意なやり方で勝負できるから好き！"
-  },
-  // 6: AIで宿題をやるのはありか？
-  {
-    emotion:  "AIに頼りすぎて自分で考える力なくなったら将来困らない？",
-    logic:    "電卓が普及しても数学は残った、AIも道具として使いこなせばいい",
-    careful:  "今は良くても試験本番で自分の力がなかったら終わり",
-    positive: "AIをうまく使えるスキル自体が将来の武器になる！"
-  },
-  // 7: 告白はLINEでもありか？
-  {
-    emotion:  "直接言われた方が絶対嬉しい、LINEだと気持ちが伝わりにくい",
-    logic:    "相手が断りやすい環境を作る方が双方にとって合理的とも言える",
-    careful:  "LINEだとスクショされたり広まったりするリスクがある",
-    positive: "形より気持ちが大事！LINEでも全然いいと思う！"
-  },
-  // 8: 授業中に寝るのはありか？
-  {
-    emotion:  "眠いのを我慢し続けるのって体にも悪いし、正直かわいそう",
-    logic:    "睡眠不足は学習効率を著しく下げる、仮眠の方が結果的に効果的",
-    careful:  "寝てる姿が先生や周りへの失礼になる、場の空気を乱す",
-    positive: "短い仮眠で頭がリセットされる、戦略的な睡眠だと思う！"
-  }
+  { emotion:"スマホで友達と繋がれる時間って大事じゃん、それを奪うのはかわいそうだよ",
+    logic:"フランスでは禁止後に学力が上がったデータがある、効果は証明されてる",
+    careful:"緊急時に連絡できないのは危険、禁止は行きすぎだと思う",
+    positive:"スマホを上手く使う練習をする方が将来役に立つんじゃない？" },
+  { emotion:"毎朝何着るか悩まなくていいの、地味に助かってる人も多いと思う",
+    logic:"制服がある学校の方が学習に集中できるという研究結果もある",
+    careful:"私服だといじめや格差が生まれやすい、制服はそれを防いでる",
+    positive:"私服にしたら個性が伸びて、もっと面白い学校になると思う！" },
+  { emotion:"宿題多すぎて好きなことする時間なくなるの、マジでしんどい",
+    logic:"復習の効果は科学的に証明されてる、宿題ゼロは学力低下につながる",
+    careful:"宿題がなくなったら自分で勉強できる子とできない子の差が広がりそう",
+    positive:"宿題なくして自分でやりたい勉強をやる方が絶対伸びる！" },
+  { emotion:"中学生でも傷ついてる子いっぱいいる、守るためには必要だと思う",
+    logic:"オーストラリアが16歳制限を導入、世界的に規制強化の流れがある",
+    careful:"年齢確認をすり抜ける方法はいくらでもある、実効性が疑問",
+    positive:"制限するより正しい使い方を教える方が絶対いい！" },
+  { emotion:"自分たちで決めた校則なら納得して守れるじゃん、絶対その方がいい",
+    logic:"生徒会が校則を決めた学校では違反率が下がったデータがある",
+    careful:"生徒だけで決めると収拾がつかなくなる、先生の関与は必要だと思う",
+    positive:"全部生徒で決めたら責任感も育つし一石二鳥じゃん！" },
+  { emotion:"テストの点数だけで評価されるのって、なんか悲しくない？",
+    logic:"記憶力より思考力を問う評価の方が社会で役立つ能力を測れる",
+    careful:"レポートは写すのが簡単、公平な評価ができるか疑問",
+    positive:"レポートなら自分の得意なやり方で勝負できるから好き！" },
+  { emotion:"AIに頼りすぎて自分で考える力なくなったら将来困らない？",
+    logic:"電卓が普及しても数学は残った、AIも道具として使いこなせばいい",
+    careful:"今は良くても試験本番で自分の力がなかったら終わり",
+    positive:"AIをうまく使えるスキル自体が将来の武器になる！" },
+  { emotion:"直接言われた方が絶対嬉しい、LINEだと気持ちが伝わりにくい",
+    logic:"相手が断りやすい環境を作る方が双方にとって合理的とも言える",
+    careful:"LINEだとスクショされたり広まったりするリスクがある",
+    positive:"形より気持ちが大事！LINEでも全然いいと思う！" },
+  { emotion:"眠いのを我慢し続けるのって体にも悪いし、正直かわいそう",
+    logic:"睡眠不足は学習効率を著しく下げる、仮眠の方が結果的に効果的",
+    careful:"寝てる姿が先生や周りへの失礼になる、場の空気を乱す",
+    positive:"短い仮眠で頭がリセットされる、戦略的な睡眠だと思う！" }
 ];
 
-// Type descriptions
+// Param impact per topic [agree, disagree, neutral] for [happy, economy, env, freedom]
+const IMPACT = [
+  // 0 スマホ禁止
+  { 賛成:{happy:-8, economy:-3, env:+3, freedom:-12}, 反対:{happy:+10, economy:+5, env:-2, freedom:+10}, どちらでもない:{happy:+1, economy:0, env:0, freedom:0} },
+  // 1 制服必要
+  { 賛成:{happy:+3, economy:+5, env:+3, freedom:-10}, 反対:{happy:+8, economy:-3, env:-2, freedom:+12}, どちらでもない:{happy:0, economy:+1, env:0, freedom:0} },
+  // 2 宿題廃止
+  { 賛成:{happy:+12, economy:-8, env:0, freedom:+10}, 反対:{happy:-5, economy:+8, env:0, freedom:-5}, どちらでもない:{happy:+1, economy:0, env:0, freedom:0} },
+  // 3 SNS年齢制限
+  { 賛成:{happy:+8, economy:-5, env:0, freedom:-12}, 反対:{happy:-3, economy:+5, env:0, freedom:+10}, どちらでもない:{happy:+1, economy:0, env:0, freedom:0} },
+  // 4 校則生徒
+  { 賛成:{happy:+10, economy:-2, env:0, freedom:+12}, 反対:{happy:-3, economy:+3, env:0, freedom:-8}, どちらでもない:{happy:+1, economy:0, env:0, freedom:0} },
+  // 5 テスト廃止レポート
+  { 賛成:{happy:+8, economy:-8, env:0, freedom:+8}, 反対:{happy:-3, economy:+8, env:0, freedom:-5}, どちらでもない:{happy:+1, economy:0, env:0, freedom:0} },
+  // 6 AI宿題OK
+  { 賛成:{happy:+5, economy:+12, env:+3, freedom:+8}, 反対:{happy:-2, economy:-8, env:-2, freedom:-5}, どちらでもない:{happy:+1, economy:0, env:0, freedom:0} },
+  // 7 LINE告白
+  { 賛成:{happy:+5, economy:+3, env:0, freedom:+8}, 反対:{happy:+3, economy:-2, env:0, freedom:-3}, どちらでもない:{happy:+1, economy:0, env:0, freedom:0} },
+  // 8 授業寝る
+  { 賛成:{happy:+10, economy:-10, env:0, freedom:+8}, 反対:{happy:-5, economy:+8, env:0, freedom:-8}, どちらでもない:{happy:+1, economy:0, env:0, freedom:0} }
+];
+
 const TYPE_INFO = {
-  "感情": {
-    emoji: "😢",
-    npc: "エモ",
-    desc: "人の気持ちや共感を大切にして考えるタイプ。感情的なつながりを重視する。"
-  },
-  "論理": {
-    emoji: "🧠",
-    npc: "ロン",
-    desc: "データや根拠をもとに冷静に判断するタイプ。筋道を立てて考える。"
-  },
-  "慎重": {
-    emoji: "😰",
-    npc: "シン",
-    desc: "リスクや安全を最優先に考えるタイプ。慎重に物事を判断する。"
-  },
-  "楽観": {
-    emoji: "😄",
-    npc: "ラク",
-    desc: "可能性やチャレンジを重視するタイプ。前向きに物事を捉える。"
-  }
+  "感情": { emoji:"😢", npc:"エモ", desc:"市民の感情と共感を最優先する人情派リーダー" },
+  "論理": { emoji:"🧠", npc:"ロン", desc:"データに基づいた合理的決断を下すテクノクラート" },
+  "慎重": { emoji:"😰", npc:"シン", desc:"リスクを徹底排除する安定志向の守護者" },
+  "楽観": { emoji:"😄", npc:"ラク", desc:"未来の可能性を切り拓くチャレンジャー" }
 };
 
-// Keywords for type judgment
 const TYPE_KEYWORDS = {
-  "感情": ["気持ち","感情","かわいそう","つらい","嬉しい","悲しい","心","仲間","友達","ひとり","孤独","共感","大事","好き","辛い","楽しい","幸せ","寂しい"],
-  "論理": ["データ","統計","根拠","証明","研究","効果","効率","合理","論理","科学","調査","事実","結果","分析","情報","比較","数字"],
-  "慎重": ["危険","リスク","心配","不安","安全","怖い","問題","トラブル","失敗","注意","守る","ルール","規則","防ぐ","慎重","確認","疑問"],
-  "楽観": ["可能性","チャレンジ","挑戦","面白い","楽しそう","伸びる","成長","未来","前向き","絶対","ポジティブ","夢","希望","好奇心","どんどん","試して"]
+  "感情": ["気持ち","感情","かわいそう","つらい","嬉しい","悲しい","心","仲間","友達","共感","大事","好き","辛い","楽しい","幸せ","寂しい","可哀想","人間"],
+  "論理": ["データ","統計","根拠","証明","研究","効果","効率","合理","論理","科学","調査","事実","結果","分析","情報","比較","数字","客観"],
+  "慎重": ["危険","リスク","心配","不安","安全","怖い","問題","トラブル","失敗","注意","守る","ルール","規則","防ぐ","慎重","確認","疑問","守"],
+  "楽観": ["可能性","チャレンジ","挑戦","面白い","楽しそう","伸びる","成長","未来","前向き","絶対","ポジティブ","夢","希望","好奇心","試","新しい","自由"]
 };
 
-function judgeType(text) {
-  const scores = { "感情": 0, "論理": 0, "慎重": 0, "楽観": 0 };
-  Object.entries(TYPE_KEYWORDS).forEach(([type, words]) => {
-    words.forEach(w => { if (text.includes(w)) scores[type]++; });
-  });
-  return Object.entries(scores).sort((a,b) => b[1]-a[1])[0][0];
-}
-
-function describeChange(s1, s2) {
-  if (s1 === s2) return "最初から最後まで一貫した立場を保った。ぶれない信念がある！";
-  if (s1 === "賛成" && s2 === "反対") return "賛成から反対へ、大きく考えが変わった。いろんな視点を取り込んだ結果かも。";
-  if (s1 === "反対" && s2 === "賛成") return "反対から賛成へ、意見が転換した。新しい気づきがあったんだね。";
-  if (s2 === "どちらでもない") return "どちらとも言えない複雑さに気づいた。多角的に考えられてる証拠！";
-  return "考えが揺れ動いた。それが「考えた」ということ。";
-}
-
+// ============== STATE ==============
 const state = {
-  topicIndex: 0,
-  topic: "",
-  stance1: "",
-  reason1: "",
-  stance2: "",
-  reason2: "",
-  resultType: "",
-  resultNpc: ""
+  name: "",
+  params: { happy:50, economy:50, env:50, freedom:50 },
+  questions: [],
+  qIndex: 0,
+  current: { topicIdx:0, stance1:"", reason1:"", stance2:"", reason2:"" },
+  reasons: []
 };
 
+// ============== HELPERS ==============
 const $ = (id) => document.getElementById(id);
 const show = (id) => {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
   $(id).classList.remove('hidden');
   window.scrollTo(0, 0);
 };
-
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i=a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function clamp(v) { return Math.max(0, Math.min(100, v)); }
+function updateParamPanel() {
+  const p = state.params;
+  $('val-happy').textContent = p.happy;
+  $('val-economy').textContent = p.economy;
+  $('val-env').textContent = p.env;
+  $('val-freedom').textContent = p.freedom;
+  $('bar-happy').style.width = p.happy + '%';
+  $('bar-economy').style.width = p.economy + '%';
+  $('bar-env').style.width = p.env + '%';
+  $('bar-freedom').style.width = p.freedom + '%';
+}
 function bindStance(rowId, key) {
   document.querySelectorAll(`#${rowId} .stance-btn`).forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll(`#${rowId} .stance-btn`).forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      state[key] = btn.dataset.stance;
+      state.current[key] = btn.dataset.stance;
     });
   });
+}
+function clearStance(rowId) {
+  document.querySelectorAll(`#${rowId} .stance-btn`).forEach(b => b.classList.remove('selected'));
 }
 bindStance('stance1', 'stance1');
 bindStance('stance2', 'stance2');
 
-$('btn-start').addEventListener('click', () => {
-  state.topicIndex = Math.floor(Math.random() * TOPICS.length);
-  state.topic = TOPICS[state.topicIndex];
-  $('topic-text').textContent = state.topic;
-  $('topic-text2').textContent = state.topic;
-  show('screen-topic');
+// ============== FLOW ==============
+$('btn-name').addEventListener('click', () => {
+  const name = $('player-name').value.trim();
+  if (!name) { $('name-err').textContent = "▼ ID未入力です。名前を登録してください。"; return; }
+  if (name.length > 12) { $('name-err').textContent = "▼ 12文字以内で入力してください。"; return; }
+  state.name = name;
+  $('status-mayor').textContent = `MAYOR: ${name.toUpperCase()}`;
+  $('name-err').textContent = "";
+  show('screen-intro');
 });
 
+$('btn-intro').addEventListener('click', () => {
+  // Pick 5 random topics
+  state.questions = shuffle(TOPICS).slice(0, 5);
+  state.qIndex = 0;
+  state.reasons = [];
+  state.params = { happy:50, economy:50, env:50, freedom:50 };
+  $('param-panel').classList.remove('hidden');
+  updateParamPanel();
+  loadQuestion();
+});
+
+function loadQuestion() {
+  const q = state.questions[state.qIndex];
+  state.current = { topicIdx: q.id, stance1:"", reason1:"", stance2:"", reason2:"" };
+  $('q-counter').textContent = `CASE ${state.qIndex+1} / 5`;
+  $('topic-text').textContent = `「${q.title}」`;
+  $('topic-text2').textContent = `「${q.title}」`;
+  $('topic-prefix').textContent = `市長、${q.prefix}`;
+  $('reason1').value = "";
+  $('reason2').value = "";
+  clearStance('stance1');
+  clearStance('stance2');
+  $('topic-err').textContent = "";
+  $('final-err').textContent = "";
+  show('screen-topic');
+}
+
 $('btn-to-npc').addEventListener('click', () => {
-  if (!state.stance1) { $('topic-err').textContent = "立場を選んでください。"; return; }
-  state.reason1 = $('reason1').value.trim();
-  if (!state.reason1) { $('topic-err').textContent = "理由を入力してください。"; return; }
+  if (!state.current.stance1) { $('topic-err').textContent = "▼ 立場を選択してください。"; return; }
+  const r = $('reason1').value.trim();
+  if (!r) { $('topic-err').textContent = "▼ 理由を入力してください。"; return; }
+  state.current.reason1 = r;
   $('topic-err').textContent = "";
   showNpcScreen();
 });
@@ -465,53 +904,124 @@ function showNpcScreen() {
   show('screen-npc');
   const list = $('npc-list');
   list.innerHTML = "";
-  const lines = LINES[state.topicIndex];
-
+  const lines = LINES[state.current.topicIdx];
   NPCS.forEach((n, i) => {
     const card = document.createElement('div');
     card.className = `npc-card ${n.cls}`;
     card.innerHTML = `
       <div class="npc-head">
         <span class="npc-emoji">${n.emoji}</span>
-        <span class="npc-name">${n.name}（${n.type}）</span>
+        <span class="npc-name">${n.name} / ${n.type}</span>
       </div>
       <div class="npc-msg">「${lines[n.id]}」</div>
     `;
     list.appendChild(card);
-    // Staggered fade-in
-    setTimeout(() => card.classList.add('visible'), i * 180);
+    setTimeout(() => card.classList.add('visible'), i * 220);
   });
 }
 
 $('btn-to-final').addEventListener('click', () => show('screen-final'));
 
-$('btn-to-result').addEventListener('click', () => {
-  if (!state.stance2) { $('final-err').textContent = "立場を選んでください。"; return; }
-  state.reason2 = $('reason2').value.trim();
-  if (!state.reason2) { $('final-err').textContent = "理由を入力してください。"; return; }
+$('btn-to-delta').addEventListener('click', () => {
+  if (!state.current.stance2) { $('final-err').textContent = "▼ 最終立場を選択してください。"; return; }
+  const r = $('reason2').value.trim();
+  if (!r) { $('final-err').textContent = "▼ 判断理由を入力してください。"; return; }
+  state.current.reason2 = r;
   $('final-err').textContent = "";
-  showResult();
-  show('screen-result');
+  applyImpact();
 });
 
-function showResult() {
-  const combined = state.reason1 + " " + state.reason2;
-  const type = judgeType(combined);
-  const info = TYPE_INFO[type];
+function applyImpact() {
+  const c = state.current;
+  const impact = IMPACT[c.topicIdx][c.stance2];
+  const before = { ...state.params };
+  state.params.happy   = clamp(state.params.happy   + impact.happy);
+  state.params.economy = clamp(state.params.economy + impact.economy);
+  state.params.env     = clamp(state.params.env     + impact.env);
+  state.params.freedom = clamp(state.params.freedom + impact.freedom);
+  state.reasons.push(c.reason1 + " " + c.reason2);
 
+  $('delta-msg').textContent = `${state.name}市長は「${c.stance2}」の決断を下した。`;
+  const labels = { happy:"幸福度", economy:"経済力", env:"環境", freedom:"自由度" };
+  const list = $('delta-list');
+  list.innerHTML = "";
+  ["happy","economy","env","freedom"].forEach(k => {
+    const d = state.params[k] - before[k];
+    const sign = d > 0 ? "+" : "";
+    const cls = d > 0 ? "delta-up" : (d < 0 ? "delta-down" : "delta-zero");
+    const arrow = d > 0 ? "▲" : (d < 0 ? "▼" : "—");
+    const row = document.createElement('div');
+    row.className = "delta-row";
+    row.innerHTML = `<span>${labels[k]}</span><span class="${cls}">${arrow} ${sign}${d} → ${state.params[k]}</span>`;
+    list.appendChild(row);
+  });
+  updateParamPanel();
+  show('screen-delta');
+}
+
+$('btn-next').addEventListener('click', () => {
+  state.qIndex++;
+  if (state.qIndex >= state.questions.length) {
+    showResult();
+  } else {
+    loadQuestion();
+  }
+});
+
+// ============== RESULT ==============
+function judgeType(text) {
+  const scores = { "感情":0, "論理":0, "慎重":0, "楽観":0 };
+  Object.entries(TYPE_KEYWORDS).forEach(([type, words]) => {
+    words.forEach(w => { if (text.includes(w)) scores[type]++; });
+  });
+  let max = -1, t = "論理";
+  Object.entries(scores).forEach(([k,v]) => { if (v > max) { max = v; t = k; } });
+  return t;
+}
+
+function makeVerdict(p) {
+  const avg = (p.happy + p.economy + p.env + p.freedom) / 4;
+  if (avg >= 75) return "★ 伝説の市長 ★ NEXUSは黄金時代を迎えた。";
+  if (avg >= 60) return "◎ 名市長 ◎ 街は着実に発展している。";
+  if (avg >= 45) return "○ 平凡な市長 ○ 街は安定した日常を保っている。";
+  if (avg >= 30) return "△ 市民の不満 △ 街には課題が山積している。";
+  return "✕ 統治崩壊 ✕ NEXUSは混乱に陥った…";
+}
+
+function showResult() {
+  const allReasons = state.reasons.join(" ");
+  const type = judgeType(allReasons);
+  const info = TYPE_INFO[type];
   state.resultType = type;
   state.resultNpc = info.npc;
 
+  $('result-title').textContent = `▼ ${state.name} 市長の統治結果`;
   $('r-emoji').textContent = info.emoji;
-  $('r-type').textContent = `${type}タイプ（${info.npc}と似てる！）`;
+  $('r-type').textContent = `${type}タイプ / ${info.npc}型`;
   $('r-desc').textContent = info.desc;
-  $('r-first').textContent = `${state.stance1} — ${state.reason1}`;
-  $('r-final').textContent = `${state.stance2} — ${state.reason2}`;
-  $('r-change').textContent = describeChange(state.stance1, state.stance2);
+
+  const p = state.params;
+  ["happy","economy","env","freedom"].forEach(k => {
+    $(`g-${k==='happy'?'happy':k==='economy'?'economy':k==='env'?'env':'freedom'}-val`).textContent = p[k];
+  });
+  // animate after slight delay
+  setTimeout(() => {
+    $('g-happy').style.width = p.happy + '%';
+    $('g-economy').style.width = p.economy + '%';
+    $('g-env').style.width = p.env + '%';
+    $('g-freedom').style.width = p.freedom + '%';
+  }, 100);
+
+  $('verdict').textContent = makeVerdict(p);
+  show('screen-result');
 }
 
 $('btn-share').addEventListener('click', () => {
-  const text = `🔍ニュース多角メガネで考えてみた！\nお題：${state.topic}\n私は『${state.resultType}タイプ』（${state.resultNpc}と似てる！）\n#ニュース多角メガネ`;
+  const p = state.params;
+  const text = `🏙 NEXUS 2047 / ${state.name}市長の統治結果\n` +
+               `幸福度:${p.happy} 経済力:${p.economy} 環境:${p.env} 自由度:${p.freedom}\n` +
+               `思考タイプ：${state.resultType}型（${state.resultNpc}と同タイプ）\n` +
+               `#NEXUS2047 #ニュース多角メガネ`;
   const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
   if (navigator.share) {
     navigator.share({ text }).catch(() => window.open(url, '_blank'));
@@ -521,15 +1031,12 @@ $('btn-share').addEventListener('click', () => {
 });
 
 $('btn-restart').addEventListener('click', () => {
-  state.stance1 = ""; state.stance2 = "";
-  state.reason1 = ""; state.reason2 = "";
-  $('reason1').value = ""; $('reason2').value = "";
-  document.querySelectorAll('.stance-btn').forEach(b => b.classList.remove('selected'));
-  state.topicIndex = Math.floor(Math.random() * TOPICS.length);
-  state.topic = TOPICS[state.topicIndex];
-  $('topic-text').textContent = state.topic;
-  $('topic-text2').textContent = state.topic;
-  show('screen-topic');
+  state.params = { happy:50, economy:50, env:50, freedom:50 };
+  state.questions = shuffle(TOPICS).slice(0, 5);
+  state.qIndex = 0;
+  state.reasons = [];
+  updateParamPanel();
+  loadQuestion();
 });
 </script>
 </body>
