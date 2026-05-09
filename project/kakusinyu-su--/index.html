@@ -1,0 +1,150 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>バズれ。</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- タイトル画面 -->
+    <div id="title-screen" class="screen active">
+      <div class="title-logo">バズれ。</div>
+      <div class="title-sub">普通にバズれ。考えるのはあとでいい。</div>
+      <button id="start-btn" class="primary-btn">タップして始める</button>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <div id="game-screen" class="screen">
+      <!-- 上部ステータスバー -->
+      <header class="top-bar">
+        <div class="stat">
+          <span class="stat-label">フォロワー</span>
+          <span id="followers" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">信頼度</span>
+          <span id="trust" class="stat-value">50</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">炎上度</span>
+          <span id="heat" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">ターン</span>
+          <span id="turn" class="stat-value">1</span>
+        </div>
+      </header>
+
+      <!-- メインコンテナ（ショート動画風レイアウト） -->
+      <main class="main-container">
+        <!-- 左：ニュース＆投稿 -->
+        <section class="content-column">
+          <div class="news-card">
+            <div class="news-label">今日のトレンドニュース</div>
+            <div id="news-text" class="news-text"></div>
+          </div>
+
+          <div class="post-style-card">
+            <div class="post-label">どう投稿する？</div>
+            <div id="post-buttons" class="post-buttons"></div>
+          </div>
+
+          <div id="result-panel" class="result-panel hidden">
+            <div id="result-title" class="result-title"></div>
+            <div id="result-detail" class="result-detail"></div>
+          </div>
+        </section>
+
+        <!-- 右：SNS風UI -->
+        <section class="feed-column">
+          <div class="phone-frame">
+            <div class="phone-header">
+              <div class="phone-logo">Buzz</div>
+              <div class="phone-icons">
+                <span id="notif-icon" class="notif-icon">🔔</span>
+              </div>
+            </div>
+
+            <div class="phone-body">
+              <!-- おすすめ欄 -->
+              <div class="trend-box">
+                <div class="trend-title">おすすめトレンド</div>
+                <div id="trend-tags" class="trend-tags"></div>
+              </div>
+
+              <!-- 投稿プレビュー -->
+              <div class="post-preview">
+                <div class="post-user">
+                  <div class="avatar">YOU</div>
+                  <div class="user-info">
+                    <div class="user-name">@you</div>
+                    <div id="post-style-label" class="user-meta">投稿スタイル：-</div>
+                  </div>
+                </div>
+                <div id="post-preview-text" class="post-text">
+                  投稿を選ぶとここに表示されます
+                </div>
+                <div class="post-actions">
+                  <div class="action">
+                    ❤️ <span id="like-count">0</span>
+                  </div>
+                  <div class="action">
+                    🔁 <span id="repost-count">0</span>
+                  </div>
+                  <div class="action">
+                    💬 <span id="comment-count">0</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- コメント欄 -->
+              <div class="comment-box">
+                <div class="comment-title">コメント</div>
+                <div id="comment-list" class="comment-list"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- 結果画面 -->
+    <div id="result-screen" class="screen">
+      <div class="result-header">
+        <div class="title-logo small">バズれ。</div>
+        <div class="result-label">あなたが作ったSNS空間</div>
+      </div>
+
+      <div class="result-summary">
+        <div class="result-stat">
+          <span class="stat-label">最終フォロワー</span>
+          <span id="final-followers" class="stat-value big"></span>
+        </div>
+        <div class="result-stat">
+          <span class="stat-label">信頼度</span>
+          <span id="final-trust" class="stat-value big"></span>
+        </div>
+        <div class="result-stat">
+          <span class="stat-label">炎上度</span>
+          <span id="final-heat" class="stat-value big"></span>
+        </div>
+      </div>
+
+      <div id="world-label" class="world-label"></div>
+      <div id="world-desc" class="world-desc"></div>
+
+      <button id="replay-btn" class="primary-btn">もう一回バズる</button>
+      <div class="share-hint">※スクショ撮って友達に見せてもOK</div>
+    </div>
+  </div>
+
+  <audio id="se-buzz" src="https://cdn.jsdelivr.net/gh/napolab/sfx-kit/bubble1.mp3"></audio>
+  <audio id="se-fire" src="https://cdn.jsdelivr.net/gh/napolab/sfx-kit/pop1.mp3"></audio>
+  <audio id="se-notif" src="https://cdn.jsdelivr.net/gh/napolab/sfx-kit/click1.mp3"></audio>
+
+  <script src="script.js"></script>
+</body>
+</html>
