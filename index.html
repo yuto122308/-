@@ -1,920 +1,123 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEXUS 2047 — 市長シミュレーター</title>
-<style>
-:root {
-  --bg: #050c18;
-  --panel: #0a1628;
-  --border: rgba(0,220,255,0.35);
-  --cyan: #00dcff;
-  --green: #00ff9d;
-  --pink: #ff2d78;
-  --yellow: #ffe600;
-  --text: #c8dff5;
-  --dim: #5a7090;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: "Segoe UI","Yu Gothic","Hiragino Sans",system-ui,sans-serif;
-  min-height: 100vh;
-  padding: 12px;
-  background-image:
-    radial-gradient(ellipse at 15% 10%, rgba(0,220,255,.10) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 90%, rgba(0,255,157,.08) 0%, transparent 50%);
-  background-attachment: fixed;
-}
-/* scanline */
-body::after {
-  content:"";
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  background: repeating-linear-gradient(
-    0deg, rgba(0,220,255,.03) 0px, rgba(0,220,255,.03) 1px,
-    transparent 1px, transparent 3px
-  );
-  z-index:100;
-}
-.app {
-  max-width: 740px;
-  margin: 0 auto;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  box-shadow: 0 0 50px rgba(0,220,255,.15), 0 0 120px rgba(0,255,157,.06);
-  overflow: hidden;
-  position: relative;
-}
-/* corner marks */
-.app::before, .app::after {
-  content:"";
-  position:absolute;
-  width:18px; height:18px;
-  border:2px solid var(--cyan);
-  pointer-events:none;
-  z-index:10;
-}
-.app::before { top:6px; left:6px; border-right:none; border-bottom:none; }
-.app::after  { bottom:6px; right:6px; border-left:none; border-top:none; }
-
-/* ---- HEADER ---- */
-header {
-  background: linear-gradient(180deg, rgba(0,220,255,.12) 0%, transparent 100%);
-  border-bottom: 1px solid var(--border);
-  padding: 22px 20px 14px;
-  text-align: center;
-}
-header h1 {
-  font-size: 24px;
-  font-weight: 900;
-  letter-spacing: .35em;
-  color: var(--cyan);
-  text-shadow: 0 0 12px rgba(0,220,255,.8), 0 0 30px rgba(0,220,255,.4);
-}
-header .sub {
-  font-size: 11px;
-  letter-spacing: .45em;
-  color: var(--green);
-  margin-top: 4px;
-  text-shadow: 0 0 8px rgba(0,255,157,.6);
-}
-
-/* ---- STATUS BAR ---- */
-.sbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 18px;
-  background: rgba(0,0,0,.4);
-  border-bottom: 1px solid rgba(0,220,255,.15);
-  font-size: 11px;
-  letter-spacing: .15em;
-  color: var(--dim);
-}
-.sbar .live { color: var(--green); }
-.sbar .live::before { content:"● "; animation: blink 1.4s infinite; }
-@keyframes blink { 50%{opacity:.2} }
-
-/* ---- PARAM BAR ---- */
-#param-panel {
-  display: none;
-  padding: 10px 18px;
-  background: rgba(0,0,0,.5);
-  border-bottom: 1px solid rgba(0,220,255,.12);
-}
-#param-panel.show { display: block; }
-.prow {
-  display: grid;
-  grid-template-columns: repeat(4,1fr);
-  gap: 10px;
-}
-.pcell { text-align: center; }
-.pcell .plabel {
-  font-size: 10px;
-  letter-spacing: .15em;
-  color: var(--dim);
-  margin-bottom: 3px;
-}
-.pcell .ptrack {
-  height: 5px;
-  background: rgba(255,255,255,.07);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.pcell .pfill {
-  height: 100%;
-  transition: width .5s;
-}
-.pcell .pval {
-  font-size: 13px;
-  font-weight: 700;
-  margin-top: 2px;
-}
-.ph .pfill,.ph .pval { background: var(--pink);   color: var(--pink);   box-shadow: 0 0 6px var(--pink); }
-.pe .pfill,.pe .pval { background: var(--yellow);  color: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
-.pn .pfill,.pn .pval { background: var(--green);   color: var(--green);  box-shadow: 0 0 6px var(--green); }
-.pf .pfill,.pf .pval { background: var(--cyan);    color: var(--cyan);   box-shadow: 0 0 6px var(--cyan); }
-
-/* ---- SCREENS ---- */
-.screen { padding: 26px 22px; }
-.screen.hidden { display: none; }
-
-h2 {
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: .2em;
-  color: var(--cyan);
-  text-shadow: 0 0 8px rgba(0,220,255,.5);
-  border-left: 3px solid var(--cyan);
-  padding-left: 10px;
-  margin-bottom: 18px;
-}
-.lead { font-size: 14px; color: var(--text); margin-bottom: 14px; line-height: 1.7; }
-
-/* text inputs */
-input[type=text], textarea {
-  width: 100%;
-  background: rgba(0,0,0,.55);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 15px;
-  padding: 11px 12px;
-  letter-spacing: .03em;
-  resize: none;
-}
-input[type=text]:focus, textarea:focus {
-  outline: none;
-  border-color: var(--cyan);
-  box-shadow: 0 0 12px rgba(0,220,255,.35);
-}
-
-/* labels */
-.flabel {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .2em;
-  color: var(--green);
-  text-shadow: 0 0 5px rgba(0,255,157,.5);
-  margin: 14px 0 6px;
-}
-.flabel::before { content:"// "; color: var(--dim); }
-
-/* buttons */
-.btn {
-  display: block;
-  width: 100%;
-  margin-top: 14px;
-  padding: 13px 20px;
-  background: linear-gradient(90deg, var(--cyan), var(--green));
-  color: #011018;
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: .18em;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  box-shadow: 0 0 18px rgba(0,220,255,.5);
-  transition: .18s;
-}
-.btn:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(0,220,255,.8); }
-.btn:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
-.btn.ghost {
-  background: transparent;
-  color: var(--cyan);
-  border: 1px solid var(--cyan);
-  box-shadow: inset 0 0 10px rgba(0,220,255,.1), 0 0 10px rgba(0,220,255,.2);
-}
-.btn.ghost:hover { background: rgba(0,220,255,.1); }
-.btn-row { display: flex; gap: 8px; margin-top: 14px; }
-.btn-row .btn { margin-top: 0; }
-
-/* stance buttons */
-.stance-row { display: flex; gap: 8px; margin: 10px 0 4px; flex-wrap: wrap; }
-.sbtn {
-  flex: 1;
-  min-width: 90px;
-  padding: 12px 6px;
-  background: rgba(0,220,255,.04);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  cursor: pointer;
-  transition: .18s;
-}
-.sbtn:hover { background: rgba(0,220,255,.14); box-shadow: 0 0 10px rgba(0,220,255,.3); }
-.sbtn.on {
-  background: var(--cyan);
-  color: #011018;
-  border-color: var(--cyan);
-  box-shadow: 0 0 16px rgba(0,220,255,.7);
-}
-
-/* error */
-.err { color: var(--pink); font-size: 12px; margin-top: 8px; text-shadow: 0 0 5px var(--pink); }
-
-/* topic box */
-.tbox {
-  position: relative;
-  background: rgba(0,220,255,.05);
-  border: 1px solid var(--cyan);
-  border-radius: 4px;
-  padding: 18px 16px 14px;
-  margin: 14px 0;
-  box-shadow: 0 0 14px rgba(0,220,255,.1);
-}
-.tbox .tag {
-  position: absolute;
-  top: -10px; left: 14px;
-  background: var(--panel);
-  color: var(--pink);
-  font-size: 10px;
-  letter-spacing: .3em;
-  padding: 2px 8px;
-  border: 1px solid var(--pink);
-  text-shadow: 0 0 6px var(--pink);
-}
-.tbox .title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--cyan);
-  text-shadow: 0 0 8px rgba(0,220,255,.5);
-  text-align: center;
-}
-.tbox .prefix {
-  font-size: 12px;
-  color: var(--dim);
-  text-align: center;
-  margin-top: 8px;
-  letter-spacing: .04em;
-}
-
-/* NPC cards */
-.ncard {
-  border: 1px solid;
-  border-radius: 3px;
-  padding: 13px 13px 13px 28px;
-  margin-bottom: 10px;
-  background: rgba(255,255,255,.015);
-  position: relative;
-  opacity: 0;
-  transform: translateX(-16px);
-  transition: opacity .35s, transform .35s;
-}
-.ncard.vis { opacity: 1; transform: translateX(0); }
-.ncard::before { content:">"; position:absolute; left:10px; top:12px; font-size:12px; }
-.nhead {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: .08em;
-}
-.nem { font-size: 20px; }
-.nmsg { font-size: 14px; color: var(--text); line-height: 1.6; }
-.ne { border-color:#ff5090; box-shadow:0 0 8px rgba(255,80,144,.2); }
-.ne .nname,.ne::before { color:#ff5090; text-shadow:0 0 6px #ff5090; }
-.nl { border-color:#00aaff; box-shadow:0 0 8px rgba(0,170,255,.2); }
-.nl .nname,.nl::before { color:#00aaff; text-shadow:0 0 6px #00aaff; }
-.ns { border-color:#ffcc00; box-shadow:0 0 8px rgba(255,204,0,.2); }
-.ns .nname,.ns::before { color:#ffcc00; text-shadow:0 0 6px #ffcc00; }
-.nr { border-color:var(--green); box-shadow:0 0 8px rgba(0,255,157,.2); }
-.nr .nname,.nr::before { color:var(--green); text-shadow:0 0 6px var(--green); }
-
-/* question counter */
-.qcount {
-  text-align: center;
-  font-size: 11px;
-  letter-spacing: .3em;
-  color: var(--green);
-  text-shadow: 0 0 5px rgba(0,255,157,.5);
-  margin-bottom: 10px;
-}
-
-/* delta */
-.dblock {
-  border: 1px dashed var(--green);
-  background: rgba(0,255,157,.04);
-  border-radius: 3px;
-  padding: 14px;
-  margin: 14px 0;
-}
-.dblock h3 { font-size: 11px; letter-spacing: .2em; color: var(--green); margin-bottom: 10px; text-shadow: 0 0 5px var(--green); }
-.drow {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  padding: 4px 0;
-  border-bottom: 1px dotted rgba(0,255,157,.15);
-}
-.drow:last-child { border-bottom: none; }
-.dup   { color: var(--green); }
-.ddown { color: var(--pink); }
-.dzero { color: var(--dim); }
-
-/* result */
-.rcard {
-  border: 1px solid var(--cyan);
-  background: rgba(0,220,255,.05);
-  border-radius: 4px;
-  padding: 20px;
-  text-align: center;
-  margin: 14px 0;
-  box-shadow: 0 0 20px rgba(0,220,255,.15);
-}
-.remi { font-size: 52px; filter: drop-shadow(0 0 10px var(--cyan)); }
-.rtype {
-  font-size: 22px;
-  font-weight: 900;
-  color: var(--cyan);
-  text-shadow: 0 0 12px rgba(0,220,255,.7);
-  letter-spacing: .15em;
-  margin: 6px 0;
-}
-.rdesc { font-size: 13px; color: var(--text); }
-
-/* graph */
-.rgraph {
-  border: 1px solid var(--border);
-  background: rgba(0,0,0,.5);
-  border-radius: 3px;
-  padding: 16px;
-  margin: 14px 0;
-}
-.rgraph h3 { font-size: 11px; letter-spacing: .2em; color: var(--green); margin-bottom: 14px; text-shadow: 0 0 5px var(--green); }
-.gbar { margin-bottom: 12px; }
-.gbar .glrow { display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; letter-spacing:.08em; }
-.gbar .gtrack {
-  height: 16px;
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.gbar .gfill {
-  height: 100%;
-  width: 0;
-  transition: width 1.2s ease-out;
-}
-.gb-h .gfill,.gb-h .gv { color:var(--pink);   background:linear-gradient(90deg,rgba(255,45,120,.3),var(--pink)); box-shadow:0 0 8px var(--pink); }
-.gb-e .gfill,.gb-e .gv { color:var(--yellow);  background:linear-gradient(90deg,rgba(255,230,0,.3),var(--yellow)); box-shadow:0 0 8px var(--yellow); }
-.gb-n .gfill,.gb-n .gv { color:var(--green);   background:linear-gradient(90deg,rgba(0,255,157,.3),var(--green));  box-shadow:0 0 8px var(--green); }
-.gb-f .gfill,.gb-f .gv { color:var(--cyan);    background:linear-gradient(90deg,rgba(0,220,255,.3),var(--cyan));   box-shadow:0 0 8px var(--cyan); }
-
-.verdict {
-  text-align: center;
-  padding: 14px;
-  border: 1px solid var(--green);
-  background: rgba(0,255,157,.04);
-  border-radius: 3px;
-  color: var(--green);
-  font-size: 14px;
-  letter-spacing: .1em;
-  text-shadow: 0 0 6px var(--green);
-  margin: 10px 0;
-}
-
-/* intro text */
-.intro-body {
-  border-top: 1px solid rgba(0,220,255,.2);
-  border-bottom: 1px solid rgba(0,220,255,.2);
-  padding: 22px 14px;
-  text-align: center;
-  font-size: 15px;
-  line-height: 2;
-  margin: 14px 0;
-}
-.intro-body .cx  { color:var(--cyan);  text-shadow:0 0 8px rgba(0,220,255,.7); font-weight:700; }
-.intro-body .cgr { color:var(--green); text-shadow:0 0 8px rgba(0,255,157,.7); font-weight:700; }
-
-/* char chips */
-.chips { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:14px 0; }
-.chip {
-  display:flex; align-items:center; gap:8px;
-  padding:9px 11px;
-  border:1px solid;
-  border-radius:3px;
-  font-size:12px;
-  font-weight:700;
-  background:rgba(0,0,0,.3);
-  letter-spacing:.04em;
-}
-.c-e { border-color:#ff5090; color:#ff5090; }
-.c-l { border-color:#00aaff; color:#00aaff; }
-.c-s { border-color:#ffcc00; color:#ffcc00; }
-.c-r { border-color:var(--green); color:var(--green); }
-.chip-em { font-size:18px; }
-
-@media(max-width:480px){
-  .prow { grid-template-columns:repeat(2,1fr); }
-  .chips { grid-template-columns:1fr; }
-  header h1 { font-size:18px; }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>既読 — フィルターバブル体験ゲーム</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Noto Sans JP', sans-serif; color: #fff; padding: 20px 0; }
+    #phone { width: 390px; min-height: 700px; max-height: 90vh; background: #1a1a2e; border-radius: 40px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 0 0 2px #2a2a4a, 0 0 80px rgba(100,100,255,0.15); position: relative; }
+    #status-bar { background: #0f0f1a; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a4a; flex-shrink: 0; min-height: 48px; }
+    #day-label { font-size: 13px; font-weight: 700; color: #7c7cff; letter-spacing: 2px; }
+    #part-label { font-size: 11px; color: #888; background: #222; padding: 4px 10px; border-radius: 10px; letter-spacing: 1px; }
+    #content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; scrollbar-width: thin; scrollbar-color: #2a2a4a transparent; }
+    #content::-webkit-scrollbar { width: 4px; }
+    #content::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 2px; }
+    .chat-area { padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; }
+    .chat-meta { display: flex; flex-direction: column; gap: 4px; }
+    .chat-meta.right { align-items: flex-end; }
+    .chat-name { font-size: 11px; color: #888; padding: 0 4px; }
+    .chat-bubble { max-width: 80%; padding: 11px 15px; border-radius: 18px; font-size: 14px; line-height: 1.7; animation: fadeInUp 0.35s ease; }
+    .chat-bubble.other { background: #252545; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .chat-bubble.player { background: #4040e8; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .choice-area { padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 10px; animation: fadeInUp 0.4s ease; }
+    .choice-label { font-size: 11px; color: #666; letter-spacing: 1px; padding: 0 4px; margin-bottom: 4px; }
+    .choice-btn { background: #1e1e3a; border: 1px solid #3a3a6a; color: #ddd; padding: 13px 16px; border-radius: 12px; font-size: 14px; font-family: 'Noto Sans JP', sans-serif; cursor: pointer; text-align: left; line-height: 1.6; transition: background 0.2s, border-color 0.2s, color 0.2s; }
+    .choice-btn:hover { background: #2a2a5a; border-color: #6060ff; color: #fff; }
+    .choice-btn:active { background: #3535aa; }
+    .timeline-header { padding: 12px 16px 10px; font-size: 12px; color: #666; letter-spacing: 2px; border-bottom: 1px solid #1e1e3a; background: #0f0f1a; flex-shrink: 0; }
+    .post-card { padding: 14px 16px; border-bottom: 1px solid #1e1e3a; animation: slideInLeft 0.35s ease; background: #1a1a2e; }
+    .post-card.hana { background: #160a28; border-bottom-color: #2a1048; }
+    .post-content { font-size: 14px; line-height: 1.75; color: #ddd; margin-bottom: 11px; word-break: break-all; }
+    .post-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .like-count { font-size: 12px; color: #666; }
+    .post-actions { display: flex; gap: 8px; }
+    .like-btn { background: #2a1a3a; border: 1px solid #4a2a5a; color: #ff7aaa; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-family: 'Noto Sans JP', sans-serif; cursor: pointer; transition: background 0.2s, border-color 0.2s; white-space: nowrap; }
+    .like-btn:hover { background: #3a1a4a; border-color: #ff7aaa; }
+    .like-btn.liked { background: #3a1a4a; border-color: #ff7aaa; opacity: 0.8; cursor: default; }
+    .skip-btn { background: #1a1a28; border: 1px solid #2a2a4a; color: #666; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-family: 'Noto Sans JP', sans-serif; cursor: pointer; transition: background 0.2s, color 0.2s; white-space: nowrap; }
+    .skip-btn:hover { background: #252535; color: #999; }
+    .skip-btn.skipped { color: #333; cursor: default; }
+    .narration { padding: 28px 22px; text-align: center; color: #bbb; font-size: 14px; line-height: 2.1; animation: fadeInUp 0.5s ease; }
+    .narration-tag { font-size: 11px; color: #555; letter-spacing: 3px; margin-bottom: 18px; }
+    .hana-timeline-header { text-align: center; padding: 16px; color: #c080ff; font-size: 13px; font-weight: 700; letter-spacing: 3px; border-bottom: 1px solid #3a1a5a; background: #120820; flex-shrink: 0; animation: fadeInUp 0.4s ease; }
+    .end-screen { padding: 32px 22px 16px; display: flex; flex-direction: column; align-items: center; gap: 0; text-align: center; animation: fadeInUp 0.6s ease; }
+    .end-tag { font-size: 11px; color: #555; letter-spacing: 3px; margin-bottom: 24px; }
+    .end-text { font-size: 15px; line-height: 2.3; color: #ccc; }
+    .bias-section { padding: 24px 18px 8px; border-top: 1px solid #2a2a4a; animation: fadeInUp 0.5s ease; }
+    .bias-title { font-size: 12px; color: #777; margin-bottom: 20px; text-align: center; letter-spacing: 2px; }
+    .bias-item { margin-bottom: 16px; }
+    .bias-label-row { font-size: 12px; color: #aaa; display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .bias-bar-bg { background: #111128; border-radius: 4px; height: 10px; overflow: hidden; }
+    .bias-bar-fill { height: 100%; border-radius: 4px; width: 0%; transition: width 1.2s cubic-bezier(0.16,1,0.3,1); }
+    .bias-bar-fill.empathy { background: linear-gradient(90deg,#e84891,#ff9abc); }
+    .bias-bar-fill.shock { background: linear-gradient(90deg,#e84020,#ff8800); }
+    .bias-bar-fill.diversity { background: linear-gradient(90deg,#4480ff,#8860ff); }
+    .next-btn { display: block; width: calc(100% - 32px); margin: 16px auto; background: #3535e0; border: none; color: #fff; padding: 14px; border-radius: 12px; font-size: 14px; font-family: 'Noto Sans JP', sans-serif; font-weight: 500; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+    .next-btn:hover { background: #5050ff; }
+    .next-btn:active { background: #2525b0; }
+    .title-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; text-align: center; gap: 16px; animation: fadeInUp 0.6s ease; }
+    .title-main { font-size: 48px; font-weight: 700; color: #fff; letter-spacing: 6px; }
+    .title-sub { font-size: 12px; color: #555; letter-spacing: 3px; margin-top: -8px; }
+    .title-desc { font-size: 13px; color: #888; line-height: 1.9; margin-top: 12px; }
+    .title-caution { font-size: 11px; color: #444; line-height: 1.8; margin-top: 8px; border-top: 1px solid #222; padding-top: 16px; width: 100%; }
+    .start-btn { margin-top: 12px; width: 100%; background: #4040e8; border: none; color: #fff; padding: 15px; border-radius: 14px; font-size: 15px; font-family: 'Noto Sans JP', sans-serif; font-weight: 700; cursor: pointer; letter-spacing: 2px; transition: background 0.2s; }
+    .start-btn:hover { background: #5555ff; }
+    .video-screen { padding: 0; display: flex; flex-direction: column; animation: fadeInUp 0.4s ease; }
+    .video-player { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; overflow: hidden; cursor: pointer; flex-shrink: 0; }
+    .video-scene { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; background: #0a0a0a; }
+    .video-scene-text { font-size: 13px; color: #ccc; text-align: center; line-height: 1.9; opacity: 0; transition: opacity 0.5s ease; white-space: pre-line; }
+    .video-scene-text.visible { opacity: 1; }
+    .video-thumb { position: absolute; inset: 0; background: linear-gradient(160deg,#1a1a2e 0%,#0a0a14 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; transition: opacity 0.4s ease; }
+    .video-thumb-title { font-size: 12px; color: #aaa; text-align: center; padding: 0 20px; line-height: 1.6; }
+    .play-btn-big { width: 52px; height: 52px; background: rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.3); transition: background 0.2s; }
+    .play-btn-big::after { content: ''; width: 0; height: 0; border-style: solid; border-width: 10px 0 10px 18px; border-color: transparent transparent transparent #fff; margin-left: 4px; }
+    .video-player:hover .play-btn-big { background: rgba(255,255,255,0.25); }
+    .video-progress-wrap { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.15); }
+    .video-progress-fill { height: 100%; background: #ff4040; width: 0%; transition: width 0.1s linear; }
+    .video-meta { padding: 12px 14px; background: #111118; border-bottom: 1px solid #1e1e3a; }
+    .video-meta-title { font-size: 13px; color: #ddd; line-height: 1.5; margin-bottom: 6px; }
+    .video-meta-sub { font-size: 11px; color: #555; display: flex; gap: 12px; }
+    .video-cut-notice { background: #1e0a0a; border-left: 3px solid #ff4040; padding: 10px 14px; font-size: 12px; color: #cc7070; line-height: 1.6; margin: 0; display: none; animation: fadeInUp 0.4s ease; }
+    .video-cut-notice.show { display: block; }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideInLeft { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
+    @media (max-width:430px) { body { padding:0; align-items:stretch; } #phone { width:100%; min-height:100vh; max-height:100vh; border-radius:0; } }
+  </style>
 </head>
 <body>
-<div class="app">
-  <header>
-    <h1>NEXUS // 2047</h1>
-    <div class="sub">CITY GOVERNANCE SIMULATOR</div>
-  </header>
-
-  <div class="sbar">
-    <span class="live">SYSTEM ONLINE</span>
-    <span id="sbar-name">UNREGISTERED</span>
+<div id="phone">
+  <div id="status-bar">
+    <span id="day-label">既読</span>
+    <span id="part-label">START</span>
   </div>
-
-  <!-- param panel -->
-  <div id="param-panel">
-    <div class="prow">
-      <div class="pcell ph">
-        <div class="plabel">幸福度</div>
-        <div class="ptrack"><div class="pfill" id="pf-h" style="width:50%"></div></div>
-        <div class="pval" id="pv-h">50</div>
-      </div>
-      <div class="pcell pe">
-        <div class="plabel">経済力</div>
-        <div class="ptrack"><div class="pfill" id="pf-e" style="width:50%"></div></div>
-        <div class="pval" id="pv-e">50</div>
-      </div>
-      <div class="pcell pn">
-        <div class="plabel">環境</div>
-        <div class="ptrack"><div class="pfill" id="pf-n" style="width:50%"></div></div>
-        <div class="pval" id="pv-n">50</div>
-      </div>
-      <div class="pcell pf">
-        <div class="plabel">自由度</div>
-        <div class="ptrack"><div class="pfill" id="pf-f" style="width:50%"></div></div>
-        <div class="pval" id="pv-f">50</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- S0: name -->
-  <div class="screen" id="s-name">
-    <h2>// IDENTITY REGISTRATION</h2>
-    <p class="lead">NEXUSの新市長として登録してください。あなたの名前がこの街の歴史に刻まれます。</p>
-    <span class="flabel">PLAYER NAME</span>
-    <input type="text" id="inp-name" placeholder="例：シンタロウ" maxlength="12">
-    <button class="btn" id="btn-name">REGISTER ▶</button>
-    <div class="err" id="err-name"></div>
-  </div>
-
-  <!-- S1: intro -->
-  <div class="screen hidden" id="s-intro">
-    <h2>// SYSTEM BOOT</h2>
-    <div class="intro-body">
-      <span class="cx">2047年。</span><br>
-      テクノロジーが発展した都市<br>
-      <span class="cgr">『 NEXUS 』</span><br>
-      は、様々な社会問題を抱えていた。<br><br>
-      あなたはこの街の<span class="cx">新市長</span>に就任した。<br>
-      市民の声に耳を傾け、<br>
-      あなたの判断で街を変えていけ。
-    </div>
-    <p class="lead" style="font-size:12px;color:var(--dim);letter-spacing:.1em;">▼ 諮問機関 — 4名のアナリスト</p>
-    <div class="chips">
-      <div class="chip c-e"><span class="chip-em">😢</span>エモ — 感情アナリスト</div>
-      <div class="chip c-l"><span class="chip-em">🧠</span>ロン — 論理アナリスト</div>
-      <div class="chip c-s"><span class="chip-em">😰</span>シン — リスク管理官</div>
-      <div class="chip c-r"><span class="chip-em">😄</span>ラク — 戦略立案官</div>
-    </div>
-    <button class="btn" id="btn-start">市政開始 ▶</button>
-  </div>
-
-  <!-- S2: topic + initial stance -->
-  <div class="screen hidden" id="s-topic">
-    <div class="qcount" id="qcount">CASE 1 / 5</div>
-    <h2>// CASE FILE</h2>
-    <div class="tbox">
-      <span class="tag">ALERT</span>
-      <div class="title" id="t-title"></div>
-      <div class="prefix" id="t-prefix"></div>
-    </div>
-    <span class="flabel">YOUR INITIAL STANCE</span>
-    <div class="stance-row" id="sr1">
-      <button class="sbtn" data-v="賛成">▲ 賛成</button>
-      <button class="sbtn" data-v="反対">▼ 反対</button>
-      <button class="sbtn" data-v="どちらでもない">◆ 保留</button>
-    </div>
-    <span class="flabel">REASON</span>
-    <textarea id="ta1" rows="2" placeholder="理由を一言..."></textarea>
-    <button class="btn" id="btn-counsel">諮問機関の意見を聞く ▶</button>
-    <div class="err" id="err-topic"></div>
-  </div>
-
-  <!-- S3: NPC -->
-  <div class="screen hidden" id="s-npc">
-    <h2>// ADVISORY COUNCIL</h2>
-    <p class="lead" style="font-size:13px;">4名から報告が届いています。</p>
-    <div id="npc-list"></div>
-    <button class="btn" id="btn-decide">最終決断へ ▶</button>
-  </div>
-
-  <!-- S4: final stance -->
-  <div class="screen hidden" id="s-final">
-    <h2>// FINAL DECISION</h2>
-    <div class="tbox">
-      <span class="tag">DECISION</span>
-      <div class="title" id="t-title2"></div>
-    </div>
-    <span class="flabel">FINAL STANCE</span>
-    <div class="stance-row" id="sr2">
-      <button class="sbtn" data-v="賛成">▲ 賛成</button>
-      <button class="sbtn" data-v="反対">▼ 反対</button>
-      <button class="sbtn" data-v="どちらでもない">◆ 保留</button>
-    </div>
-    <span class="flabel">FINAL REASON</span>
-    <textarea id="ta2" rows="3" placeholder="最終的な判断理由..."></textarea>
-    <button class="btn" id="btn-execute">政策実行 ▶</button>
-    <div class="err" id="err-final"></div>
-  </div>
-
-  <!-- S5: delta -->
-  <div class="screen hidden" id="s-delta">
-    <h2>// IMPACT REPORT</h2>
-    <p class="lead" id="delta-msg" style="font-size:13px;"></p>
-    <div class="dblock">
-      <h3>▼ PARAMETER CHANGE</h3>
-      <div id="delta-rows"></div>
-    </div>
-    <button class="btn" id="btn-next">次の案件へ ▶</button>
-  </div>
-
-  <!-- S6: result -->
-  <div class="screen hidden" id="s-result">
-    <h2>// FINAL REPORT</h2>
-    <p class="lead" style="text-align:center;font-size:12px;color:var(--dim);letter-spacing:.15em;" id="r-title"></p>
-    <div class="rcard">
-      <div class="remi" id="r-emi"></div>
-      <div class="rtype" id="r-type"></div>
-      <div class="rdesc" id="r-desc"></div>
-    </div>
-    <div class="rgraph">
-      <h3>▼ NEXUS CITY STATUS</h3>
-      <div class="gbar gb-h">
-        <div class="glrow"><span>幸福度</span><span class="gv" id="gv-h"></span></div>
-        <div class="gtrack"><div class="gfill" id="gf-h"></div></div>
-      </div>
-      <div class="gbar gb-e">
-        <div class="glrow"><span>経済力</span><span class="gv" id="gv-e"></span></div>
-        <div class="gtrack"><div class="gfill" id="gf-e"></div></div>
-      </div>
-      <div class="gbar gb-n">
-        <div class="glrow"><span>環境</span><span class="gv" id="gv-n"></span></div>
-        <div class="gtrack"><div class="gfill" id="gf-n"></div></div>
-      </div>
-      <div class="gbar gb-f">
-        <div class="glrow"><span>自由度</span><span class="gv" id="gv-f"></span></div>
-        <div class="gtrack"><div class="gfill" id="gf-f"></div></div>
-      </div>
-    </div>
-    <div class="verdict" id="verdict"></div>
-    <div class="btn-row">
-      <button class="btn" id="btn-share">📡 SHARE</button>
-      <button class="btn ghost" id="btn-restart">RESTART</button>
-    </div>
-  </div>
+  <div id="content"></div>
 </div>
-
 <script>
-// =========== DATA ===========
-const TOPICS = [
-  { id:0, title:"学校のスマホ使用を全面禁止すべきか？",   prefix:"教育委員会から、学生のスマホ全面禁止案が提出されました。" },
-  { id:1, title:"制服は必要か？",                         prefix:"市民団体から、制服廃止の請願が届いています。" },
-  { id:2, title:"宿題は廃止すべきか？",                   prefix:"教育改革派から、宿題完全廃止の提案がありました。" },
-  { id:3, title:"SNSの年齢制限を16歳以上にすべきか？",    prefix:"保護者連盟がSNS年齢制限の強化を要請しています。" },
-  { id:4, title:"校則は生徒が決めるべきか？",             prefix:"生徒会連合から、校則決定権の譲渡が要求されました。" },
-  { id:5, title:"テストは廃止してレポート評価にすべきか？", prefix:"教育評価制度の刷新案が議会に上程されました。" },
-  { id:6, title:"AIで宿題をやるのはありか？",             prefix:"AI使用ガイドライン策定の議論が始まっています。" },
-  { id:7, title:"告白はLINEでもありか？",                 prefix:"若者文化研究所からコミュニケーション様式の報告が届きました。" },
-  { id:8, title:"授業中に寝るのはありか？",               prefix:"学校現場から、仮眠制度導入の声が上がっています。" }
-];
-
-const NPC_LIST = [
-  { id:"e", name:"エモ", role:"感情アナリスト",  em:"😢", cls:"ne" },
-  { id:"l", name:"ロン", role:"論理アナリスト",  em:"🧠", cls:"nl" },
-  { id:"s", name:"シン", role:"リスク管理官",    em:"😰", cls:"ns" },
-  { id:"r", name:"ラク", role:"戦略立案官",      em:"😄", cls:"nr" }
-];
-
-const LINES = [
-  { e:"スマホで友達と繋がれる時間って大事じゃん、それを奪うのはかわいそうだよ",
-    l:"フランスでは禁止後に学力が上がったデータがある、効果は証明されてる",
-    s:"緊急時に連絡できないのは危険、禁止は行きすぎだと思う",
-    r:"スマホを上手く使う練習をする方が将来役に立つんじゃない？" },
-  { e:"毎朝何着るか悩まなくていいの、地味に助かってる人も多いと思う",
-    l:"制服がある学校の方が学習に集中できるという研究結果もある",
-    s:"私服だといじめや格差が生まれやすい、制服はそれを防いでる",
-    r:"私服にしたら個性が伸びて、もっと面白い学校になると思う！" },
-  { e:"宿題多すぎて好きなことする時間なくなるの、マジでしんどい",
-    l:"復習の効果は科学的に証明されてる、宿題ゼロは学力低下につながる",
-    s:"宿題がなくなったら自分で勉強できる子とできない子の差が広がりそう",
-    r:"宿題なくして自分でやりたい勉強をやる方が絶対伸びる！" },
-  { e:"中学生でも傷ついてる子いっぱいいる、守るためには必要だと思う",
-    l:"オーストラリアが16歳制限を導入、世界的に規制強化の流れがある",
-    s:"年齢確認をすり抜ける方法はいくらでもある、実効性が疑問",
-    r:"制限するより正しい使い方を教える方が絶対いい！" },
-  { e:"自分たちで決めた校則なら納得して守れるじゃん、絶対その方がいい",
-    l:"生徒会が校則を決めた学校では違反率が下がったデータがある",
-    s:"生徒だけで決めると収拾がつかなくなる、先生の関与は必要だと思う",
-    r:"全部生徒で決めたら責任感も育つし一石二鳥じゃん！" },
-  { e:"テストの点数だけで評価されるのって、なんか悲しくない？",
-    l:"記憶力より思考力を問う評価の方が社会で役立つ能力を測れる",
-    s:"レポートは写すのが簡単、公平な評価ができるか疑問",
-    r:"レポートなら自分の得意なやり方で勝負できるから好き！" },
-  { e:"AIに頼りすぎて自分で考える力なくなったら将来困らない？",
-    l:"電卓が普及しても数学は残った、AIも道具として使いこなせばいい",
-    s:"今は良くても試験本番で自分の力がなかったら終わり",
-    r:"AIをうまく使えるスキル自体が将来の武器になる！" },
-  { e:"直接言われた方が絶対嬉しい、LINEだと気持ちが伝わりにくい",
-    l:"相手が断りやすい環境を作る方が双方にとって合理的とも言える",
-    s:"LINEだとスクショされたり広まったりするリスクがある",
-    r:"形より気持ちが大事！LINEでも全然いいと思う！" },
-  { e:"眠いのを我慢し続けるのって体にも悪いし、正直かわいそう",
-    l:"睡眠不足は学習効率を著しく下げる、仮眠の方が結果的に効果的",
-    s:"寝てる姿が先生や周りへの失礼になる、場の空気を乱す",
-    r:"短い仮眠で頭がリセットされる、戦略的な睡眠だと思う！" }
-];
-
-// [h, e, n, f] changes per topic per stance
-const IMPACT = [
-  { 賛成:[-8,-3,+3,-12], 反対:[+10,+5,-2,+10], どちらでもない:[+1,0,0,0] },
-  { 賛成:[+3,+5,+3,-10],  反対:[+8,-3,-2,+12],  どちらでもない:[0,+1,0,0] },
-  { 賛成:[+12,-8,0,+10],  反対:[-5,+8,0,-5],    どちらでもない:[+1,0,0,0] },
-  { 賛成:[+8,-5,0,-12],   反対:[-3,+5,0,+10],   どちらでもない:[+1,0,0,0] },
-  { 賛成:[+10,-2,0,+12],  反対:[-3,+3,0,-8],    どちらでもない:[+1,0,0,0] },
-  { 賛成:[+8,-8,0,+8],    反対:[-3,+8,0,-5],    どちらでもない:[+1,0,0,0] },
-  { 賛成:[+5,+12,+3,+8],  反対:[-2,-8,-2,-5],   どちらでもない:[+1,0,0,0] },
-  { 賛成:[+5,+3,0,+8],    反対:[+3,-2,0,-3],    どちらでもない:[+1,0,0,0] },
-  { 賛成:[+10,-10,0,+8],  反対:[-5,+8,0,-8],    どちらでもない:[+1,0,0,0] }
-];
-
-const TYPE_INFO = {
-  感情: { em:"😢", npc:"エモ", desc:"市民の感情と共感を最優先する人情派リーダー" },
-  論理: { em:"🧠", npc:"ロン", desc:"データと根拠に基づき合理的決断を下すテクノクラート" },
-  慎重: { em:"😰", npc:"シン", desc:"リスクを徹底排除する安定志向の守護者" },
-  楽観: { em:"😄", npc:"ラク", desc:"未来の可能性を切り拓くチャレンジャー" }
-};
-const TYPE_KW = {
-  感情: ["気持ち","感情","かわいそう","つらい","嬉しい","悲しい","心","仲間","友達","共感","大事","好き","辛い","幸せ","寂しい","人","可哀"],
-  論理: ["データ","統計","根拠","証明","研究","効果","効率","合理","論理","科学","調査","事実","結果","分析","情報","比較","数字","客観"],
-  慎重: ["危険","リスク","心配","不安","安全","怖い","問題","失敗","注意","守る","ルール","規則","防ぐ","慎重","確認","疑問","守"],
-  楽観: ["可能性","チャレンジ","挑戦","面白い","楽しそう","伸びる","成長","未来","前向き","絶対","夢","希望","試","新しい","自由","どんどん"]
-};
-
-// =========== STATE ===========
-const G = {
-  name: "",
-  params: { h:50, e:50, n:50, f:50 },
-  queue: [],
-  qi: 0,
-  reasons: [],
-  cur: { tid:0, s1:"", r1:"", s2:"", r2:"" },
-  resType: "", resNpc: ""
-};
-
-// =========== UTILS ===========
-const $  = id => document.getElementById(id);
-const clamp = v => Math.max(0, Math.min(100, Math.round(v)));
-function shuffle(a) {
-  const b = a.slice();
-  for (let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}
-  return b;
-}
-function show(id) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
-  $(id).classList.remove('hidden');
-  window.scrollTo(0,0);
-}
-function syncParams() {
-  const p = G.params;
-  $('pf-h').style.width = p.h+'%'; $('pv-h').textContent = p.h;
-  $('pf-e').style.width = p.e+'%'; $('pv-e').textContent = p.e;
-  $('pf-n').style.width = p.n+'%'; $('pv-n').textContent = p.n;
-  $('pf-f').style.width = p.f+'%'; $('pv-f').textContent = p.f;
-}
-function bindStance(rowId, key) {
-  document.querySelectorAll('#'+rowId+' .sbtn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      document.querySelectorAll('#'+rowId+' .sbtn').forEach(b=>b.classList.remove('on'));
-      btn.classList.add('on');
-      G.cur[key] = btn.dataset.v;
-    });
-  });
-}
-function clearStance(rowId) {
-  document.querySelectorAll('#'+rowId+' .sbtn').forEach(b=>b.classList.remove('on'));
-}
-function judgeType(txt) {
-  const sc = {感情:0,論理:0,慎重:0,楽観:0};
-  for(const [t,ws] of Object.entries(TYPE_KW)) ws.forEach(w=>{if(txt.includes(w))sc[t]++;});
-  return Object.entries(sc).sort((a,b)=>b[1]-a[1])[0][0];
-}
-function verdict(p) {
-  const avg = (p.h+p.e+p.n+p.f)/4;
-  if(avg>=75) return "★ 伝説の市長 ★  NEXUSは黄金時代を迎えた。";
-  if(avg>=60) return "◎ 名市長  街は着実に発展している。";
-  if(avg>=45) return "○ 堅実な統治  街は安定した日常を保っている。";
-  if(avg>=30) return "△ 市民の不満  街には課題が山積している。";
-  return "✕ 統治崩壊  NEXUSは混乱に陥った…";
-}
-
-// =========== BIND STANCES ===========
-bindStance('sr1','s1');
-bindStance('sr2','s2');
-
-// =========== S0: NAME ===========
-$('btn-name').addEventListener('click',()=>{
-  const n = $('inp-name').value.trim();
-  if(!n){ $('err-name').textContent="▼ 名前を入力してください。"; return; }
-  G.name = n;
-  $('sbar-name').textContent = 'MAYOR: '+n.toUpperCase();
-  $('err-name').textContent="";
-  show('s-intro');
-});
-
-// =========== S1: INTRO ===========
-$('btn-start').addEventListener('click',()=>{
-  G.params = {h:50,e:50,n:50,f:50};
-  G.queue  = shuffle(TOPICS).slice(0,5);
-  G.qi     = 0;
-  G.reasons= [];
-  $('param-panel').classList.add('show');
-  syncParams();
-  loadQ();
-});
-
-// =========== LOAD QUESTION ===========
-function loadQ() {
-  const q = G.queue[G.qi];
-  G.cur = { tid:q.id, s1:"", r1:"", s2:"", r2:"" };
-  $('qcount').textContent  = 'CASE '+(G.qi+1)+' / 5';
-  $('t-title').textContent  = '「'+q.title+'」';
-  $('t-title2').textContent = '「'+q.title+'」';
-  $('t-prefix').textContent = '市長、'+q.prefix;
-  $('ta1').value = '';
-  $('ta2').value = '';
-  clearStance('sr1');
-  clearStance('sr2');
-  $('err-topic').textContent='';
-  $('err-final').textContent='';
-  show('s-topic');
-}
-
-// =========== S2 → S3 ===========
-$('btn-counsel').addEventListener('click',()=>{
-  if(!G.cur.s1){ $('err-topic').textContent="▼ 立場を選択してください。"; return; }
-  const r = $('ta1').value.trim();
-  if(!r){ $('err-topic').textContent="▼ 理由を入力してください。"; return; }
-  G.cur.r1 = r;
-  $('err-topic').textContent='';
-  showNPC();
-});
-function showNPC() {
-  show('s-npc');
-  const box = $('npc-list');
-  box.innerHTML='';
-  const ln = LINES[G.cur.tid];
-  NPC_LIST.forEach((n,i)=>{
-    const d = document.createElement('div');
-    d.className='ncard '+n.cls;
-    d.innerHTML=
-      '<div class="nhead"><span class="nem">'+n.em+'</span>'+
-      '<span class="nname">'+n.name+' / '+n.role+'</span></div>'+
-      '<div class="nmsg">「'+ln[n.id]+'」</div>';
-    box.appendChild(d);
-    setTimeout(()=>d.classList.add('vis'), i*200);
-  });
-}
-
-// =========== S3 → S4 ===========
-$('btn-decide').addEventListener('click',()=>show('s-final'));
-
-// =========== S4 → S5 ===========
-$('btn-execute').addEventListener('click',()=>{
-  if(!G.cur.s2){ $('err-final').textContent="▼ 最終立場を選択してください。"; return; }
-  const r = $('ta2').value.trim();
-  if(!r){ $('err-final').textContent="▼ 判断理由を入力してください。"; return; }
-  G.cur.r2 = r;
-  G.reasons.push(G.cur.r1+' '+G.cur.r2);
-  $('err-final').textContent='';
-  applyImpact();
-});
-function applyImpact() {
-  const imp = IMPACT[G.cur.tid][G.cur.s2];
-  const keys = ['h','e','n','f'];
-  const labels = {h:'幸福度',e:'経済力',n:'環境',f:'自由度'};
-  const before = {...G.params};
-  keys.forEach((k,i)=>{ G.params[k] = clamp(G.params[k]+imp[i]); });
-  syncParams();
-
-  $('delta-msg').textContent = G.name+'市長は「'+G.cur.s2+'」の決断を下した。';
-  const rows = $('delta-rows');
-  rows.innerHTML='';
-  keys.forEach(k=>{
-    const d = G.params[k]-before[k];
-    const sign = d>0?'+':'';
-    const cls  = d>0?'dup':d<0?'ddown':'dzero';
-    const arr  = d>0?'▲':d<0?'▼':'—';
-    rows.innerHTML +=
-      '<div class="drow"><span>'+labels[k]+'</span>'+
-      '<span class="'+cls+'">'+arr+' '+sign+d+' → '+G.params[k]+'</span></div>';
-  });
-  show('s-delta');
-}
-
-// =========== S5 → next ===========
-$('btn-next').addEventListener('click',()=>{
-  G.qi++;
-  if(G.qi<G.queue.length){ loadQ(); }
-  else { showResult(); }
-});
-
-// =========== S6: RESULT ===========
-function showResult(){
-  const txt  = G.reasons.join(' ');
-  const type = judgeType(txt);
-  const info = TYPE_INFO[type];
-  G.resType = type; G.resNpc = info.npc;
-
-  $('r-title').textContent = '▼  '+G.name+'市長の統治結果';
-  $('r-emi').textContent   = info.em;
-  $('r-type').textContent  = type+'タイプ / '+info.npc+'型';
-  $('r-desc').textContent  = info.desc;
-
-  const p = G.params;
-  $('gv-h').textContent = p.h;
-  $('gv-e').textContent = p.e;
-  $('gv-n').textContent = p.n;
-  $('gv-f').textContent = p.f;
-  $('verdict').textContent = verdict(p);
-
-  show('s-result');
-  // animate bars after paint
-  setTimeout(()=>{
-    $('gf-h').style.width = p.h+'%';
-    $('gf-e').style.width = p.e+'%';
-    $('gf-n').style.width = p.n+'%';
-    $('gf-f').style.width = p.f+'%';
-  },80);
-}
-
-// =========== SHARE ===========
-$('btn-share').addEventListener('click',()=>{
-  const p = G.params;
-  const txt =
-    '🏙 NEXUS 2047 / '+G.name+'市長の統治結果\n'+
-    '幸福度:'+p.h+' 経済力:'+p.e+' 環境:'+p.n+' 自由度:'+p.f+'\n'+
-    '思考タイプ：'+G.resType+'型（'+G.resNpc+'と同タイプ）\n'+
-    '#NEXUS2047 #ニュース多角メガネ';
-  const url = 'https://twitter.com/intent/tweet?text='+encodeURIComponent(txt);
-  if(navigator.share){ navigator.share({text:txt}).catch(()=>window.open(url,'_blank')); }
-  else { window.open(url,'_blank'); }
-});
-
-// =========== RESTART ===========
-$('btn-restart').addEventListener('click',()=>{
-  G.params = {h:50,e:50,n:50,f:50};
-  G.queue  = shuffle(TOPICS).slice(0,5);
-  G.qi=0; G.reasons=[];
-  syncParams();
-  loadQ();
-});
+let empathyScore=0,shockScore=0,diversityScore=0,hanaTimelineRead=false;
+const content=document.getElementById('content'),dayLabel=document.getElementById('day-label'),partLabel=document.getElementById('part-label');
+function setStatus(d,p){dayLabel.textContent=d;partLabel.textContent=p;}
+function clearContent(){content.innerHTML='';content.scrollTop=0;}
+function scrollBottom(){content.scrollTop=content.scrollHeight;}
+function showTitle(){setStatus('既読','START');clearContent();const s=document.createElement('div');s.className='title-screen';s.innerHTML=`<div class="title-main">既読</div><div class="title-sub">フィルターバブル体験ゲーム</div><div class="title-desc">同じ事件を、みんなが同じように<br>見ているとは限らない。<br>あなたのタイムラインが、<br>あなたの世界を作っている。</div><div class="title-caution">※ このゲームはフィクションです。<br>ネットいじめ・炎上を肯定する内容ではありません。<br>探究授業での体験・議論を目的としています。</div>`;const b=document.createElement('button');b.className='start-btn';b.textContent='はじめる';b.onclick=showDay1School;s.appendChild(b);content.appendChild(s);}
+function appendNextBtn(label,nextFn){const b=document.createElement('button');b.className='next-btn';b.textContent=label;b.onclick=nextFn;content.appendChild(b);scrollBottom();}
+function appendPlayerBubble(area,text){const m=document.createElement('div');m.className='chat-meta right';const b=document.createElement('div');b.className='chat-bubble player';b.textContent=text;m.appendChild(b);area.appendChild(m);scrollBottom();}
+function appendOtherBubble(area,name,text){const m=document.createElement('div');m.className='chat-meta';const n=document.createElement('div');n.className='chat-name';n.textContent=name;const b=document.createElement('div');b.className='chat-bubble other';b.textContent=text;m.appendChild(n);m.appendChild(b);area.appendChild(m);scrollBottom();}
+function showVideo(nextFn){setStatus('Day 1','動画');clearContent();const scenes=['教室。\n先生が黒板に問題を書いている。','田中くんが\n何かをつぶやく。','クラスがざわめく。\n笑い声が聞こえる。','先生が振り返り、\n大きな声で怒鳴る。','───','[ ここで動画は切れている ]'];const w=document.createElement('div');w.className='video-screen';const player=document.createElement('div');player.className='video-player';const thumb=document.createElement('div');thumb.className='video-thumb';thumb.innerHTML='<div class="video-thumb-title">【授業中】田中くんの問題行動が<br>やばすぎる… #切り抜き</div><div class="play-btn-big"></div>';const scene=document.createElement('div');scene.className='video-scene';const sceneText=document.createElement('div');sceneText.className='video-scene-text';scene.appendChild(sceneText);const pw=document.createElement('div');pw.className='video-progress-wrap';const pf=document.createElement('div');pf.className='video-progress-fill';pw.appendChild(pf);player.appendChild(thumb);player.appendChild(scene);player.appendChild(pw);const meta=document.createElement('div');meta.className='video-meta';meta.innerHTML='<div class="video-meta-title">【授業中】田中くんの問題行動がやばすぎる… 切り抜き【閲覧注意】</div><div class="video-meta-sub"><span>👁 38,412 回視聴</span><span>2日前</span></div>';const cut=document.createElement('div');cut.className='video-cut-notice';cut.textContent='⚠ この動画は切り抜きです。前後の映像は含まれていません。';w.appendChild(player);w.appendChild(meta);w.appendChild(cut);content.appendChild(w);let playing=false;player.onclick=()=>{if(playing)return;playing=true;thumb.style.opacity='0';thumb.style.pointerEvents='none';const tot=scenes.length*1400;let el=0;const iv=setInterval(()=>{el+=80;pf.style.width=Math.min((el/tot)*100,100)+'%';if(el>=tot)clearInterval(iv);},80);scenes.forEach((t,i)=>{setTimeout(()=>{sceneText.classList.remove('visible');setTimeout(()=>{sceneText.textContent=t;sceneText.classList.add('visible');},200);if(i===scenes.length-1)setTimeout(()=>{cut.classList.add('show');appendNextBtn('SNSを見る ▶',nextFn);scrollBottom();},1000);},i*1400);});};scrollBottom();}
+function showDay1School(){setStatus('Day 1','学校');clearContent();const area=document.createElement('div');area.className='chat-area';content.appendChild(area);appendOtherBubble(area,'Hana（花）','ねえ聞いた？田中くんの動画、ちょっとやばくない？');setTimeout(()=>{const ca=document.createElement('div');ca.className='choice-area';const l=document.createElement('div');l.className='choice-label';l.textContent='あなたの返答は？';const bA=document.createElement('button');bA.className='choice-btn';bA.textContent='A「どんな動画？気になる」';bA.onclick=()=>{shockScore+=1;appendPlayerBubble(area,'どんな動画？気になる');ca.remove();setTimeout(()=>showVideo(showDay1SNS),900);};const bB=document.createElement('button');bB.className='choice-btn';bB.textContent='B「あんまり人の噂話は…」';bB.onclick=()=>{diversityScore+=1;appendPlayerBubble(area,'あんまり人の噂話は…');ca.remove();setTimeout(()=>{appendOtherBubble(area,'Hana（花）','まあとりあえずこれ見てよ 🙄');setTimeout(()=>showVideo(showDay1SNS),800);},700);};ca.appendChild(l);ca.appendChild(bA);ca.appendChild(bB);content.appendChild(ca);scrollBottom();},700);}
+function createTimeline(posts,onAllDone){const h=document.createElement('div');h.className='timeline-header';h.textContent='タイムライン';content.appendChild(h);let done=0;posts.forEach((post,i)=>{setTimeout(()=>{const card=document.createElement('div');card.className='post-card';const pc=document.createElement('div');pc.className='post-content';pc.textContent=post.text;const footer=document.createElement('div');footer.className='post-footer';const lc=document.createElement('div');lc.className='like-count';lc.textContent='❤ '+post.likes.toLocaleString();const acts=document.createElement('div');acts.className='post-actions';let inter=false;const lb=document.createElement('button');lb.className='like-btn';lb.textContent='いいね❤️';const sb=document.createElement('button');sb.className='skip-btn';sb.textContent='スキップ▶';lb.onclick=()=>{if(inter)return;inter=true;lb.classList.add('liked');lb.disabled=true;sb.disabled=true;sb.classList.add('skipped');if(post.type==='empathy')empathyScore+=2;else if(post.type==='shock')shockScore+=2;else if(post.type==='diversity')diversityScore+=3;done++;if(done===posts.length)setTimeout(onAllDone,500);};sb.onclick=()=>{if(inter)return;inter=true;sb.classList.add('skipped');sb.disabled=true;lb.disabled=true;if(post.type==='empathy')empathyScore=Math.max(0,empathyScore-1);else if(post.type==='shock')shockScore=Math.max(0,shockScore-1);else if(post.type==='diversity')diversityScore=Math.max(0,diversityScore-1);done++;if(done===posts.length)setTimeout(onAllDone,500);};acts.appendChild(lb);acts.appendChild(sb);footer.appendChild(lc);footer.appendChild(acts);card.appendChild(pc);card.appendChild(footer);content.appendChild(card);scrollBottom();},i*350);});}
+function showDay1SNS(){setStatus('Day 1','SNS');clearContent();createTimeline([{text:'田中くんの授業中の動画見た？笑えないんだけど🔥 #炎上 #学校裏垢',likes:142,type:'shock'},{text:'田中くんのことよく知らないけど、あの動画一方的すぎない？かわいそう',likes:38,type:'empathy'},{text:'切り抜き動画って前後の文脈省いてること多いから注意。本当のことわからなくない？',likes:12,type:'diversity'}],()=>{appendNextBtn('Day 2 へ ▶',showDay2School);});}
+function showDay2School(){setStatus('Day 2','学校');clearContent();const area=document.createElement('div');area.className='chat-area';content.appendChild(area);appendOtherBubble(area,'Hana（花）','田中くん、やっぱりやばいよ。みんなそう言ってるもん');setTimeout(()=>{const ca=document.createElement('div');ca.className='choice-area';const l=document.createElement('div');l.className='choice-label';l.textContent='あなたの返答は？';const bA=document.createElement('button');bA.className='choice-btn';bA.textContent='A「だよね、あの動画ひどかった」';bA.onclick=()=>{shockScore+=2;empathyScore+=1;appendPlayerBubble(area,'だよね、あの動画ひどかった');ca.remove();setTimeout(showDay2SNS,900);};const bB=document.createElement('button');bB.className='choice-btn';bB.textContent='B「でも全部が本当かわからなくない？」';bB.onclick=()=>{diversityScore+=2;appendPlayerBubble(area,'でも全部が本当かわからなくない？');ca.remove();setTimeout(showDay2SNS,900);};ca.appendChild(l);ca.appendChild(bA);ca.appendChild(bB);content.appendChild(ca);scrollBottom();},700);}
+function showDay2SNS(){setStatus('Day 2','SNS');clearContent();const filtered=(empathyScore+shockScore)>diversityScore;createTimeline(filtered?[{text:'田中くん学校来たらしい。被害者の気持ちわかるの？',likes:203,type:'shock'},{text:'擁護してる人、同類じゃないの',likes:87,type:'shock'},{text:'切り抜き動画のフルver見た？やっぱりひどい',likes:156,type:'empathy'}]:[{text:'どっちの言い分も聞かないで判断するのこわい',likes:34,type:'diversity'},{text:'クラスの空気って怖いよね。一気に変わる',likes:28,type:'diversity'},{text:'SNSで人を裁く文化マジで終わってほしい',likes:19,type:'diversity'}],()=>{appendNextBtn('Day 3 へ ▶',showDay3School);});}
+function showDay3School(){setStatus('Day 3','学校');clearContent();const area=document.createElement('div');area.className='chat-area';content.appendChild(area);appendOtherBubble(area,'Hana（花）','なんで田中くんの肩持つの？おかしくない？');setTimeout(()=>{const ca=document.createElement('div');ca.className='choice-area';const l=document.createElement('div');l.className='choice-label';l.textContent='あなたの返答は？';const bA=document.createElement('button');bA.className='choice-btn';bA.textContent='A「ごめん、確かにやばいかもね」';bA.onclick=()=>{empathyScore+=2;shockScore+=1;appendPlayerBubble(area,'ごめん、確かにやばいかもね');ca.remove();setTimeout(showEndJudge,900);};const bB=document.createElement('button');bB.className='choice-btn';bB.textContent='B「でも俺/私が見た情報と違う…」';bB.onclick=()=>{diversityScore+=2;appendPlayerBubble(area,'でも俺/私が見た情報と違う…');ca.remove();setTimeout(showHanaTimeline,900);};ca.appendChild(l);ca.appendChild(bA);ca.appendChild(bB);content.appendChild(ca);scrollBottom();},700);}
+function showHanaTimeline(){setStatus('Day 3','Hanaの画面');clearContent();const hh=document.createElement('div');hh.className='hana-timeline-header';hh.textContent='─── Hanaのタイムライン ───';content.appendChild(hh);const posts=[{text:'被害者の子、泣いてたって聞いた。田中くん最低',likes:412},{text:'擁護コメントしてる人たちって何なの',likes:234},{text:'学校側が動かないなら拡散するしかない',likes:189}];posts.forEach((p,i)=>{setTimeout(()=>{const card=document.createElement('div');card.className='post-card hana';const pc=document.createElement('div');pc.className='post-content';pc.textContent=p.text;const lc=document.createElement('div');lc.className='like-count';lc.textContent='❤ '+p.likes.toLocaleString();card.appendChild(pc);card.appendChild(lc);content.appendChild(card);scrollBottom();if(i===posts.length-1)setTimeout(()=>{hanaTimelineRead=true;diversityScore+=5;const n=document.createElement('div');n.className='narration';n.innerHTML='<div class="narration-tag">── ナレーション ──</div><p>Hanaが見ていた世界は、<br>あなたの見ていた世界と違った。</p><br><p>同じ事件なのに。<br>同じクラスなのに。</p>';content.appendChild(n);appendNextBtn('続ける ▶',showEndJudge);},700);},i*450);});}
+function showEndJudge(){if((empathyScore+shockScore)>diversityScore*2)showDivisionEnd();else showDialogueEnd();}
+function showDivisionEnd(){setStatus('結末','分断エンド');clearContent();const s=document.createElement('div');s.className='end-screen';s.innerHTML='<div class="end-tag">─── 7日後 ───</div><div class="end-text">田中くんはクラスに来なくなった。<br><br>Hanaとはもう話していない。<br><br>あなたのタイムラインは今日も、<br>あなたの知っている世界だけを<br>映している。</div>';content.appendChild(s);setTimeout(showBiasVisualization,900);}
+function showDialogueEnd(){setStatus('結末','対話エンド');clearContent();const s=document.createElement('div');s.className='end-screen';s.innerHTML='<div class="end-tag">─── 7日後 ───</div><div class="end-text">田中くんの話、<br>ちゃんと聞けた気がした。<br><br>Hanaとも、少しだけ話せた。<br><br>世界が広がるのは、<br>ちょっと疲れる。<br>でも、悪くなかった。</div>';content.appendChild(s);setTimeout(showBiasVisualization,900);}
+function showBiasVisualization(){const total=empathyScore+shockScore+diversityScore;const ep=total>0?Math.round(empathyScore/total*100):33;const sp=total>0?Math.round(shockScore/total*100):34;const dp=total>0?Math.round(diversityScore/total*100):33;const sec=document.createElement('div');sec.className='bias-section';const t=document.createElement('div');t.className='bias-title';t.textContent='あなたのタイムラインの偏り';sec.appendChild(t);function bar(label,pct,cls){const item=document.createElement('div');item.className='bias-item';const lr=document.createElement('div');lr.className='bias-label-row';lr.innerHTML=`<span>${label}</span><span>${pct}%</span>`;const bg=document.createElement('div');bg.className='bias-bar-bg';const fill=document.createElement('div');fill.className='bias-bar-fill '+cls;fill.style.width='0%';bg.appendChild(fill);item.appendChild(lr);item.appendChild(bg);setTimeout(()=>{fill.style.width=pct+'%';},150);return item;}sec.appendChild(bar('共感系コンテンツ',ep,'empathy'));sec.appendChild(bar('炎上系コンテンツ',sp,'shock'));sec.appendChild(bar('多様性コンテンツ',dp,'diversity'));const c=document.createElement('div');c.style.cssText='font-size:12px;color:#555;text-align:center;margin:20px 4px 8px;line-height:1.8;';c.textContent=(empathyScore+shockScore)>diversityScore*2?'あなたのフィードは同じ方向の声で満ちていた。これがフィルターバブルの正体です。':'複数の視点に触れたあなたは、バブルの外を少し覗けていた。';sec.appendChild(c);const rb=document.createElement('button');rb.className='next-btn';rb.textContent='もう一度プレイ';rb.style.marginTop='12px';rb.onclick=()=>{empathyScore=0;shockScore=0;diversityScore=0;hanaTimelineRead=false;showTitle();};sec.appendChild(rb);content.appendChild(sec);scrollBottom();}
+showTitle();
 </script>
 </body>
 </html>
