@@ -470,6 +470,162 @@
     .start-btn:hover { background: #5555ff; }
 
     /* ============================================
+       フェイク動画プレイヤー UI
+    ============================================ */
+    .video-screen {
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      animation: fadeInUp 0.4s ease;
+    }
+
+    /* 動画プレイヤー本体（16:9） */
+    .video-player {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      overflow: hidden;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* 「映像」の代わりに表示するシーンテキスト */
+    .video-scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: #0a0a0a;
+    }
+
+    .video-scene-text {
+      font-size: 13px;
+      color: #ccc;
+      text-align: center;
+      line-height: 1.9;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      white-space: pre-line;
+    }
+
+    .video-scene-text.visible { opacity: 1; }
+
+    /* 再生前のサムネイル */
+    .video-thumb {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg, #1a1a2e 0%, #0a0a14 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: opacity 0.4s ease;
+    }
+
+    .video-thumb-title {
+      font-size: 12px;
+      color: #aaa;
+      text-align: center;
+      padding: 0 20px;
+      line-height: 1.6;
+    }
+
+    .play-btn-big {
+      width: 52px;
+      height: 52px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(255,255,255,0.3);
+      transition: background 0.2s;
+    }
+
+    .play-btn-big::after {
+      content: '';
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 10px 0 10px 18px;
+      border-color: transparent transparent transparent #fff;
+      margin-left: 4px;
+    }
+
+    .video-player:hover .play-btn-big {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* 進捗バー */
+    .video-progress-wrap {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: rgba(255,255,255,0.15);
+    }
+
+    .video-progress-fill {
+      height: 100%;
+      background: #ff4040;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    /* 再生中オーバーレイ（一時停止アイコン） */
+    .video-playing-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-playing-overlay.show { display: flex; }
+
+    /* 動画メタ情報（タイトル・再生数など） */
+    .video-meta {
+      padding: 12px 14px;
+      background: #111118;
+      border-bottom: 1px solid #1e1e3a;
+    }
+
+    .video-meta-title {
+      font-size: 13px;
+      color: #ddd;
+      line-height: 1.5;
+      margin-bottom: 6px;
+    }
+
+    .video-meta-sub {
+      font-size: 11px;
+      color: #555;
+      display: flex;
+      gap: 12px;
+    }
+
+    /* 「切り抜き表示」バナー — 動画が途中で切れている演出 */
+    .video-cut-notice {
+      background: #1e0a0a;
+      border-left: 3px solid #ff4040;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #cc7070;
+      line-height: 1.6;
+      margin: 0;
+      display: none;
+      animation: fadeInUp 0.4s ease;
+    }
+
+    .video-cut-notice.show { display: block; }
+
+    /* ============================================
        アニメーション定義
     ============================================ */
     @keyframes fadeInUp {
@@ -636,6 +792,128 @@ function appendOtherBubble(chatArea, name, text) {
 }
 
 /* ============================================
+   フェイク動画プレイヤー
+   「田中くんの動画」を模した切り抜き動画UIを表示する。
+   実際の動画ファイルは不要。CSSアニメーションと
+   テキストで「映像を見る体験」を再現する。
+   動画は意図的に途中で切れており、文脈の欠落を示す。
+   nextFn: 動画を見終えた後に呼ぶ関数
+============================================ */
+function showVideo(nextFn) {
+  setStatus('Day 1', '動画');
+  clearContent();
+
+  // シーン定義：動画の「映像」として順番に表示するテキスト
+  const scenes = [
+    '教室。\n先生が黒板に問題を書いている。',
+    '田中くんが\n何かをつぶやく。',
+    'クラスがざわめく。\n笑い声が聞こえる。',
+    '先生が振り返り、\n大きな声で怒鳴る。',
+    '───',
+    '[ ここで動画は切れている ]'
+  ];
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'video-screen';
+
+  // ── 動画プレイヤー本体 ──
+  const player = document.createElement('div');
+  player.className = 'video-player';
+
+  // サムネイル（再生前）
+  const thumb = document.createElement('div');
+  thumb.className = 'video-thumb';
+  thumb.innerHTML = `
+    <div class="video-thumb-title">【授業中】田中くんの問題行動が<br>やばすぎる… #切り抜き</div>
+    <div class="play-btn-big"></div>
+  `;
+
+  // シーンテキスト表示エリア（再生中）
+  const scene = document.createElement('div');
+  scene.className = 'video-scene';
+
+  const sceneText = document.createElement('div');
+  sceneText.className = 'video-scene-text';
+  scene.appendChild(sceneText);
+
+  // プログレスバー
+  const progressWrap = document.createElement('div');
+  progressWrap.className = 'video-progress-wrap';
+  const progressFill = document.createElement('div');
+  progressFill.className = 'video-progress-fill';
+  progressWrap.appendChild(progressFill);
+
+  player.appendChild(thumb);
+  player.appendChild(scene);
+  player.appendChild(progressWrap);
+
+  // ── 動画メタ情報 ──
+  const meta = document.createElement('div');
+  meta.className = 'video-meta';
+  meta.innerHTML = `
+    <div class="video-meta-title">【授業中】田中くんの問題行動がやばすぎる… 切り抜き【閲覧注意】</div>
+    <div class="video-meta-sub">
+      <span>👁 38,412 回視聴</span>
+      <span>2日前</span>
+    </div>
+  `;
+
+  // 「切り抜き」警告バナー（再生後に表示）
+  const cutNotice = document.createElement('div');
+  cutNotice.className = 'video-cut-notice';
+  cutNotice.textContent = '⚠ この動画は切り抜きです。前後の映像は含まれていません。';
+
+  wrapper.appendChild(player);
+  wrapper.appendChild(meta);
+  wrapper.appendChild(cutNotice);
+  content.appendChild(wrapper);
+
+  // ── 再生ロジック ──
+  let isPlaying = false;
+
+  player.onclick = () => {
+    if (isPlaying) return;
+    isPlaying = true;
+    thumb.style.opacity = '0';
+    thumb.style.pointerEvents = 'none';
+
+    const totalDuration = scenes.length * 1400; // 各シーン1.4秒
+    let elapsed = 0;
+    const interval = 80;
+
+    // プログレスバーをリアルタイムで更新
+    const progressTimer = setInterval(() => {
+      elapsed += interval;
+      const pct = Math.min((elapsed / totalDuration) * 100, 100);
+      progressFill.style.width = pct + '%';
+      if (elapsed >= totalDuration) clearInterval(progressTimer);
+    }, interval);
+
+    // シーンを順番に表示
+    scenes.forEach((text, i) => {
+      setTimeout(() => {
+        sceneText.classList.remove('visible');
+        setTimeout(() => {
+          sceneText.textContent = text;
+          sceneText.classList.add('visible');
+        }, 200);
+
+        // 最後のシーン（動画終了）
+        if (i === scenes.length - 1) {
+          setTimeout(() => {
+            cutNotice.classList.add('show');
+            appendNextBtn('SNSを見る ▶', nextFn);
+            scrollBottom();
+          }, 1000);
+        }
+      }, i * 1400);
+    });
+  };
+
+  scrollBottom();
+}
+
+/* ============================================
    Day1 — 学校パート
 ============================================ */
 function showDay1School() {
@@ -663,7 +941,8 @@ function showDay1School() {
       shockScore += 1; // 炎上・好奇心寄りの選択
       appendPlayerBubble(chatArea, 'どんな動画？気になる');
       choiceArea.remove();
-      setTimeout(showDay1SNS, 900);
+      // A選択 → すぐ動画を見に行く
+      setTimeout(() => showVideo(showDay1SNS), 900);
     };
 
     const btnB = document.createElement('button');
@@ -673,7 +952,11 @@ function showDay1School() {
       diversityScore += 1; // 慎重・多様性寄りの選択
       appendPlayerBubble(chatArea, 'あんまり人の噂話は…');
       choiceArea.remove();
-      setTimeout(showDay1SNS, 900);
+      // B選択 → Hanaが動画を送ってきた演出を挟んでから動画へ
+      setTimeout(() => {
+        appendOtherBubble(chatArea, 'Hana（花）', 'まあとりあえずこれ見てよ 🙄');
+        setTimeout(() => showVideo(showDay1SNS), 800);
+      }, 700);
     };
 
     choiceArea.appendChild(label);
