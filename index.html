@@ -16,1457 +16,1620 @@
     }
 
     body {
-      background: #111;
+      background: #0d0d0d;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       min-height: 100vh;
       font-family: 'Noto Sans JP', sans-serif;
       color: #fff;
-      padding: 20px 0;
+      padding: 30px 0;
     }
 
     /* ============================================
-       スマホ画面モック本体
-       幅390px・中央寄せで実機に近い見た目を再現
+       スマホ画面モック本体 (390px)
     ============================================ */
     #phone {
       width: 390px;
       min-height: 700px;
-      max-height: 90vh;
-      background: #1a1a2e;
+      background: #1a1a1a;
       border-radius: 40px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       box-shadow:
-        0 0 0 2px #2a2a4a,
-        0 0 80px rgba(100, 100, 255, 0.15);
+        0 0 0 2px #2a2a2a,
+        0 0 80px rgba(80, 80, 80, 0.2);
       position: relative;
     }
 
     /* ============================================
-       ステータスバー（Day・パート表示 — 常時表示）
+       ステータスバー
     ============================================ */
     #status-bar {
-      background: #0f0f1a;
-      padding: 12px 20px;
+      background: #111;
+      padding: 12px 20px 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #2a2a4a;
+      font-size: 11px;
+      color: #888;
+      border-bottom: 1px solid #222;
       flex-shrink: 0;
-      min-height: 48px;
     }
 
     #day-label {
-      font-size: 13px;
       font-weight: 700;
-      color: #7c7cff;
-      letter-spacing: 2px;
-    }
-
-    #part-label {
-      font-size: 11px;
-      color: #888;
-      background: #222;
-      padding: 4px 10px;
-      border-radius: 10px;
-      letter-spacing: 1px;
+      color: #aaa;
+      font-size: 12px;
     }
 
     /* ============================================
-       メインコンテンツエリア（JSで動的に書き換え）
+       メインコンテンツエリア
     ============================================ */
-    #content {
+    #screen {
       flex: 1;
       overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      scrollbar-width: thin;
-      scrollbar-color: #2a2a4a transparent;
-    }
-
-    #content::-webkit-scrollbar { width: 4px; }
-    #content::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 2px; }
-
-    /* ============================================
-       学校パート — チャットUI
-    ============================================ */
-    .chat-area {
-      padding: 20px 16px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
 
-    .chat-meta {
+    #screen::-webkit-scrollbar {
+      width: 3px;
+    }
+    #screen::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 2px;
+    }
+
+    /* ============================================
+       アニメーション
+    ============================================ */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-12px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.4s ease both;
+    }
+
+    /* ============================================
+       タイトル画面
+    ============================================ */
+    .title-screen {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      align-items: center;
+      justify-content: center;
+      min-height: 620px;
+      text-align: center;
+      animation: fadeIn 0.8s ease both;
     }
 
-    .chat-meta.right {
-      align-items: flex-end;
+    .title-logo {
+      font-size: 64px;
+      font-weight: 700;
+      letter-spacing: 12px;
+      color: #fff;
+      margin-bottom: 8px;
     }
 
-    .chat-name {
-      font-size: 11px;
-      color: #888;
-      padding: 0 4px;
+    .title-subtitle {
+      font-size: 13px;
+      color: #555;
+      letter-spacing: 2px;
+      margin-bottom: 40px;
     }
 
-    .chat-bubble {
-      max-width: 80%;
-      padding: 11px 15px;
-      border-radius: 18px;
-      font-size: 14px;
-      line-height: 1.7;
-      animation: fadeInUp 0.35s ease;
+    .title-desc {
+      font-size: 13px;
+      color: #777;
+      line-height: 1.8;
+      margin-bottom: 50px;
+      max-width: 280px;
     }
 
-    .chat-bubble.other {
-      background: #252545;
-      align-self: flex-start;
-      border-bottom-left-radius: 4px;
+    /* ============================================
+       ボタン類
+    ============================================ */
+    .btn-primary {
+      background: #fff;
+      color: #0d0d0d;
+      border: none;
+      padding: 14px 40px;
+      border-radius: 30px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 2px;
     }
 
-    .chat-bubble.player {
-      background: #4040e8;
-      align-self: flex-end;
-      border-bottom-right-radius: 4px;
+    .btn-primary:hover {
+      background: #ddd;
+      transform: scale(1.03);
     }
 
-    /* 選択肢エリア */
-    .choice-area {
-      padding: 8px 16px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      animation: fadeInUp 0.4s ease;
-    }
-
-    .choice-label {
-      font-size: 11px;
-      color: #666;
-      letter-spacing: 1px;
-      padding: 0 4px;
-      margin-bottom: 4px;
-    }
-
-    .choice-btn {
-      background: #1e1e3a;
-      border: 1px solid #3a3a6a;
-      color: #ddd;
-      padding: 13px 16px;
+    .btn-choice {
+      background: #222;
+      color: #eee;
+      border: 1px solid #333;
+      padding: 14px 16px;
       border-radius: 12px;
-      font-size: 14px;
+      font-size: 13px;
       font-family: 'Noto Sans JP', sans-serif;
       cursor: pointer;
       text-align: left;
-      line-height: 1.6;
-      transition: background 0.2s, border-color 0.2s, color 0.2s;
+      transition: all 0.2s;
+      line-height: 1.5;
+      width: 100%;
     }
 
-    .choice-btn:hover {
-      background: #2a2a5a;
-      border-color: #6060ff;
-      color: #fff;
+    .btn-choice:hover {
+      background: #2a2a2a;
+      border-color: #555;
+      transform: translateX(3px);
     }
 
-    .choice-btn:active {
-      background: #3535aa;
+    .btn-choice.saki-choice {
+      border-left: 3px solid #c0392b;
     }
 
-    /* ============================================
-       SNSタイムライン — カード型UI
-    ============================================ */
-    .timeline-header {
-      padding: 12px 16px 10px;
-      font-size: 12px;
-      color: #666;
-      letter-spacing: 2px;
-      border-bottom: 1px solid #1e1e3a;
-      background: #0f0f1a;
-      flex-shrink: 0;
+    .btn-choice.ren-choice {
+      border-left: 3px solid #2980b9;
     }
 
-    .post-card {
-      padding: 14px 16px;
-      border-bottom: 1px solid #1e1e3a;
-      animation: slideInLeft 0.35s ease;
-      background: #1a1a2e;
+    .btn-choice.neutral-choice {
+      border-left: 3px solid #27ae60;
     }
 
-    .post-card.hana {
-      background: #160a28;
-      border-bottom-color: #2a1048;
-    }
-
-    .post-content {
-      font-size: 14px;
-      line-height: 1.75;
-      color: #ddd;
-      margin-bottom: 11px;
-      word-break: break-all;
-    }
-
-    .post-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .like-count {
-      font-size: 12px;
-      color: #666;
-    }
-
-    .post-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .like-btn {
-      background: #2a1a3a;
-      border: 1px solid #4a2a5a;
-      color: #ff7aaa;
-      padding: 6px 14px;
+    .btn-next {
+      background: #222;
+      color: #888;
+      border: 1px solid #333;
+      padding: 10px 20px;
       border-radius: 20px;
       font-size: 12px;
       font-family: 'Noto Sans JP', sans-serif;
       cursor: pointer;
-      transition: background 0.2s, border-color 0.2s;
-      white-space: nowrap;
+      transition: all 0.2s;
+      align-self: center;
+      margin-top: 8px;
     }
 
-    .like-btn:hover {
-      background: #3a1a4a;
-      border-color: #ff7aaa;
-    }
-
-    .like-btn.liked {
-      background: #3a1a4a;
-      border-color: #ff7aaa;
-      opacity: 0.8;
-      cursor: default;
-    }
-
-    .skip-btn {
-      background: #1a1a28;
-      border: 1px solid #2a2a4a;
-      color: #666;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-family: 'Noto Sans JP', sans-serif;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-      white-space: nowrap;
-    }
-
-    .skip-btn:hover {
-      background: #252535;
-      color: #999;
-    }
-
-    .skip-btn.skipped {
-      color: #333;
-      cursor: default;
-    }
-
-    /* ============================================
-       ナレーション・区切り表示
-    ============================================ */
-    .narration {
-      padding: 28px 22px;
-      text-align: center;
-      color: #bbb;
-      font-size: 14px;
-      line-height: 2.1;
-      animation: fadeInUp 0.5s ease;
-    }
-
-    .narration-tag {
-      font-size: 11px;
-      color: #555;
-      letter-spacing: 3px;
-      margin-bottom: 18px;
-    }
-
-    /* Hanaタイムラインの特殊ヘッダー */
-    .hana-timeline-header {
-      text-align: center;
-      padding: 16px;
-      color: #c080ff;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      border-bottom: 1px solid #3a1a5a;
-      background: #120820;
-      flex-shrink: 0;
-      animation: fadeInUp 0.4s ease;
-    }
-
-    /* ============================================
-       エンド画面
-    ============================================ */
-    .end-screen {
-      padding: 32px 22px 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
-      text-align: center;
-      animation: fadeInUp 0.6s ease;
-    }
-
-    .end-tag {
-      font-size: 11px;
-      color: #555;
-      letter-spacing: 3px;
-      margin-bottom: 24px;
-    }
-
-    .end-text {
-      font-size: 15px;
-      line-height: 2.3;
+    .btn-next:hover {
+      background: #2a2a2a;
       color: #ccc;
     }
 
     /* ============================================
-       偏り可視化バーグラフ
+       セクションヘッダー
     ============================================ */
-    .bias-section {
-      padding: 24px 18px 8px;
-      border-top: 1px solid #2a2a4a;
-      animation: fadeInUp 0.5s ease;
+    .section-header {
+      background: #111;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: fadeIn 0.4s ease both;
     }
 
-    .bias-title {
+    /* ============================================
+       ナレーションテキスト
+    ============================================ */
+    .narration {
+      font-size: 13px;
+      color: #aaa;
+      line-height: 1.9;
+      padding: 4px 2px;
+      animation: fadeIn 0.5s ease both;
+    }
+
+    .narration-emphasis {
+      color: #ddd;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.9;
+      padding: 4px 2px;
+      animation: fadeIn 0.5s ease both;
+    }
+
+    /* ============================================
+       キャラクターアイコン
+    ============================================ */
+    .char-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .icon-saki { background: #c0392b; }
+    .icon-ren  { background: #2980b9; }
+    .icon-hana { background: #8e44ad; }
+    .icon-yu   { background: #2d5a27; }
+
+    /* ============================================
+       会話バブル（学校シーン）
+    ============================================ */
+    .dialogue-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      animation: slideIn 0.4s ease both;
+    }
+
+    .dialogue-row.player-row {
+      flex-direction: row-reverse;
+    }
+
+    .bubble {
+      background: #252525;
+      border-radius: 16px;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #e0e0e0;
+      max-width: 240px;
+    }
+
+    .bubble.player-bubble {
+      background: #2d5a27;
+      color: #fff;
+    }
+
+    .dialogue-name {
+      font-size: 10px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    /* ============================================
+       SNSタイムライン
+    ============================================ */
+    .sns-header {
+      background: #111;
+      border-radius: 10px 10px 0 0;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #222;
+    }
+
+    .sns-app-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ccc;
+    }
+
+    .sns-post {
+      background: #1e1e1e;
+      border-radius: 12px;
+      padding: 14px;
+      animation: fadeIn 0.5s ease both;
+      border: 1px solid #252525;
+    }
+
+    .sns-post-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .sns-post-meta {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sns-post-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ccc;
+    }
+
+    .sns-post-time {
+      font-size: 10px;
+      color: #555;
+    }
+
+    .sns-post-text {
+      font-size: 13px;
+      color: #bbb;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+
+    .sns-post-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-like {
+      background: #222;
+      color: #888;
+      border: 1px solid #333;
+      padding: 6px 16px;
+      border-radius: 16px;
       font-size: 12px;
-      color: #777;
-      margin-bottom: 20px;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex: 1;
+    }
+
+    .btn-like:hover {
+      background: #2a2a2a;
+      color: #ddd;
+    }
+
+    .btn-like.liked {
+      background: #c0392b;
+      color: #fff;
+      border-color: #c0392b;
+    }
+
+    .btn-skip {
+      background: transparent;
+      color: #555;
+      border: 1px solid #282828;
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-skip:hover {
+      color: #888;
+      border-color: #444;
+    }
+
+    /* ============================================
+       DMスクリーン (LINE風)
+    ============================================ */
+    .dm-header {
+      background: #111;
+      border-radius: 12px 12px 0 0;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .dm-partner-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ccc;
+    }
+
+    .dm-body {
+      background: #111;
+      border-radius: 0 0 12px 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dm-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      animation: fadeIn 0.4s ease both;
+    }
+
+    .dm-row.dm-player-row {
+      flex-direction: row-reverse;
+    }
+
+    .dm-bubble {
+      background: #222;
+      border-radius: 16px;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #ddd;
+      max-width: 220px;
+    }
+
+    .dm-bubble.dm-player-bubble {
+      background: #2d5a27;
+      color: #fff;
+    }
+
+    .dm-time {
+      font-size: 10px;
+      color: #444;
+    }
+
+    .kidoku-label {
+      font-size: 10px;
+      color: #555;
+      text-align: right;
+      margin-top: -4px;
+      animation: fadeIn 0.3s ease 0.8s both;
+    }
+
+    .kidoku-label.read {
+      color: #2980b9;
+    }
+
+    /* ============================================
+       Day4 分割スクリーン
+    ============================================ */
+    .split-screen {
+      display: flex;
+      gap: 8px;
+      animation: fadeIn 0.6s ease both;
+    }
+
+    .split-panel {
+      flex: 1;
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 180px;
+    }
+
+    .split-panel.saki-panel {
+      background: rgba(192, 57, 43, 0.15);
+      border: 1px solid rgba(192, 57, 43, 0.3);
+      animation: slideInLeft 0.5s ease both;
+    }
+
+    .split-panel.ren-panel {
+      background: rgba(41, 128, 185, 0.15);
+      border: 1px solid rgba(41, 128, 185, 0.3);
+      animation: slideInRight 0.5s ease both;
+    }
+
+    .split-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .split-label.saki-label { color: #c0392b; }
+    .split-label.ren-label  { color: #2980b9; }
+
+    .split-post {
+      font-size: 11px;
+      color: #999;
+      line-height: 1.6;
+      margin-bottom: 8px;
+      padding: 8px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+    }
+
+    /* ============================================
+       エンディング画面
+    ============================================ */
+    .ending-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
+      gap: 14px;
+      padding: 20px 4px;
+      animation: fadeIn 0.8s ease both;
+    }
+
+    .ending-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 4px;
+    }
+
+    .ending-subtitle {
+      font-size: 13px;
+      color: #666;
       letter-spacing: 2px;
     }
 
-    .bias-item {
+    .ending-body {
+      font-size: 13px;
+      color: #aaa;
+      line-height: 1.9;
+      text-align: left;
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #252525;
+    }
+
+    /* ============================================
+       バイアス可視化グラフ
+    ============================================ */
+    .bias-section {
+      animation: fadeIn 0.6s ease both;
+    }
+
+    .bias-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ccc;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .bias-bar-row {
       margin-bottom: 16px;
     }
 
-    .bias-label-row {
+    .bias-bar-label {
       font-size: 12px;
-      color: #aaa;
+      color: #888;
+      margin-bottom: 4px;
       display: flex;
       justify-content: space-between;
-      margin-bottom: 6px;
     }
 
     .bias-bar-bg {
-      background: #111128;
+      background: #222;
       border-radius: 4px;
-      height: 10px;
+      height: 12px;
       overflow: hidden;
     }
 
     .bias-bar-fill {
       height: 100%;
       border-radius: 4px;
-      width: 0%;
-      transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: width 1.2s ease;
     }
 
-    .bias-bar-fill.empathy   { background: linear-gradient(90deg, #e84891, #ff9abc); }
-    .bias-bar-fill.shock     { background: linear-gradient(90deg, #e84020, #ff8800); }
-    .bias-bar-fill.diversity { background: linear-gradient(90deg, #4480ff, #8860ff); }
+    .fill-saki  { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+    .fill-ren   { background: linear-gradient(90deg, #2980b9, #3498db); }
+    .fill-neutral { background: linear-gradient(90deg, #27ae60, #2ecc71); }
 
-    /* ============================================
-       汎用「次へ」ボタン
-    ============================================ */
-    .next-btn {
-      display: block;
-      width: calc(100% - 32px);
-      margin: 16px auto;
-      background: #3535e0;
-      border: none;
-      color: #fff;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-family: 'Noto Sans JP', sans-serif;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s;
-      flex-shrink: 0;
+    .bias-desc {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.8;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #222;
     }
 
-    .next-btn:hover  { background: #5050ff; }
-    .next-btn:active { background: #2525b0; }
-
     /* ============================================
-       タイトル画面
+       選択肢エリア
     ============================================ */
-    .title-screen {
-      flex: 1;
+    .choices-area {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 24px;
+      gap: 8px;
+      animation: fadeIn 0.5s ease both;
+    }
+
+    .choices-label {
+      font-size: 11px;
+      color: #555;
       text-align: center;
-      gap: 16px;
-      animation: fadeInUp 0.6s ease;
+      letter-spacing: 1px;
     }
 
-    .title-main {
-      font-size: 48px;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: 6px;
+    /* ============================================
+       デイ区切りカード
+    ============================================ */
+    .day-card {
+      background: #111;
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      animation: fadeIn 0.6s ease both;
     }
 
-    .title-sub {
-      font-size: 12px;
+    .day-card-num {
+      font-size: 11px;
       color: #555;
       letter-spacing: 3px;
-      margin-top: -8px;
-    }
-
-    .title-desc {
-      font-size: 13px;
-      color: #888;
-      line-height: 1.9;
-      margin-top: 12px;
-    }
-
-    .title-caution {
-      font-size: 11px;
-      color: #444;
-      line-height: 1.8;
-      margin-top: 8px;
-      border-top: 1px solid #222;
-      padding-top: 16px;
-      width: 100%;
-    }
-
-    .start-btn {
-      margin-top: 12px;
-      width: 100%;
-      background: #4040e8;
-      border: none;
-      color: #fff;
-      padding: 15px;
-      border-radius: 14px;
-      font-size: 15px;
-      font-family: 'Noto Sans JP', sans-serif;
-      font-weight: 700;
-      cursor: pointer;
-      letter-spacing: 2px;
-      transition: background 0.2s;
-    }
-
-    .start-btn:hover { background: #5555ff; }
-
-    /* ============================================
-       フェイク動画プレイヤー UI
-    ============================================ */
-    .video-screen {
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      animation: fadeInUp 0.4s ease;
-    }
-
-    /* 動画プレイヤー本体（16:9） */
-    .video-player {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-      overflow: hidden;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    /* 「映像」の代わりに表示するシーンテキスト */
-    .video-scene {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      background: #0a0a0a;
-    }
-
-    .video-scene-text {
-      font-size: 13px;
-      color: #ccc;
-      text-align: center;
-      line-height: 1.9;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-      white-space: pre-line;
-    }
-
-    .video-scene-text.visible { opacity: 1; }
-
-    /* 再生前のサムネイル */
-    .video-thumb {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(160deg, #1a1a2e 0%, #0a0a14 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: opacity 0.4s ease;
-    }
-
-    .video-thumb-title {
-      font-size: 12px;
-      color: #aaa;
-      text-align: center;
-      padding: 0 20px;
-      line-height: 1.6;
-    }
-
-    .play-btn-big {
-      width: 52px;
-      height: 52px;
-      background: rgba(255,255,255,0.15);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid rgba(255,255,255,0.3);
-      transition: background 0.2s;
-    }
-
-    .play-btn-big::after {
-      content: '';
-      width: 0;
-      height: 0;
-      border-style: solid;
-      border-width: 10px 0 10px 18px;
-      border-color: transparent transparent transparent #fff;
-      margin-left: 4px;
-    }
-
-    .video-player:hover .play-btn-big {
-      background: rgba(255,255,255,0.25);
-    }
-
-    /* 進捗バー */
-    .video-progress-wrap {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: rgba(255,255,255,0.15);
-    }
-
-    .video-progress-fill {
-      height: 100%;
-      background: #ff4040;
-      width: 0%;
-      transition: width 0.1s linear;
-    }
-
-    /* 再生中オーバーレイ（一時停止アイコン） */
-    .video-playing-overlay {
-      position: absolute;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .video-playing-overlay.show { display: flex; }
-
-    /* 動画メタ情報（タイトル・再生数など） */
-    .video-meta {
-      padding: 12px 14px;
-      background: #111118;
-      border-bottom: 1px solid #1e1e3a;
-    }
-
-    .video-meta-title {
-      font-size: 13px;
-      color: #ddd;
-      line-height: 1.5;
+      text-transform: uppercase;
       margin-bottom: 6px;
     }
 
-    .video-meta-sub {
-      font-size: 11px;
-      color: #555;
-      display: flex;
-      gap: 12px;
+    .day-card-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ccc;
+      letter-spacing: 2px;
     }
 
-    /* 「切り抜き表示」バナー — 動画が途中で切れている演出 */
-    .video-cut-notice {
-      background: #1e0a0a;
-      border-left: 3px solid #ff4040;
-      padding: 10px 14px;
+    .day-card-sub {
       font-size: 12px;
-      color: #cc7070;
-      line-height: 1.6;
-      margin: 0;
-      display: none;
-      animation: fadeInUp 0.4s ease;
-    }
-
-    .video-cut-notice.show { display: block; }
-
-    /* ============================================
-       アニメーション定義
-    ============================================ */
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes slideInLeft {
-      from { opacity: 0; transform: translateX(-12px); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-
-    /* ============================================
-       スマホ実機でのフルスクリーン対応
-    ============================================ */
-    @media (max-width: 430px) {
-      body { padding: 0; align-items: stretch; }
-      #phone {
-        width: 100%;
-        min-height: 100vh;
-        max-height: 100vh;
-        border-radius: 0;
-      }
+      color: #444;
+      margin-top: 6px;
     }
   </style>
 </head>
 <body>
-
-<!-- ============================================
-     スマホ画面モック
-============================================ -->
-<div id="phone">
-
-  <!-- ステータスバー：Day・パートを常時表示 -->
-  <div id="status-bar">
-    <span id="day-label">既読</span>
-    <span id="part-label">START</span>
+  <div id="phone">
+    <div id="status-bar">
+      <span id="day-label">— 既読 —</span>
+      <span>🔋</span>
+    </div>
+    <div id="screen"></div>
   </div>
 
-  <!-- メインコンテンツ（JSが動的に書き換える） -->
-  <div id="content"></div>
-
-</div><!-- /#phone -->
-
-<script>
-/* ============================================
-   スコア変数の定義
-   プレイヤーには一切表示しない内部変数。
-   各行動によって値が変化し、最終エンドと
-   偏り可視化グラフに使用される。
-
-   empathyScore  : 共感・同意系コンテンツへの傾き
-   shockScore    : 炎上・怒り系コンテンツへの傾き
-   diversityScore: 異論・多様性コンテンツへの傾き
-============================================ */
-let empathyScore   = 0;
-let shockScore     = 0;
-let diversityScore = 0;
-
-// Hanaのタイムラインを最後まで読んだか（diversityScore +5 の条件）
-let hanaTimelineRead = false;
-
-/* ============================================
-   DOM参照・ユーティリティ
-============================================ */
-const content   = document.getElementById('content');
-const dayLabel  = document.getElementById('day-label');
-const partLabel = document.getElementById('part-label');
-
-function setStatus(day, part) {
-  dayLabel.textContent  = day;
-  partLabel.textContent = part;
-}
-
-function clearContent() {
-  content.innerHTML = '';
-  content.scrollTop = 0;
-}
-
-function scrollBottom() {
-  content.scrollTop = content.scrollHeight;
-}
-
-/* ============================================
-   タイトル画面
-============================================ */
-function showTitle() {
-  setStatus('既読', 'START');
-  clearContent();
-
-  const screen = document.createElement('div');
-  screen.className = 'title-screen';
-  screen.innerHTML = `
-    <div class="title-main">既読</div>
-    <div class="title-sub">フィルターバブル体験ゲーム</div>
-    <div class="title-desc">
-      同じ事件を、みんなが同じように<br>
-      見ているとは限らない。<br>
-      あなたのタイムラインが、<br>あなたの世界を作っている。
-    </div>
-    <div class="title-caution">
-      ※ このゲームはフィクションです。<br>
-      ネットいじめ・炎上を肯定する内容ではありません。<br>
-      探究授業での体験・議論を目的としています。
-    </div>
-  `;
-
-  const btn = document.createElement('button');
-  btn.className = 'start-btn';
-  btn.textContent = 'はじめる';
-  btn.onclick = showDay1School;
-
-  screen.appendChild(btn);
-  content.appendChild(screen);
-}
-
-/* ============================================
-   汎用ヘルパー: 「次へ」ボタンを末尾に追加する
-============================================ */
-function appendNextBtn(label, nextFn) {
-  const btn = document.createElement('button');
-  btn.className = 'next-btn';
-  btn.textContent = label;
-  btn.onclick = nextFn;
-  content.appendChild(btn);
-  scrollBottom();
-}
-
-/* ============================================
-   汎用ヘルパー: プレイヤー発言バブルをチャットエリアに追加する
-============================================ */
-function appendPlayerBubble(chatArea, text) {
-  const meta = document.createElement('div');
-  meta.className = 'chat-meta right';
-
-  const bubble = document.createElement('div');
-  bubble.className = 'chat-bubble player';
-  bubble.textContent = text;
-
-  meta.appendChild(bubble);
-  chatArea.appendChild(meta);
-  scrollBottom();
-}
-
-/* ============================================
-   汎用ヘルパー: 相手キャラのバブルをチャットエリアに追加する
-============================================ */
-function appendOtherBubble(chatArea, name, text) {
-  const meta = document.createElement('div');
-  meta.className = 'chat-meta';
-
-  const nameDiv = document.createElement('div');
-  nameDiv.className = 'chat-name';
-  nameDiv.textContent = name;
-
-  const bubble = document.createElement('div');
-  bubble.className = 'chat-bubble other';
-  bubble.textContent = text;
-
-  meta.appendChild(nameDiv);
-  meta.appendChild(bubble);
-  chatArea.appendChild(meta);
-  scrollBottom();
-}
-
-/* ============================================
-   フェイク動画プレイヤー
-   「田中くんの動画」を模した切り抜き動画UIを表示する。
-   実際の動画ファイルは不要。CSSアニメーションと
-   テキストで「映像を見る体験」を再現する。
-   動画は意図的に途中で切れており、文脈の欠落を示す。
-   nextFn: 動画を見終えた後に呼ぶ関数
-============================================ */
-function showVideo(nextFn) {
-  setStatus('Day 1', '動画');
-  clearContent();
-
-  // シーン定義：動画の「映像」として順番に表示するテキスト
-  const scenes = [
-    '教室。\n先生が黒板に問題を書いている。',
-    '田中くんが\n何かをつぶやく。',
-    'クラスがざわめく。\n笑い声が聞こえる。',
-    '先生が振り返り、\n大きな声で怒鳴る。',
-    '───',
-    '[ ここで動画は切れている ]'
-  ];
-
-  const wrapper = document.createElement('div');
-  wrapper.className = 'video-screen';
-
-  // ── 動画プレイヤー本体 ──
-  const player = document.createElement('div');
-  player.className = 'video-player';
-
-  // サムネイル（再生前）
-  const thumb = document.createElement('div');
-  thumb.className = 'video-thumb';
-  thumb.innerHTML = `
-    <div class="video-thumb-title">【授業中】田中くんの問題行動が<br>やばすぎる… #切り抜き</div>
-    <div class="play-btn-big"></div>
-  `;
-
-  // シーンテキスト表示エリア（再生中）
-  const scene = document.createElement('div');
-  scene.className = 'video-scene';
-
-  const sceneText = document.createElement('div');
-  sceneText.className = 'video-scene-text';
-  scene.appendChild(sceneText);
-
-  // プログレスバー
-  const progressWrap = document.createElement('div');
-  progressWrap.className = 'video-progress-wrap';
-  const progressFill = document.createElement('div');
-  progressFill.className = 'video-progress-fill';
-  progressWrap.appendChild(progressFill);
-
-  player.appendChild(thumb);
-  player.appendChild(scene);
-  player.appendChild(progressWrap);
-
-  // ── 動画メタ情報 ──
-  const meta = document.createElement('div');
-  meta.className = 'video-meta';
-  meta.innerHTML = `
-    <div class="video-meta-title">【授業中】田中くんの問題行動がやばすぎる… 切り抜き【閲覧注意】</div>
-    <div class="video-meta-sub">
-      <span>👁 38,412 回視聴</span>
-      <span>2日前</span>
-    </div>
-  `;
-
-  // 「切り抜き」警告バナー（再生後に表示）
-  const cutNotice = document.createElement('div');
-  cutNotice.className = 'video-cut-notice';
-  cutNotice.textContent = '⚠ この動画は切り抜きです。前後の映像は含まれていません。';
-
-  wrapper.appendChild(player);
-  wrapper.appendChild(meta);
-  wrapper.appendChild(cutNotice);
-  content.appendChild(wrapper);
-
-  // ── 再生ロジック ──
-  let isPlaying = false;
-
-  player.onclick = () => {
-    if (isPlaying) return;
-    isPlaying = true;
-    thumb.style.opacity = '0';
-    thumb.style.pointerEvents = 'none';
-
-    const totalDuration = scenes.length * 1400; // 各シーン1.4秒
-    let elapsed = 0;
-    const interval = 80;
-
-    // プログレスバーをリアルタイムで更新
-    const progressTimer = setInterval(() => {
-      elapsed += interval;
-      const pct = Math.min((elapsed / totalDuration) * 100, 100);
-      progressFill.style.width = pct + '%';
-      if (elapsed >= totalDuration) clearInterval(progressTimer);
-    }, interval);
-
-    // シーンを順番に表示
-    scenes.forEach((text, i) => {
-      setTimeout(() => {
-        sceneText.classList.remove('visible');
-        setTimeout(() => {
-          sceneText.textContent = text;
-          sceneText.classList.add('visible');
-        }, 200);
-
-        // 最後のシーン（動画終了）
-        if (i === scenes.length - 1) {
-          setTimeout(() => {
-            cutNotice.classList.add('show');
-            appendNextBtn('SNSを見る ▶', nextFn);
-            scrollBottom();
-          }, 1000);
-        }
-      }, i * 1400);
-    });
-  };
-
-  scrollBottom();
-}
-
-/* ============================================
-   Day1 — 学校パート
-============================================ */
-function showDay1School() {
-  setStatus('Day 1', '学校');
-  clearContent();
-
-  const chatArea = document.createElement('div');
-  chatArea.className = 'chat-area';
-  content.appendChild(chatArea);
-
-  appendOtherBubble(chatArea, 'Hana（花）', 'ねえ聞いた？田中くんの動画、ちょっとやばくない？');
-
-  setTimeout(() => {
-    const choiceArea = document.createElement('div');
-    choiceArea.className = 'choice-area';
-
-    const label = document.createElement('div');
-    label.className = 'choice-label';
-    label.textContent = 'あなたの返答は？';
-
-    const btnA = document.createElement('button');
-    btnA.className = 'choice-btn';
-    btnA.textContent = 'A「どんな動画？気になる」';
-    btnA.onclick = () => {
-      shockScore += 1; // 炎上・好奇心寄りの選択
-      appendPlayerBubble(chatArea, 'どんな動画？気になる');
-      choiceArea.remove();
-      // A選択 → すぐ動画を見に行く
-      setTimeout(() => showVideo(showDay1SNS), 900);
-    };
-
-    const btnB = document.createElement('button');
-    btnB.className = 'choice-btn';
-    btnB.textContent = 'B「あんまり人の噂話は…」';
-    btnB.onclick = () => {
-      diversityScore += 1; // 慎重・多様性寄りの選択
-      appendPlayerBubble(chatArea, 'あんまり人の噂話は…');
-      choiceArea.remove();
-      // B選択 → Hanaが動画を送ってきた演出を挟んでから動画へ
-      setTimeout(() => {
-        appendOtherBubble(chatArea, 'Hana（花）', 'まあとりあえずこれ見てよ 🙄');
-        setTimeout(() => showVideo(showDay1SNS), 800);
-      }, 700);
-    };
-
-    choiceArea.appendChild(label);
-    choiceArea.appendChild(btnA);
-    choiceArea.appendChild(btnB);
-    content.appendChild(choiceArea);
-    scrollBottom();
-  }, 700);
-}
-
-/* ============================================
-   タイムライン生成関数
-   posts 配列を受け取り、カード型のSNS投稿UIを順番に生成する。
-   各カードには「いいね」「スキップ」ボタンがあり、
-   押すと対応するスコアが変動する。
-   全投稿にインタラクションしたら onAllDone() を呼ぶ。
-
-   post オブジェクト:
-     { text: string, likes: number, type: 'shock'|'empathy'|'diversity' }
-============================================ */
-function createTimeline(posts, onAllDone) {
-  const header = document.createElement('div');
-  header.className = 'timeline-header';
-  header.textContent = 'タイムライン';
-  content.appendChild(header);
-
-  let interactedCount = 0;
-
-  posts.forEach((post, index) => {
-    setTimeout(() => {
-      const card = document.createElement('div');
-      card.className = 'post-card';
-
-      const postContent = document.createElement('div');
-      postContent.className = 'post-content';
-      postContent.textContent = post.text;
-
-      const footer = document.createElement('div');
-      footer.className = 'post-footer';
-
-      const likeCount = document.createElement('div');
-      likeCount.className = 'like-count';
-      likeCount.textContent = `❤ ${post.likes.toLocaleString()}`;
-
-      const actions = document.createElement('div');
-      actions.className = 'post-actions';
-
-      let interacted = false;
-
-      const likeBtn = document.createElement('button');
-      likeBtn.className = 'like-btn';
-      likeBtn.textContent = 'いいね❤️';
-
-      const skipBtn = document.createElement('button');
-      skipBtn.className = 'skip-btn';
-      skipBtn.textContent = 'スキップ▶';
-
-      // いいねを押したときのスコア変動
-      likeBtn.onclick = () => {
-        if (interacted) return;
-        interacted = true;
-        likeBtn.classList.add('liked');
-        likeBtn.disabled = true;
-        skipBtn.disabled = true;
-        skipBtn.classList.add('skipped');
-
-        if (post.type === 'empathy')        empathyScore   += 2;
-        else if (post.type === 'shock')     shockScore     += 2;
-        else if (post.type === 'diversity') diversityScore += 3;
-
-        interactedCount++;
-        if (interactedCount === posts.length) setTimeout(onAllDone, 500);
-      };
-
-      // スキップしたときのスコア変動（該当スコアを微減、0未満にはしない）
-      skipBtn.onclick = () => {
-        if (interacted) return;
-        interacted = true;
-        skipBtn.classList.add('skipped');
-        skipBtn.disabled = true;
-        likeBtn.disabled = true;
-
-        if (post.type === 'empathy')        empathyScore   = Math.max(0, empathyScore   - 1);
-        else if (post.type === 'shock')     shockScore     = Math.max(0, shockScore     - 1);
-        else if (post.type === 'diversity') diversityScore = Math.max(0, diversityScore - 1);
-
-        interactedCount++;
-        if (interactedCount === posts.length) setTimeout(onAllDone, 500);
-      };
-
-      actions.appendChild(likeBtn);
-      actions.appendChild(skipBtn);
-      footer.appendChild(likeCount);
-      footer.appendChild(actions);
-      card.appendChild(postContent);
-      card.appendChild(footer);
-      content.appendChild(card);
-      scrollBottom();
-    }, index * 350);
-  });
-}
-
-/* ============================================
-   Day1 — SNSパート
-============================================ */
-function showDay1SNS() {
-  setStatus('Day 1', 'SNS');
-  clearContent();
-
-  const day1Posts = [
-    {
-      text:  '田中くんの授業中の動画見た？笑えないんだけど🔥 #炎上 #学校裏垢',
-      likes: 142,
-      type:  'shock'
-    },
-    {
-      text:  '田中くんのことよく知らないけど、あの動画一方的すぎない？かわいそう',
-      likes: 38,
-      type:  'empathy'
-    },
-    {
-      text:  '切り抜き動画って前後の文脈省いてること多いから注意。本当のことわからなくない？',
-      likes: 12,
-      type:  'diversity'
+  <script>
+    // ============================================
+    // スコアシステム（非表示）
+    // ============================================
+    let scores = { saki: 0, ren: 0, neutral: 0 };
+    let currentDay = 0;
+    let day4Choice = null;
+    let finalChoice = null;
+
+    // ============================================
+    // ユーティリティ
+    // ============================================
+    const screen = document.getElementById('screen');
+    const dayLabel = document.getElementById('day-label');
+
+    function setDayLabel(text) {
+      dayLabel.textContent = text;
     }
-  ];
 
-  createTimeline(day1Posts, () => {
-    appendNextBtn('Day 2 へ ▶', showDay2School);
-  });
-}
+    function clearScreen() {
+      screen.innerHTML = '';
+    }
 
-/* ============================================
-   Day2 — 学校パート
-============================================ */
-function showDay2School() {
-  setStatus('Day 2', '学校');
-  clearContent();
+    function scrollToBottom() {
+      setTimeout(() => screen.scrollTop = screen.scrollHeight, 50);
+    }
 
-  const chatArea = document.createElement('div');
-  chatArea.className = 'chat-area';
-  content.appendChild(chatArea);
+    function el(tag, cls, html) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (html) e.innerHTML = html;
+      return e;
+    }
 
-  appendOtherBubble(chatArea, 'Hana（花）', '田中くん、やっぱりやばいよ。みんなそう言ってるもん');
+    function append(node) {
+      screen.appendChild(node);
+      scrollToBottom();
+    }
 
-  setTimeout(() => {
-    const choiceArea = document.createElement('div');
-    choiceArea.className = 'choice-area';
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
-    const label = document.createElement('div');
-    label.className = 'choice-label';
-    label.textContent = 'あなたの返答は？';
+    // キャラクターアイコンHTML生成
+    function iconHtml(who) {
+      const map = {
+        saki: ['icon-saki', '咲'],
+        ren:  ['icon-ren',  '蓮'],
+        hana: ['icon-hana', 'H'],
+        yu:   ['icon-yu',   'ユ'],
+      };
+      const [cls, char] = map[who] || ['icon-yu', '?'];
+      return `<div class="char-icon ${cls}">${char}</div>`;
+    }
 
-    const btnA = document.createElement('button');
-    btnA.className = 'choice-btn';
-    btnA.textContent = 'A「だよね、あの動画ひどかった」';
-    btnA.onclick = () => {
-      shockScore   += 2;
-      empathyScore += 1;
-      appendPlayerBubble(chatArea, 'だよね、あの動画ひどかった');
-      choiceArea.remove();
-      setTimeout(showDay2SNS, 900);
-    };
-
-    const btnB = document.createElement('button');
-    btnB.className = 'choice-btn';
-    btnB.textContent = 'B「でも全部が本当かわからなくない？」';
-    btnB.onclick = () => {
-      diversityScore += 2;
-      appendPlayerBubble(chatArea, 'でも全部が本当かわからなくない？');
-      choiceArea.remove();
-      setTimeout(showDay2SNS, 900);
-    };
-
-    choiceArea.appendChild(label);
-    choiceArea.appendChild(btnA);
-    choiceArea.appendChild(btnB);
-    content.appendChild(choiceArea);
-    scrollBottom();
-  }, 700);
-}
-
-/* ============================================
-   Day2 — SNSパート
-   分岐判定ロジック（フィルターバブルの体現）:
-   Day1〜2前半のスコアを元にタイムライン内容を変える。
-   共感+炎上スコアが多様性スコアを超えている場合、
-   より過激・同調的なタイムラインが表示される。
-============================================ */
-function showDay2SNS() {
-  setStatus('Day 2', 'SNS');
-  clearContent();
-
-  // フィルターバブル判定：同調圧力スコアが多様性スコアを上回ったか
-  const isFilterBubbled = (empathyScore + shockScore) > diversityScore;
-
-  let day2Posts;
-
-  if (isFilterBubbled) {
-    // 共感・炎上スコアが高い → 偏ったタイムライン（炎上寄り）
-    day2Posts = [
-      {
-        text:  '田中くん学校来たらしい。被害者の気持ちわかるの？',
-        likes: 203,
-        type:  'shock'
-      },
-      {
-        text:  '擁護してる人、同類じゃないの',
-        likes: 87,
-        type:  'shock'
-      },
-      {
-        text:  '切り抜き動画のフルver見た？やっぱりひどい',
-        likes: 156,
-        type:  'empathy'
+    // 会話バブル追加
+    function addDialogue(who, name, text) {
+      const isPlayer = (who === 'yu');
+      const row = el('div', `dialogue-row${isPlayer ? ' player-row' : ''}`);
+      const nameHtml = name ? `<div class="dialogue-name">${name}</div>` : '';
+      const icon = el('div');
+      icon.innerHTML = iconHtml(who);
+      const bubbleWrap = el('div');
+      bubbleWrap.innerHTML = `${nameHtml}<div class="bubble${isPlayer ? ' player-bubble' : ''}">${text}</div>`;
+      if (isPlayer) {
+        row.appendChild(bubbleWrap);
+        row.appendChild(icon);
+      } else {
+        row.appendChild(icon);
+        row.appendChild(bubbleWrap);
       }
-    ];
-  } else {
-    // 多様性スコアが高い → バランスのとれたタイムライン
-    day2Posts = [
-      {
-        text:  'どっちの言い分も聞かないで判断するのこわい',
-        likes: 34,
-        type:  'diversity'
-      },
-      {
-        text:  'クラスの空気って怖いよね。一気に変わる',
-        likes: 28,
-        type:  'diversity'
-      },
-      {
-        text:  'SNSで人を裁く文化マジで終わってほしい',
-        likes: 19,
-        type:  'diversity'
+      append(row);
+    }
+
+    // ナレーション追加
+    function addNarration(text, emphasis) {
+      const p = el('p', emphasis ? 'narration-emphasis' : 'narration', text);
+      append(p);
+    }
+
+    // セクションヘッダー
+    function addSectionHeader(text) {
+      const h = el('div', 'section-header', text);
+      append(h);
+    }
+
+    // ボタン追加（汎用）
+    function addButton(label, cls, fn) {
+      const btn = el('button', cls, label);
+      btn.onclick = fn;
+      append(btn);
+      return btn;
+    }
+
+    // ============================================
+    // タイトル画面
+    // ============================================
+    function showTitle() {
+      clearScreen();
+      setDayLabel('— 既読 —');
+      const wrap = el('div', 'title-screen');
+      wrap.innerHTML = `
+        <div class="title-logo">既読</div>
+        <div class="title-subtitle">— フィルターバブル体験ゲーム —</div>
+        <div class="title-desc">
+          文化祭の準備をめぐって<br>
+          クラスが二分されていく。<br><br>
+          あなたはどちらの声を聞き、<br>
+          何を信じるのか。
+        </div>
+      `;
+      const btn = el('button', 'btn-primary', 'はじめる');
+      btn.onclick = () => showDay1School();
+      wrap.appendChild(btn);
+      append(wrap);
+    }
+
+    // ============================================
+    // DAY 1：学校
+    // ============================================
+    async function showDay1School() {
+      clearScreen();
+      setDayLabel('Day 1 — 学校');
+      currentDay = 1;
+
+      const card = el('div', 'day-card');
+      card.innerHTML = `
+        <div class="day-card-num">DAY 1</div>
+        <div class="day-card-title">集合写真</div>
+        <div class="day-card-sub">文化祭まで3週間</div>
+      `;
+      append(card);
+
+      await delay(200);
+      addNarration('昼休み。クラスの文化祭準備委員会が、初めて全員集まった。');
+      await delay(300);
+      addDialogue('saki', '渡辺 咲', 'ねえ聞いて！　今年の出し物、私やっぱりお化け屋敷にしたいんだけど。');
+      await delay(300);
+      addDialogue('ren', '中島 蓮', '……カフェじゃダメなの？　去年みたいなやつ。収益も安定するし。');
+      await delay(300);
+      addDialogue('saki', '渡辺 咲', 'また同じのやっても面白くないじゃん！　せっかくの高校最後の文化祭なのに。');
+      await delay(300);
+      addDialogue('ren', '中島 蓮', '「面白い」だけで決めて後で後悔するのが嫌なんだよ。去年のこと覚えてない？');
+      await delay(300);
+      addNarration('去年——前の委員長が強引に進めた出し物が直前で崩れ、クラスが一時ギスギスした。蓮はそれを引きずっている。');
+      await delay(200);
+      addSectionHeader('あなたはどう動く？');
+
+      await delay(100);
+      const choicesArea = el('div', 'choices-area');
+      choicesArea.innerHTML = '<div class="choices-label">選択してください</div>';
+
+      const c1 = el('button', 'btn-choice saki-choice', '「お化け屋敷、やってみようよ。みんなで作るの楽しそう」');
+      c1.onclick = () => { scores.saki += 2; showDay1SchoolEnd('saki'); };
+      const c2 = el('button', 'btn-choice ren-choice', '「カフェのほうが現実的かもね。トラブル少なそう」');
+      c2.onclick = () => { scores.ren += 2; showDay1SchoolEnd('ren'); };
+      const c3 = el('button', 'btn-choice neutral-choice', '「ふたりの言いたいこと、もう少し聞かせてほしい」');
+      c3.onclick = () => { scores.neutral += 4; showDay1SchoolEnd('neutral'); };
+
+      choicesArea.appendChild(c1);
+      choicesArea.appendChild(c2);
+      choicesArea.appendChild(c3);
+      append(choicesArea);
+    }
+
+    async function showDay1SchoolEnd(choice) {
+      const area = screen.querySelector('.choices-area');
+      if (area) area.remove();
+
+      if (choice === 'saki') {
+        addDialogue('yu', 'ユウ', 'お化け屋敷、やってみようよ。みんなで作るの楽しそう。');
+        await delay(200);
+        addDialogue('saki', '渡辺 咲', 'でしょでしょ！　ユウもそう思うよね！');
+        await delay(200);
+        addDialogue('ren', '中島 蓮', '……まあ、多数決で決めればいいじゃん。');
+      } else if (choice === 'ren') {
+        addDialogue('yu', 'ユウ', 'カフェのほうが現実的かもね。トラブル少なそう。');
+        await delay(200);
+        addDialogue('ren', '中島 蓮', 'そうだよ。ちゃんと考えてる人もいるんだよ咲。');
+        await delay(200);
+        addDialogue('saki', '渡辺 咲', '……（口をつぐんだ）');
+      } else {
+        addDialogue('yu', 'ユウ', 'ふたりの言いたいこと、もう少し聞かせてほしい。');
+        await delay(200);
+        addDialogue('saki', '渡辺 咲', 'え？　……うん、いいけど。');
+        await delay(200);
+        addDialogue('ren', '中島 蓮', '……珍しいこと聞くね、ユウは。');
       }
-    ];
-  }
 
-  createTimeline(day2Posts, () => {
-    appendNextBtn('Day 3 へ ▶', showDay3School);
-  });
-}
+      await delay(300);
+      addNarration('放課後、Hanaからメッセージが来た。');
+      await delay(200);
+      addButton('→ DMを確認する', 'btn-next', () => showDay1DM());
+    }
 
-/* ============================================
-   Day3 — 学校パート（山場）
-============================================ */
-function showDay3School() {
-  setStatus('Day 3', '学校');
-  clearContent();
+    // ============================================
+    // DAY 1：Hana DM
+    // ============================================
+    async function showDay1DM() {
+      clearScreen();
+      setDayLabel('Day 1 — DM');
 
-  const chatArea = document.createElement('div');
-  chatArea.className = 'chat-area';
-  content.appendChild(chatArea);
+      addSectionHeader('Direct Message');
 
-  appendOtherBubble(chatArea, 'Hana（花）', 'なんで田中くんの肩持つの？おかしくない？');
+      const dmHeader = el('div', 'dm-header');
+      dmHeader.innerHTML = `${iconHtml('hana')}<span class="dm-partner-name">Hana</span>`;
+      append(dmHeader);
 
-  setTimeout(() => {
-    const choiceArea = document.createElement('div');
-    choiceArea.className = 'choice-area';
+      const dmBody = el('div', 'dm-body');
+      append(dmBody);
 
-    const label = document.createElement('div');
-    label.className = 'choice-label';
-    label.textContent = 'あなたの返答は？';
+      const msgs = [
+        { who: 'hana', text: 'ユウ！　今日の委員会、見てたよ。咲と蓮またやりあってたね😅' },
+        { who: 'hana', text: '咲ってさ、ちょっと空気読めないとこあるよね。蓮がなんで慎重なのかわかってないじゃん' },
+        { who: 'hana', text: 'ユウはどう思う？' },
+      ];
 
-    const btnA = document.createElement('button');
-    btnA.className = 'choice-btn';
-    btnA.textContent = 'A「ごめん、確かにやばいかもね」';
-    btnA.onclick = () => {
-      empathyScore += 2;
-      shockScore   += 1;
-      appendPlayerBubble(chatArea, 'ごめん、確かにやばいかもね');
-      choiceArea.remove();
-      // Aを選択 → Hanaのタイムライン表示なし、そのまま結末判定へ
-      setTimeout(showEndJudge, 900);
-    };
-
-    const btnB = document.createElement('button');
-    btnB.className = 'choice-btn';
-    btnB.textContent = 'B「でも俺/私が見た情報と違う…」';
-    btnB.onclick = () => {
-      diversityScore += 2;
-      appendPlayerBubble(chatArea, 'でも俺/私が見た情報と違う…');
-      choiceArea.remove();
-      // Bを選択 → 強制的にHanaのタイムラインを表示するイベントが発生
-      setTimeout(showHanaTimeline, 900);
-    };
-
-    choiceArea.appendChild(label);
-    choiceArea.appendChild(btnA);
-    choiceArea.appendChild(btnB);
-    content.appendChild(choiceArea);
-    scrollBottom();
-  }, 700);
-}
-
-/* ============================================
-   Hanaのタイムライン（強制表示イベント）
-   Day3でBを選んだ場合のみ発生する演出。
-   「Hanaが見ていた世界」を別タイムラインとして表示し、
-   プレイヤーに情報の非対称性・フィルターバブルを体感させる。
-   最後まで読むと diversityScore +5 を付与する。
-============================================ */
-function showHanaTimeline() {
-  setStatus('Day 3', 'Hanaの画面');
-  clearContent();
-
-  const hanaHeader = document.createElement('div');
-  hanaHeader.className = 'hana-timeline-header';
-  hanaHeader.textContent = '─── Hanaのタイムライン ───';
-  content.appendChild(hanaHeader);
-
-  const hanaPosts = [
-    { text: '被害者の子、泣いてたって聞いた。田中くん最低', likes: 412 },
-    { text: '擁護コメントしてる人たちって何なの',           likes: 234 },
-    { text: '学校側が動かないなら拡散するしかない',         likes: 189 }
-  ];
-
-  hanaPosts.forEach((post, index) => {
-    setTimeout(() => {
-      const card = document.createElement('div');
-      card.className = 'post-card hana';
-
-      const postContent = document.createElement('div');
-      postContent.className = 'post-content';
-      postContent.textContent = post.text;
-
-      const likeCount = document.createElement('div');
-      likeCount.className = 'like-count';
-      likeCount.textContent = `❤ ${post.likes.toLocaleString()}`;
-
-      card.appendChild(postContent);
-      card.appendChild(likeCount);
-      content.appendChild(card);
-      scrollBottom();
-
-      // 最後の投稿を表示後、ナレーションと次へボタンを追加
-      if (index === hanaPosts.length - 1) {
-        setTimeout(() => {
-          hanaTimelineRead = true;
-          diversityScore += 5; // 異なる視点を最後まで読んだ報酬
-
-          const narr = document.createElement('div');
-          narr.className = 'narration';
-          narr.innerHTML = `
-            <div class="narration-tag">── ナレーション ──</div>
-            <p>Hanaが見ていた世界は、<br>あなたの見ていた世界と違った。</p>
-            <br>
-            <p>同じ事件なのに。<br>同じクラスなのに。</p>
-          `;
-          content.appendChild(narr);
-          appendNextBtn('続ける ▶', showEndJudge);
-        }, 700);
+      for (let i = 0; i < msgs.length; i++) {
+        await delay(400 + i * 300);
+        const { who, text } = msgs[i];
+        const row = el('div', 'dm-row');
+        row.innerHTML = iconHtml(who);
+        const bubble = el('div', 'dm-bubble', text);
+        row.appendChild(bubble);
+        dmBody.appendChild(row);
+        scrollToBottom();
       }
-    }, index * 450);
-  });
-}
 
-/* ============================================
-   分岐判定ロジック（エンド分岐）
-   empathyScore + shockScore > diversityScore × 2 → 分断エンド
-   それ以外                                       → 対話エンド
+      await delay(600);
+      addButton('→ 返信する', 'btn-next', () => showDay1DMReply());
+    }
 
-   「炎上・同調への引力が多様性への意識の2倍を超えたか」で判定する。
-============================================ */
-function showEndJudge() {
-  if ((empathyScore + shockScore) > diversityScore * 2) {
-    showDivisionEnd();
-  } else {
-    showDialogueEnd();
-  }
-}
+    async function showDay1DMReply() {
+      const btn = screen.querySelector('.btn-next');
+      if (btn) btn.remove();
 
-/* ============================================
-   エンド演出 — 分断エンド
-   フィルターバブルに飲み込まれ、関係が断絶する結末
-============================================ */
-function showDivisionEnd() {
-  setStatus('結末', '分断エンド');
-  clearContent();
+      const dmBody = screen.querySelector('.dm-body');
 
-  const screen = document.createElement('div');
-  screen.className = 'end-screen';
-  screen.innerHTML = `
-    <div class="end-tag">─── 7日後 ───</div>
-    <div class="end-text">
-      田中くんはクラスに来なくなった。<br>
-      <br>
-      Hanaとはもう話していない。<br>
-      <br>
-      あなたのタイムラインは今日も、<br>
-      あなたの知っている世界だけを<br>
-      映している。
-    </div>
-  `;
-  content.appendChild(screen);
+      const replyRow = el('div', 'dm-row dm-player-row');
+      replyRow.innerHTML = `<div class="dm-bubble dm-player-bubble">うーん、どっちの気持ちもわかる気がする……</div>${iconHtml('yu')}`;
+      dmBody.appendChild(replyRow);
+      scrollToBottom();
 
-  setTimeout(showBiasVisualization, 900);
-}
+      await delay(400);
+      const kidoku = el('div', 'kidoku-label read', '既読');
+      dmBody.appendChild(kidoku);
+      scrollToBottom();
 
-/* ============================================
-   エンド演出 — 対話エンド
-   複数の視点を受け止め、対話へと踏み出せた結末
-============================================ */
-function showDialogueEnd() {
-  setStatus('結末', '対話エンド');
-  clearContent();
+      await delay(500);
+      const hanaReply = el('div', 'dm-row');
+      hanaReply.innerHTML = `${iconHtml('hana')}<div class="dm-bubble">そっか。まあ、あとでSNS見てみて。みんな色々言ってるよ</div>`;
+      dmBody.appendChild(hanaReply);
+      scrollToBottom();
 
-  const screen = document.createElement('div');
-  screen.className = 'end-screen';
-  screen.innerHTML = `
-    <div class="end-tag">─── 7日後 ───</div>
-    <div class="end-text">
-      田中くんの話、<br>ちゃんと聞けた気がした。<br>
-      <br>
-      Hanaとも、少しだけ話せた。<br>
-      <br>
-      世界が広がるのは、<br>ちょっと疲れる。<br>
-      でも、悪くなかった。
-    </div>
-  `;
-  content.appendChild(screen);
+      await delay(500);
+      addButton('→ SNSを開く', 'btn-next', () => showDay1SNS());
+    }
 
-  setTimeout(showBiasVisualization, 900);
-}
+    // ============================================
+    // DAY 1：SNS
+    // ============================================
+    async function showDay1SNS() {
+      clearScreen();
+      setDayLabel('Day 1 — SNS');
 
-/* ============================================
-   偏り可視化の計算部分
-   3スコアの合計を分母として各割合（%）を算出し、
-   CSSトランジションで伸びるバーグラフとして表示する。
-   合計が0の場合はゼロ除算を防ぐため均等割りにする。
-============================================ */
-function showBiasVisualization() {
-  const total = empathyScore + shockScore + diversityScore;
+      addSectionHeader('SNS タイムライン');
 
-  // 各スコアをパーセンテージに変換
-  const empathyPct   = total > 0 ? Math.round((empathyScore   / total) * 100) : 33;
-  const shockPct     = total > 0 ? Math.round((shockScore     / total) * 100) : 34;
-  const diversityPct = total > 0 ? Math.round((diversityScore / total) * 100) : 33;
+      const posts = [
+        {
+          who: 'saki',
+          name: '渡辺 咲',
+          time: '16:42',
+          text: '文化祭どうなるかな〜　お化け屋敷絶対楽しいのに😤　なんでみんなリスクとれないの',
+          type: 'saki',
+        },
+        {
+          who: 'ren',
+          name: '中島 蓮',
+          time: '16:55',
+          text: '去年のこと忘れたの？　準備不足で崩れたら誰が後片付けするのか、ちゃんと考えてほしい',
+          type: 'ren',
+        },
+        {
+          who: 'hana',
+          name: 'Hana',
+          time: '17:03',
+          text: '文化祭の出し物論争、見てると疲れる😂　正直どっちでもいいよー',
+          type: 'neutral',
+        },
+      ];
 
-  const section = document.createElement('div');
-  section.className = 'bias-section';
+      for (let i = 0; i < posts.length; i++) {
+        await delay(300 + i * 200);
+        addSNSPost(posts[i], i);
+      }
 
-  const title = document.createElement('div');
-  title.className = 'bias-title';
-  title.textContent = 'あなたのタイムラインの偏り';
-  section.appendChild(title);
+      await delay(300);
+      addButton('→ Day 2へ', 'btn-next', () => showDay2School());
+    }
 
-  // バーアイテムを生成するローカルヘルパー
-  function makeBiasBar(label, pct, colorClass) {
-    const item = document.createElement('div');
-    item.className = 'bias-item';
+    function addSNSPost(post, index) {
+      const { who, name, time, text, type } = post;
+      const postEl = el('div', 'sns-post');
+      postEl.style.animationDelay = `${index * 0.1}s`;
+      postEl.innerHTML = `
+        <div class="sns-post-header">
+          ${iconHtml(who)}
+          <div class="sns-post-meta">
+            <span class="sns-post-name">${name}</span>
+            <span class="sns-post-time">${time}</span>
+          </div>
+        </div>
+        <div class="sns-post-text">${text}</div>
+        <div class="sns-post-actions">
+          <button class="btn-like" data-type="${type}">♡ いいね</button>
+          <button class="btn-skip">スキップ</button>
+        </div>
+      `;
 
-    const labelRow = document.createElement('div');
-    labelRow.className = 'bias-label-row';
-    labelRow.innerHTML = `<span>${label}</span><span>${pct}%</span>`;
+      const likeBtn = postEl.querySelector('.btn-like');
+      const skipBtn = postEl.querySelector('.btn-skip');
 
-    const barBg = document.createElement('div');
-    barBg.className = 'bias-bar-bg';
+      likeBtn.onclick = () => {
+        if (likeBtn.classList.contains('liked')) return;
+        likeBtn.classList.add('liked');
+        likeBtn.textContent = '♥ いいね済み';
+        if (type === 'saki') scores.saki += 2;
+        else if (type === 'ren') scores.ren += 2;
+        else scores.neutral += 3;
+        likeBtn.disabled = true;
+        skipBtn.disabled = true;
+      };
 
-    const barFill = document.createElement('div');
-    barFill.className = `bias-bar-fill ${colorClass}`;
-    barFill.style.width = '0%';
+      skipBtn.onclick = () => {
+        scores.neutral -= 1;
+        likeBtn.disabled = true;
+        skipBtn.disabled = true;
+        postEl.style.opacity = '0.4';
+      };
 
-    barBg.appendChild(barFill);
-    item.appendChild(labelRow);
-    item.appendChild(barBg);
+      append(postEl);
+    }
 
-    // 描画後に width をセットすることで CSS トランジションを発火させる
-    setTimeout(() => { barFill.style.width = pct + '%'; }, 150);
+    // ============================================
+    // DAY 2：学校
+    // ============================================
+    async function showDay2School() {
+      clearScreen();
+      setDayLabel('Day 2 — 学校');
+      currentDay = 2;
 
-    return item;
-  }
+      const card = el('div', 'day-card');
+      card.innerHTML = `
+        <div class="day-card-num">DAY 2</div>
+        <div class="day-card-title">多数決</div>
+        <div class="day-card-sub">文化祭まで2週間半</div>
+      `;
+      append(card);
 
-  section.appendChild(makeBiasBar('共感系コンテンツ', empathyPct,   'empathy'));
-  section.appendChild(makeBiasBar('炎上系コンテンツ', shockPct,     'shock'));
-  section.appendChild(makeBiasBar('多様性コンテンツ', diversityPct, 'diversity'));
+      await delay(200);
+      addNarration('翌日、ホームルームで出し物を決める多数決が行われた。結果は——お化け屋敷、17票。カフェ、13票。');
+      await delay(300);
+      addDialogue('saki', '渡辺 咲', 'やった！　多数決で決まったんだからさ、蓮も協力してよ！');
+      await delay(300);
+      addDialogue('ren', '中島 蓮', '……わかった。でも、進行管理は絶対にちゃんとやってほしい。');
+      await delay(300);
+      addDialogue('saki', '渡辺 咲', '任せて！　私が全部仕切るから！');
+      await delay(300);
+      addNarration('放課後の準備会議。咲が意気揚々と進行し始めたが、蓮の表情が硬い。');
+      await delay(200);
+      addDialogue('ren', '中島 蓮', '咲、小道具リスト、まだできてないの？　昨日言ったじゃん。');
+      await delay(200);
+      addDialogue('saki', '渡辺 咲', '今日中に出す！　ちょっと待って！');
+      await delay(200);
+      addDialogue('ren', '中島 蓮', '「今日中」って毎日言ってるよね……。');
+      await delay(200);
+      addSectionHeader('あなたはどう動く？');
 
-  // エンド別のひとことコメント
-  const comment = document.createElement('div');
-  comment.style.cssText = 'font-size:12px;color:#555;text-align:center;margin:20px 4px 8px;line-height:1.8;';
-  if ((empathyScore + shockScore) > diversityScore * 2) {
-    comment.textContent = 'あなたのフィードは同じ方向の声で満ちていた。\nこれがフィルターバブルの正体です。';
-  } else {
-    comment.textContent = '複数の視点に触れたあなたは、バブルの外を少し覗けていた。';
-  }
-  section.appendChild(comment);
+      await delay(100);
+      const choicesArea = el('div', 'choices-area');
+      choicesArea.innerHTML = '<div class="choices-label">選択してください</div>';
 
-  // もう一度プレイするボタン
-  const replayBtn = document.createElement('button');
-  replayBtn.className = 'next-btn';
-  replayBtn.textContent = 'もう一度プレイ';
-  replayBtn.style.marginTop = '12px';
-  replayBtn.onclick = () => {
-    // スコアを全リセット
-    empathyScore     = 0;
-    shockScore       = 0;
-    diversityScore   = 0;
-    hanaTimelineRead = false;
+      const c1 = el('button', 'btn-choice saki-choice', '「咲、もうちょっと時間あげようよ。やる気あるんだから」');
+      c1.onclick = () => { scores.saki += 3; scores.ren -= 2; showDay2SchoolEnd('saki'); };
+      const c2 = el('button', 'btn-choice ren-choice', '「蓮の言う通り、スケジュール管理はしっかりしないと」');
+      c2.onclick = () => { scores.ren += 3; scores.saki -= 2; showDay2SchoolEnd('ren'); };
+      const c3 = el('button', 'btn-choice neutral-choice', '「リスト、一緒に作ろうか。30分でやれるよ」');
+      c3.onclick = () => { scores.neutral += 4; showDay2SchoolEnd('neutral'); };
+
+      choicesArea.appendChild(c1);
+      choicesArea.appendChild(c2);
+      choicesArea.appendChild(c3);
+      append(choicesArea);
+    }
+
+    async function showDay2SchoolEnd(choice) {
+      const area = screen.querySelector('.choices-area');
+      if (area) area.remove();
+
+      if (choice === 'saki') {
+        addDialogue('yu', 'ユウ', '咲、もうちょっと時間あげようよ。やる気あるんだから。');
+        await delay(200);
+        addDialogue('saki', '渡辺 咲', 'ありがとユウ！　絶対やるから！');
+        await delay(200);
+        addDialogue('ren', '中島 蓮', '……（黙って席を立った）');
+      } else if (choice === 'ren') {
+        addDialogue('yu', 'ユウ', '蓮の言う通り、スケジュール管理はしっかりしないと。');
+        await delay(200);
+        addDialogue('ren', '中島 蓮', 'そう、そこなんだよ。ありがとユウ。');
+        await delay(200);
+        addDialogue('saki', '渡辺 咲', '……わかった、もういい。私ひとりでやる。');
+      } else {
+        addDialogue('yu', 'ユウ', 'リスト、一緒に作ろうか。30分でやれるよ。');
+        await delay(200);
+        addDialogue('saki', '渡辺 咲', 'え、ほんと？　助かる！');
+        await delay(200);
+        addDialogue('ren', '中島 蓮', '……ユウ、ありがとう。（少し表情がほぐれた）');
+      }
+
+      await delay(300);
+      addButton('→ SNSを確認する', 'btn-next', () => showDay2SNS());
+    }
+
+    // ============================================
+    // DAY 2：SNS（スコアで分岐）
+    // ============================================
+    async function showDay2SNS() {
+      clearScreen();
+      setDayLabel('Day 2 — SNS');
+
+      addSectionHeader('SNS タイムライン');
+      addNarration('フィードを開くと、クラスの投稿が流れてきた。');
+
+      await delay(200);
+
+      // タイムライン分岐
+      let timeline;
+      if (scores.saki > scores.ren + 1) {
+        timeline = 'A'; // 咲よりのフィード
+      } else if (scores.ren > scores.saki + 1) {
+        timeline = 'B'; // 蓮よりのフィード
+      } else {
+        timeline = 'C'; // 混合フィード
+      }
+
+      let posts;
+      if (timeline === 'A') {
+        addNarration('あなたのフィードには、咲を応援する声が多く流れてきた。');
+        posts = [
+          { who: 'saki', name: '渡辺 咲', time: '19:11', text: '準備大変だけど楽しい！！　みんな一緒にお化け屋敷作ろ😆', type: 'saki' },
+          { who: 'hana', name: 'Hana', time: '19:23', text: '咲のテンション見てると、こっちも頑張ろうって思える', type: 'saki' },
+          { who: 'ren', name: '中島 蓮', time: '20:01', text: '……楽しいのはわかった。でも締め切りはある。', type: 'ren' },
+        ];
+      } else if (timeline === 'B') {
+        addNarration('あなたのフィードには、計画性を重視する声が多く流れてきた。');
+        posts = [
+          { who: 'ren', name: '中島 蓮', time: '19:08', text: '小道具リスト、今日中に叩き台を出しておいた。確認してほしい', type: 'ren' },
+          { who: 'hana', name: 'Hana', time: '19:44', text: '蓮って地味にすごい仕事してるよね、縁の下の力持ち', type: 'ren' },
+          { who: 'saki', name: '渡辺 咲', time: '20:12', text: '（蓮のリストに）こんなに細かくしなくていいじゃん……', type: 'saki' },
+        ];
+      } else {
+        addNarration('あなたのフィードには、両方の声が混じって流れてきた。');
+        posts = [
+          { who: 'saki', name: '渡辺 咲', time: '18:55', text: '文化祭絶対最高にするよ！！', type: 'saki' },
+          { who: 'ren', name: '中島 蓮', time: '19:22', text: '熱意はわかる。あとはそれを形にしてほしいだけ。', type: 'ren' },
+          { who: 'hana', name: 'Hana', time: '19:50', text: 'ふたりともしんどそう。誰かが橋渡ししてくれればいいのに', type: 'neutral' },
+        ];
+      }
+
+      for (let i = 0; i < posts.length; i++) {
+        await delay(300 + i * 200);
+        addSNSPost(posts[i], i);
+      }
+
+      await delay(400);
+      addButton('→ Day 3へ', 'btn-next', () => showDay3School());
+    }
+
+    // ============================================
+    // DAY 3：学校
+    // ============================================
+    async function showDay3School() {
+      clearScreen();
+      setDayLabel('Day 3 — 学校');
+      currentDay = 3;
+
+      const card = el('div', 'day-card');
+      card.innerHTML = `
+        <div class="day-card-num">DAY 3</div>
+        <div class="day-card-title">ノイズ</div>
+        <div class="day-card-sub">文化祭まで2週間</div>
+      `;
+      append(card);
+
+      await delay(200);
+      addNarration('準備が始まって1週間。クラスは静かに二分されていた。咲チームと蓮チームで、自然に座席が分かれた放課後の教室。');
+      await delay(300);
+      addDialogue('saki', '渡辺 咲', 'ねえユウ、蓮って最近すごく否定的じゃない？　どう思う？');
+      await delay(300);
+      addNarration('ちょうどそのとき、蓮があなたのそばを通りかかった。');
+      await delay(200);
+      addDialogue('ren', '中島 蓮', '（小声で）……ユウ、ちょっといい？　咲、また無茶なこと言ってるんだけど。');
+      await delay(300);
+      addNarration('ふたりに同時に声をかけられた。');
+      await delay(200);
+      addSectionHeader('あなたはどう動く？');
+
+      await delay(100);
+      const choicesArea = el('div', 'choices-area');
+      choicesArea.innerHTML = '<div class="choices-label">選択してください</div>';
+
+      const c1 = el('button', 'btn-choice saki-choice', '咲の話を聞く（蓮には「あとで」と言う）');
+      c1.onclick = () => { scores.saki += 3; scores.ren -= 2; showDay3SchoolMid('saki'); };
+      const c2 = el('button', 'btn-choice ren-choice', '蓮の話を聞く（咲には「あとで」と言う）');
+      c2.onclick = () => { scores.ren += 3; scores.saki -= 2; showDay3SchoolMid('ren'); };
+      const c3 = el('button', 'btn-choice neutral-choice', '「ふたりとも、一緒に話せないかな」と提案する');
+      c3.onclick = () => { scores.neutral += 4; showDay3SchoolMid('neutral'); };
+
+      choicesArea.appendChild(c1);
+      choicesArea.appendChild(c2);
+      choicesArea.appendChild(c3);
+      append(choicesArea);
+    }
+
+    async function showDay3SchoolMid(choice) {
+      const area = screen.querySelector('.choices-area');
+      if (area) area.remove();
+
+      if (choice === 'saki') {
+        addDialogue('yu', 'ユウ', '咲、話して。（蓮に）ごめん、あとで。');
+        await delay(200);
+        addDialogue('ren', '中島 蓮', '……そっか。（立ち去った）');
+        await delay(200);
+        addDialogue('saki', '渡辺 咲', '蓮ってさ、自分の意見しか正しいと思ってないんだよね。去年のトラウマで視野が狭くなってる気がする。');
+      } else if (choice === 'ren') {
+        addDialogue('yu', 'ユウ', '蓮、話して。（咲に）ごめん、あとで。');
+        await delay(200);
+        addDialogue('saki', '渡辺 咲', '……（ちょっと傷ついた顔をした）');
+        await delay(200);
+        addDialogue('ren', '中島 蓮', '咲がまた締め切りを延ばそうとしてるんだ。あいつ、本当に責任感ないんだよ。悪気はないんだろうけど。');
+      } else {
+        addDialogue('yu', 'ユウ', 'ふたりとも、一緒に話せないかな。');
+        await delay(200);
+        addDialogue('saki', '渡辺 咲', 'え……　まあ、いいけど。');
+        await delay(200);
+        addDialogue('ren', '中島 蓮', '……わかった。');
+        await delay(200);
+        addNarration('三人で放課後に残った。お互い、思っていたより相手の事情を知らなかったことに気づき始めた。');
+        scores.neutral += 2;
+      }
+
+      await delay(300);
+      addNarration('夜、Hanaからメッセージが来た。');
+      addButton('→ DMを確認する', 'btn-next', () => showDay3DM());
+    }
+
+    // ============================================
+    // DAY 3：Hana DM
+    // ============================================
+    async function showDay3DM() {
+      clearScreen();
+      setDayLabel('Day 3 — DM');
+      addSectionHeader('Direct Message');
+
+      const dmHeader = el('div', 'dm-header');
+      dmHeader.innerHTML = `${iconHtml('hana')}<span class="dm-partner-name">Hana</span>`;
+      append(dmHeader);
+
+      const dmBody = el('div', 'dm-body');
+      append(dmBody);
+
+      const msgs = [
+        { who: 'hana', text: 'ユウ、最近クラスの雰囲気どう思う？' },
+        { who: 'hana', text: '正直言うと……咲も蓮も、SNSで相手の悪口みたいなの書き始めてて、フォロワーもどんどん片方に肩入れし始めてる' },
+        { who: 'hana', text: 'みんな自分が正しいと思ってるんだよね。誰かが間違ってるんじゃなくて、見えてる景色が違うだけな気がするんだけど' },
+      ];
+
+      for (let i = 0; i < msgs.length; i++) {
+        await delay(400 + i * 300);
+        const row = el('div', 'dm-row');
+        row.innerHTML = iconHtml('hana');
+        const bubble = el('div', 'dm-bubble', msgs[i].text);
+        row.appendChild(bubble);
+        dmBody.appendChild(row);
+        scrollToBottom();
+      }
+
+      await delay(600);
+      addButton('→ SNSを開く', 'btn-next', () => showDay3SNS());
+    }
+
+    // ============================================
+    // DAY 3：SNS
+    // ============================================
+    async function showDay3SNS() {
+      clearScreen();
+      setDayLabel('Day 3 — SNS');
+      addSectionHeader('SNS タイムライン');
+      addNarration('フィードには、じわじわと対立の色が滲み始めていた。');
+
+      await delay(200);
+
+      const posts = [
+        { who: 'saki', name: '渡辺 咲', time: '21:05', text: '頑張ってるのに細かいことでいちいちつっかかってくる人、ほんとしんどい。準備楽しいのに😞', type: 'saki' },
+        { who: 'ren', name: '中島 蓮', time: '21:33', text: '「楽しい」だけで動く人と一緒に仕事するの、こっちがどれだけ疲弊してるかわかってんの', type: 'ren' },
+        { who: 'hana', name: 'Hana', time: '22:01', text: '……誰も悪くないと思うんだけどな。ただ怖くて言えない', type: 'neutral' },
+      ];
+
+      for (let i = 0; i < posts.length; i++) {
+        await delay(300 + i * 200);
+        addSNSPost(posts[i], i);
+      }
+
+      await delay(400);
+      addButton('→ Day 4へ', 'btn-next', () => showDay4School());
+    }
+
+    // ============================================
+    // DAY 4：学校（クライマックス）
+    // ============================================
+    async function showDay4School() {
+      clearScreen();
+      setDayLabel('Day 4 — 学校');
+      currentDay = 4;
+
+      const card = el('div', 'day-card');
+      card.innerHTML = `
+        <div class="day-card-num">DAY 4</div>
+        <div class="day-card-title">決裂</div>
+        <div class="day-card-sub">文化祭まで1週間</div>
+      `;
+      append(card);
+
+      await delay(200);
+      addNarration('文化祭まで残り1週間。準備は佳境に入っていたが——');
+      await delay(300);
+      addDialogue('saki', '渡辺 咲', '蓮、ちょっと！　なんで私の担当エリアに勝手に手を入れたの？！');
+      await delay(300);
+      addDialogue('ren', '中島 蓮', '誰もやらないから俺がやっただけだよ。どうせまた後回しにするつもりだったんじゃないの。');
+      await delay(300);
+      addDialogue('saki', '渡辺 咲', '信用してないってことじゃん！　最初からそうだった。多数決で負けたからって、ずっと邪魔してきたんじゃないの！');
+      await delay(300);
+      addDialogue('ren', '中島 蓮', '邪魔？　俺が何度スケジュール組み直したと思ってる。誰かがちゃんとしないと全部崩れるんだよ！');
+      await delay(300);
+      addNarration('教室中が静まりかえった。ふたりの言葉が、空中でぶつかって砕けていく。');
+
+      await delay(400);
+      addButton('→ ふたりの世界を見る', 'btn-next', () => showDay4Comparison());
+    }
+
+    // ============================================
+    // DAY 4：分割スクリーン（両者の見え方）
+    // ============================================
+    async function showDay4Comparison() {
+      clearScreen();
+      setDayLabel('Day 4 — それぞれの世界');
+
+      addNarration('同じ出来事が、ふたりの目にはまったく違って映っていた。');
+      await delay(400);
+
+      const split = el('div', 'split-screen');
+
+      const sakiPanel = el('div', 'split-panel saki-panel');
+      sakiPanel.innerHTML = `
+        <div class="split-label saki-label">咲 の世界</div>
+        <div class="split-post">「私が一番頑張ってる。なのに蓮はいつも否定する」</div>
+        <div class="split-post">フィードに流れてくるのは——蓮の批判、管理主義への嫌悪、咲を応援するリプライ</div>
+        <div class="split-post">「みんな私を支持してくれてる。蓮だけが浮いてる」</div>
+      `;
+
+      const renPanel = el('div', 'split-panel ren-panel');
+      renPanel.innerHTML = `
+        <div class="split-label ren-label">蓮 の世界</div>
+        <div class="split-post">「俺が動かなければ何も進まない。咲は無責任だ」</div>
+        <div class="split-post">フィードに流れてくるのは——咲の無計画さへの批判、蓮の仕事ぶりを称える声</div>
+        <div class="split-post">「だから俺が正しかった。みんなわかってくれてる」</div>
+      `;
+
+      split.appendChild(sakiPanel);
+      split.appendChild(renPanel);
+      append(split);
+
+      await delay(600);
+      addNarration('ふたりはSNSで、自分を肯定する声だけを浴び続けていた。相手の言葉は届かず、自分が正しいという確信だけが育っていった。');
+      await delay(400);
+      addNarration('これが——フィルターバブルの中にいる、ということ。');
+
+      await delay(500);
+      addButton('→ Day 4 SNSへ', 'btn-next', () => showDay4SNS());
+    }
+
+    // ============================================
+    // DAY 4：SNS
+    // ============================================
+    async function showDay4SNS() {
+      clearScreen();
+      setDayLabel('Day 4 — SNS');
+      addSectionHeader('SNS タイムライン');
+      addNarration('対立がSNSにあふれ出していた。');
+
+      await delay(200);
+
+      const posts = [
+        { who: 'saki', name: '渡辺 咲', time: '18:44', text: '自分のやり方だけが正しいと思ってる人、怖い。誰の文化祭なの？', type: 'saki' },
+        { who: 'ren', name: '中島 蓮', time: '19:02', text: '感情で動いて失敗した時に誰かが責任取るの。最初から言ってた。', type: 'ren' },
+        { who: 'hana', name: 'Hana', time: '19:45', text: 'ユウ、明日早めに来て。ちょっと話したいことある。', type: 'neutral' },
+      ];
+
+      for (let i = 0; i < posts.length; i++) {
+        await delay(300 + i * 200);
+        addSNSPost(posts[i], i);
+      }
+
+      await delay(500);
+      addSectionHeader('あなたはどう動く？');
+      await delay(100);
+
+      const choicesArea = el('div', 'choices-area');
+      choicesArea.innerHTML = '<div class="choices-label">SNSに何か書く？</div>';
+
+      const c1 = el('button', 'btn-choice saki-choice', '咲を支持する投稿をする');
+      c1.onclick = () => { scores.saki += 3; day4Choice = 'saki'; showDay5School(); };
+      const c2 = el('button', 'btn-choice ren-choice', '蓮を支持する投稿をする');
+      c2.onclick = () => { scores.ren += 3; day4Choice = 'ren'; showDay5School(); };
+      const c3 = el('button', 'btn-choice neutral-choice', '「ふたりと直接話す」とだけ書く');
+      c3.onclick = () => { scores.neutral += 3; day4Choice = 'neutral'; showDay5School(); };
+      const c4 = el('button', 'btn-choice', '何も書かない');
+      c4.onclick = () => { day4Choice = 'none'; showDay5School(); };
+
+      choicesArea.appendChild(c1);
+      choicesArea.appendChild(c2);
+      choicesArea.appendChild(c3);
+      choicesArea.appendChild(c4);
+      append(choicesArea);
+    }
+
+    // ============================================
+    // DAY 5：学校（最終日）
+    // ============================================
+    async function showDay5School() {
+      clearScreen();
+      setDayLabel('Day 5 — 学校');
+      currentDay = 5;
+
+      const card = el('div', 'day-card');
+      card.innerHTML = `
+        <div class="day-card-num">DAY 5</div>
+        <div class="day-card-title">最後の朝</div>
+        <div class="day-card-sub">文化祭前日</div>
+      `;
+      append(card);
+
+      await delay(200);
+      addNarration('文化祭の前日。Hanaが朝早くに教室に来ていた。');
+      await delay(300);
+      addDialogue('hana', 'Hana', 'ユウ、聞いてくれる？　咲も蓮も、もうギリギリのとこにいる。どっちかが折れるか、誰かが間に入るかしないと、文化祭当日にぐちゃぐちゃになると思う。');
+      await delay(300);
+      addDialogue('hana', 'Hana', 'でも……私には荷が重くて。ユウならできると思う。');
+      await delay(300);
+      addNarration('あなたの胸に、今まで見てきたものが浮かぶ。SNSの言葉、ふたりの表情、Hanaの声。');
+      await delay(200);
+      addSectionHeader('あなたは何をする？');
+
+      await delay(100);
+      const choicesArea = el('div', 'choices-area');
+      choicesArea.innerHTML = '<div class="choices-label">最後の選択</div>';
+
+      const c1 = el('button', 'btn-choice saki-choice', 'A：咲に直接話す（蓮への怒りを整理する手伝い）');
+      c1.onclick = () => { finalChoice = 'A'; scores.saki += 2; showEnding(); };
+      const c2 = el('button', 'btn-choice ren-choice', 'B：蓮に直接話す（咲への不満を聞き出す）');
+      c2.onclick = () => { finalChoice = 'B'; scores.ren += 2; showEnding(); };
+      const c3 = el('button', 'btn-choice neutral-choice', 'C：ふたりを呼んで、三人で話し合う場を作る');
+      c3.onclick = () => { finalChoice = 'C'; scores.neutral += 5; showEnding(); };
+      const c4 = el('button', 'btn-choice', 'D：「自分には関係ない」と思って何もしない');
+      c4.onclick = () => { finalChoice = 'D'; showEnding(); };
+
+      choicesArea.appendChild(c1);
+      choicesArea.appendChild(c2);
+      choicesArea.appendChild(c3);
+      choicesArea.appendChild(c4);
+      append(choicesArea);
+    }
+
+    // ============================================
+    // エンディング分岐ロジック
+    // ============================================
+    function determineEnding() {
+      if (finalChoice === 'D') return 'bystander';
+      if (finalChoice === 'C' && scores.neutral >= 10) return 'reconcile';
+      if (finalChoice === 'A' || finalChoice === 'B') {
+        if (scores.neutral >= 6) return 'partial';
+        else return 'onesided';
+      }
+      if (finalChoice === 'C') return 'partial';
+      return 'bystander';
+    }
+
+    // ============================================
+    // エンディング
+    // ============================================
+    async function showEnding() {
+      clearScreen();
+
+      const ending = determineEnding();
+
+      const endingData = {
+        reconcile: {
+          color: '#27ae60',
+          title: '和解',
+          subtitle: 'ENDING：和解',
+          body: `文化祭の前日、三人はぎりぎりまで話した。<br><br>
+咲は「私、ちゃんと聞いてなかった」と言った。蓮は「俺も言い方がきつかった」と認めた。<br><br>
+翌日の文化祭、お化け屋敷は成功した。完璧ではなかった。でも、完成した。<br><br>
+SNSのフィードを開くと、クラスメートが一緒に写った写真を上げていた。咲と蓮も、同じフレームの中にいた。<br><br>
+あなたは、ふたりが見えていなかったお互いの景色を見せた。それだけで、世界は少しだけ変わった。`,
+        },
+        partial: {
+          color: '#f39c12',
+          title: '片方だけ\n救った',
+          subtitle: 'ENDING：片方だけ救った',
+          body: `文化祭は終わった。<br><br>
+あなたが話を聞いたほうは、少しだけ楽になった。でも、もう片方はまだ傷ついたままだった。<br><br>
+クラスの亀裂は消えなかった。それでも——誰かの話を聞いたこと、それは本物だった。<br><br>
+「正しい側」に立つことと、「誰かの話を聞く」ことは、違うことだとあなたは気づいた。<br><br>
+次にどうするか、それはあなた次第だ。`,
+        },
+        onesided: {
+          color: '#e74c3c',
+          title: '一方的に\n終わった',
+          subtitle: 'ENDING：一方的に終わった',
+          body: `文化祭は終わった。表向きは。<br><br>
+あなたは片方の声を聞き続けた。気づけば、もう片方の声がフィードから消えていた——いや、見えなくなっていた。<br><br>
+相手が変わったのではなく、あなたが見なくなったのだ。<br><br>
+咲と蓮は、文化祭が終わってもほとんど話さなくなった。あなたはその片方と一緒にいた。<br><br>
+もう片方の顔を、あなたはもうよく覚えていない。`,
+        },
+        bystander: {
+          color: '#555',
+          title: '傍観',
+          subtitle: 'ENDING：傍観',
+          body: `文化祭は、なんとか終わった。<br><br>
+あなたは何もしなかった。巻き込まれたくなかった。それは合理的な判断だったかもしれない。<br><br>
+咲も蓮も、それぞれ傷ついたまま、それぞれのグループの中に消えていった。<br><br>
+Hanaは翌日、あなたにメッセージを送ってこなかった。<br><br>
+「既読」のマークだけが、青く光っていた。`,
+        },
+      };
+
+      const data = endingData[ending];
+
+      setDayLabel('ENDING');
+
+      const endScreen = el('div', 'ending-screen');
+      endScreen.innerHTML = `
+        <div style="font-size:11px;color:#444;letter-spacing:3px">ENDING</div>
+        <div class="ending-title" style="color:${data.color}">${data.title}</div>
+        <div class="ending-subtitle" style="color:${data.color}40;font-size:12px">${data.subtitle}</div>
+        <div class="ending-body">${data.body}</div>
+      `;
+      append(endScreen);
+
+      await delay(600);
+      addButton('→ あなたのバイアスを確認する', 'btn-next', () => showBiasVisualization(ending));
+    }
+
+    // ============================================
+    // バイアス可視化
+    // ============================================
+    async function showBiasVisualization(ending) {
+      clearScreen();
+      setDayLabel('振り返り');
+
+      addSectionHeader('フィルターバブル診断');
+      addNarration('ゲームを通じたあなたの行動パターンを分析しました。');
+
+      await delay(400);
+
+      const total = scores.saki + scores.ren + scores.neutral;
+      const safeTotal = total <= 0 ? 1 : total;
+      const sakiPct  = Math.max(0, Math.min(100, Math.round((scores.saki / safeTotal) * 100)));
+      const renPct   = Math.max(0, Math.min(100, Math.round((scores.ren / safeTotal) * 100)));
+      const neutralPct = Math.max(0, Math.min(100, 100 - sakiPct - renPct));
+
+      const biasSection = el('div', 'bias-section');
+      biasSection.innerHTML = `
+        <div class="bias-title">あなたの行動スコア</div>
+
+        <div class="bias-bar-row">
+          <div class="bias-bar-label">
+            <span>咲 よりの行動</span>
+            <span>${sakiPct}%</span>
+          </div>
+          <div class="bias-bar-bg">
+            <div class="bias-bar-fill fill-saki" style="width:0%" data-target="${sakiPct}%"></div>
+          </div>
+        </div>
+
+        <div class="bias-bar-row">
+          <div class="bias-bar-label">
+            <span>蓮 よりの行動</span>
+            <span>${renPct}%</span>
+          </div>
+          <div class="bias-bar-bg">
+            <div class="bias-bar-fill fill-ren" style="width:0%" data-target="${renPct}%"></div>
+          </div>
+        </div>
+
+        <div class="bias-bar-row">
+          <div class="bias-bar-label">
+            <span>中立・両者を聞く行動</span>
+            <span>${neutralPct}%</span>
+          </div>
+          <div class="bias-bar-bg">
+            <div class="bias-bar-fill fill-neutral" style="width:0%" data-target="${neutralPct}%"></div>
+          </div>
+        </div>
+
+        <div class="bias-desc">
+          SNSのアルゴリズムは、あなたが「いいね」を押したコンテンツに似た情報を優先的に届けます。
+          あなたが片方の声を多く肯定すればするほど、相手側の声は届きにくくなります。<br><br>
+          これがフィルターバブルです。誰かが悪いわけではありません。
+          仕組みそのものが、私たちを少しずつ「自分だけの世界」に閉じ込めていきます。<br><br>
+          <strong style="color:#ccc">気づくことが、最初の一歩です。</strong>
+        </div>
+      `;
+      append(biasSection);
+
+      // アニメーション
+      setTimeout(() => {
+        const bars = biasSection.querySelectorAll('.bias-bar-fill');
+        bars.forEach(bar => {
+          bar.style.width = bar.dataset.target;
+        });
+      }, 200);
+
+      await delay(600);
+      addButton('→ もう一度プレイする', 'btn-next', () => {
+        scores = { saki: 0, ren: 0, neutral: 0 };
+        currentDay = 0;
+        day4Choice = null;
+        finalChoice = null;
+        showTitle();
+      });
+    }
+
+    // ============================================
+    // 起動
+    // ============================================
     showTitle();
-  };
-  section.appendChild(replayBtn);
-
-  content.appendChild(section);
-  scrollBottom();
-}
-
-/* ============================================
-   ゲーム起動 — タイトル画面を表示する
-============================================ */
-showTitle();
-</script>
+  </script>
 </body>
 </html>
