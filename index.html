@@ -693,7 +693,7 @@
     // ============================================
     // ユーティリティ
     // ============================================
-    const screen = document.getElementById('screen');
+    const gameScreen = document.getElementById('screen');
     const dayLabel = document.getElementById('day-label');
 
     function setDayLabel(text) {
@@ -701,11 +701,11 @@
     }
 
     function clearScreen() {
-      screen.innerHTML = '';
+      gameScreen.innerHTML = '';
     }
 
     function scrollToBottom() {
-      setTimeout(() => screen.scrollTop = screen.scrollHeight, 50);
+      setTimeout(() => gameScreen.scrollTop = gameScreen.scrollHeight, 50);
     }
 
     function el(tag, cls, html) {
@@ -716,7 +716,7 @@
     }
 
     function append(node) {
-      screen.appendChild(node);
+      gameScreen.appendChild(node);
       scrollToBottom();
     }
 
@@ -847,7 +847,7 @@
     }
 
     async function showDay1SchoolEnd(choice) {
-      const area = screen.querySelector('.choices-area');
+      const area = gameScreen.querySelector('.choices-area');
       if (area) area.remove();
 
       if (choice === 'saki') {
@@ -914,10 +914,10 @@
     }
 
     async function showDay1DMReply() {
-      const btn = screen.querySelector('.btn-next');
+      const btn = gameScreen.querySelector('.btn-next');
       if (btn) btn.remove();
 
-      const dmBody = screen.querySelector('.dm-body');
+      const dmBody = gameScreen.querySelector('.dm-body');
 
       const replyRow = el('div', 'dm-row dm-player-row');
       replyRow.innerHTML = `<div class="dm-bubble dm-player-bubble">うーん、どっちの気持ちもわかる気がする……</div>${iconHtml('yu')}`;
@@ -1077,7 +1077,7 @@
     }
 
     async function showDay2SchoolEnd(choice) {
-      const area = screen.querySelector('.choices-area');
+      const area = gameScreen.querySelector('.choices-area');
       if (area) area.remove();
 
       if (choice === 'saki') {
@@ -1206,7 +1206,7 @@
     }
 
     async function showDay3SchoolMid(choice) {
-      const area = screen.querySelector('.choices-area');
+      const area = gameScreen.querySelector('.choices-area');
       if (area) area.remove();
 
       if (choice === 'saki') {
