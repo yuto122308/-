@@ -3,1393 +3,797 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>通知99+ | 文化祭広報係の7日間</title>
+<title>BCMediaQuest</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  :root {
-    --blue: #0095f6;
-    --light-blue: #e8f4fd;
-    --green: #25d366;
-    --light-green: #dcf8c6;
-    --gray: #8e8e8e;
-    --light-gray: #fafafa;
-    --border: #dbdbdb;
-    --text: #262626;
-    --red: #ed4956;
-    --orange: #f77737;
-  }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif;
-    background: #111;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    overflow: hidden;
-  }
-
-  #phone {
-    width: 390px;
-    height: 844px;
-    background: #fff;
-    border-radius: 44px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
-  }
-
-  @media (max-height: 900px) {
-    #phone { width: 100vw; height: 100vh; border-radius: 0; }
-  }
-  @media (max-width: 430px) {
-    #phone { width: 100vw; height: 100vh; border-radius: 0; }
-  }
-
-  /* ── Status Bar ── */
-  #status-bar {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    background: rgba(255,255,255,0.96);
-    backdrop-filter: blur(12px);
-    padding: 10px 14px 8px;
-    border-bottom: 1px solid var(--border);
-    display: none;
-  }
-  #status-bar.visible { display: block; }
-
-  .status-day {
-    font-size: 10px;
-    color: var(--gray);
-    text-align: center;
-    margin-bottom: 6px;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-  }
-  .status-items {
-    display: flex;
-    justify-content: space-around;
-    gap: 6px;
-  }
-  .status-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    flex: 1;
-  }
-  .status-label { font-size: 9px; color: var(--gray); }
-  .status-track {
-    width: 100%;
-    height: 4px;
-    background: #e8e8e8;
-    border-radius: 2px;
-    overflow: hidden;
-  }
-  .status-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
-  }
-  .status-val { font-size: 11px; font-weight: 800; color: var(--text); }
-
-  /* ── Scenes ── */
-  .scene {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.35s ease;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-  }
-  .scene.active { opacity: 1; pointer-events: all; }
-
-  /* ── Buttons ── */
-  .btn {
-    display: block;
-    width: calc(100% - 32px);
-    margin: 0 auto;
-    padding: 15px;
-    font-size: 15px;
-    font-weight: 700;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: transform 0.15s ease, opacity 0.15s ease;
-    text-align: center;
-    letter-spacing: 0.2px;
-  }
-  .btn:active { transform: scale(0.97); opacity: 0.85; }
-  .btn-blue { background: var(--blue); color: #fff; }
-  .btn-blue:hover { background: #0082d6; }
-  .btn-green { background: var(--green); color: #fff; }
-  .btn-green:hover { background: #20b858; }
-  .btn-ghost { background: #fff; color: var(--blue); border: 2px solid var(--blue); }
-  .btn-ghost:hover { background: var(--light-blue); }
-  .btn-white { background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
-  .btn-white:hover { background: rgba(255,255,255,0.25); }
-
-  .scene-footer {
-    padding: 12px 16px 20px;
-    background: #fff;
-    border-top: 1px solid var(--border);
-  }
-
-  /* ══════════════════════════════════════
-     SCENE 1 — CLASS LINE
-  ═══════════════════════════════════════ */
-  #scene1 { background: #e5ddd5; display: flex; flex-direction: column; }
-
-  .line-header {
-    background: #4caf93;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
-  }
-  .line-header-avatar {
-    width: 38px; height: 38px;
-    background: rgba(255,255,255,0.25);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-  .line-header-name { color: #fff; font-size: 16px; font-weight: 700; }
-  .line-header-members { color: rgba(255,255,255,0.75); font-size: 11px; margin-top: 1px; }
-
-  .line-messages {
-    flex: 1;
-    padding: 14px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    overflow-y: auto;
-  }
-
-  .line-msg {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-  .line-msg.shown { opacity: 1; transform: none; }
-
-  .line-avatar {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 800; color: #fff;
-    flex-shrink: 0;
-  }
-  .line-msg-name { font-size: 10px; color: var(--gray); margin-bottom: 3px; padding-left: 2px; }
-  .line-bubble {
-    background: #fff;
-    border-radius: 18px 18px 18px 4px;
-    padding: 10px 14px;
-    font-size: 14px;
-    line-height: 1.45;
-    color: var(--text);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    max-width: 220px;
-  }
-  .line-time { font-size: 10px; color: rgba(0,0,0,0.4); padding-bottom: 2px; }
-
-  /* ══════════════════════════════════════
-     SCENE 2 — RANKING
-  ═══════════════════════════════════════ */
-  #scene2 { background: #fff; display: flex; flex-direction: column; }
-
-  .insta-nav {
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-  }
-  .insta-wordmark {
-    font-size: 22px;
-    font-weight: 700;
-    font-style: italic;
-    letter-spacing: -0.5px;
-    color: var(--text);
-  }
-  .insta-nav-icons { display: flex; gap: 16px; font-size: 22px; }
-
-  .ranking-body { padding: 18px 16px; flex: 1; }
-  .ranking-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
-  .ranking-sub { font-size: 12px; color: var(--gray); margin-bottom: 18px; }
-
-  .rank-card {
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-    margin-bottom: 12px;
-  }
-  .rank-row {
-    display: flex;
-    align-items: center;
-    padding: 14px 16px;
-    gap: 14px;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  .rank-row:last-child { border-bottom: none; }
-  .rank-row.mine { background: var(--light-blue); }
-
-  .rank-num { font-size: 22px; font-weight: 900; width: 28px; text-align: center; }
-  .rank-class-name { font-size: 15px; font-weight: 600; }
-  .rank-class-handle { font-size: 11px; color: var(--gray); margin-top: 1px; }
-  .rank-likes { font-size: 14px; font-weight: 700; margin-left: auto; }
-
-  .rank-gap-banner {
-    background: #fffbea;
-    border: 1px solid #fde68a;
-    border-radius: 12px;
-    padding: 12px 14px;
-    font-size: 13px;
-    color: #92400e;
-    text-align: center;
-    font-weight: 500;
-  }
-  .rank-hint {
-    margin-top: 12px;
-    padding: 12px 14px;
-    background: var(--light-gray);
-    border-radius: 12px;
-    font-size: 12px;
-    color: var(--gray);
-    line-height: 1.6;
-  }
-
-  /* ══════════════════════════════════════
-     SCENE 3 — POST SELECT
-  ═══════════════════════════════════════ */
-  #scene3 { background: #fff; display: flex; flex-direction: column; }
-
-  .post-head { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-  .post-head-title { font-size: 17px; font-weight: 800; }
-  .post-head-sub { font-size: 12px; color: var(--gray); margin-top: 3px; }
-
-  .post-options {
-    padding: 14px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 11px;
-    flex: 1;
-    overflow-y: auto;
-  }
-
-  .post-opt {
-    border: 2px solid var(--border);
-    border-radius: 16px;
-    padding: 14px 14px 14px 18px;
-    cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s, background 0.15s;
-    background: #fff;
-    position: relative;
-    overflow: hidden;
-  }
-  .post-opt:hover { border-color: var(--blue); background: var(--light-blue); transform: scale(1.01); }
-  .post-opt:active { transform: scale(0.99); }
-
-  .post-opt-tag {
-    display: inline-block;
-    padding: 2px 9px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 700;
-    margin-bottom: 7px;
-  }
-  .post-opt-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-  .post-opt-desc { font-size: 12px; color: #555; line-height: 1.45; max-width: 270px; }
-  .post-opt-boost {
-    position: absolute;
-    right: 14px; top: 50%;
-    transform: translateY(-50%);
-    font-size: 13px; font-weight: 800;
-  }
-
-  /* ══════════════════════════════════════
-     SCENE 4 — BUZZ
-  ═══════════════════════════════════════ */
-  #scene4 {
-    background: #000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 24px;
-    gap: 6px;
-  }
-
-  .buzz-label { font-size: 12px; color: rgba(255,255,255,0.45); margin-bottom: 4px; }
-
-  .buzz-counter {
-    font-size: 52px;
-    font-weight: 900;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: transform 0.2s ease;
-    letter-spacing: -1px;
-  }
-  .buzz-counter.pop { transform: scale(1.08); }
-
-  .buzz-comments {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin: 18px 0 6px;
-    width: 280px;
-  }
-  .buzz-cmt {
-    background: rgba(255,255,255,0.09);
-    border-radius: 20px;
-    padding: 9px 14px;
-    color: #fff;
-    font-size: 13px;
-    opacity: 0;
-    transform: translateX(-16px);
-    transition: opacity 0.35s ease, transform 0.35s ease;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-  }
-  .buzz-cmt.shown { opacity: 1; transform: none; }
-  .buzz-cmt-av {
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 700;
-    flex-shrink: 0;
-  }
-
-  .line-buzz-wrap { width: 280px; margin-top: 8px; }
-  .line-buzz-label { font-size: 10px; color: rgba(255,255,255,0.35); margin-bottom: 5px; padding-left: 2px; }
-  .line-buzz-msgs { display: flex; flex-direction: column; gap: 7px; }
-  .line-buzz-msg {
-    background: var(--light-green);
-    border-radius: 14px 14px 14px 3px;
-    padding: 8px 13px;
-    font-size: 13px;
-    color: #1a1a1a;
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    align-self: flex-start;
-    max-width: 80%;
-  }
-  .line-buzz-msg.shown { opacity: 1; transform: none; }
-
-  .ss-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.88);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.5s ease;
-  }
-  .ss-overlay.shown { opacity: 1; pointer-events: all; }
-  .ss-icon { font-size: 60px; }
-  .ss-title { color: #fff; font-size: 18px; font-weight: 700; text-align: center; line-height: 1.4; }
-  .ss-sub { color: rgba(255,255,255,0.5); font-size: 12px; text-align: center; line-height: 1.5; }
-
-  /* ══════════════════════════════════════
-     SCENE 5 — LOCK SCREEN
-  ═══════════════════════════════════════ */
-  #scene5 {
-    background: linear-gradient(150deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 56px 22px 36px;
-  }
-
-  .lock-clock { font-size: 76px; font-weight: 200; color: #fff; letter-spacing: -2px; line-height: 1; }
-  .lock-date { font-size: 14px; color: rgba(255,255,255,0.65); margin-top: 4px; margin-bottom: 28px; }
-
-  .notif-stack { display: flex; flex-direction: column; gap: 9px; }
-
-  .notif-card {
-    background: rgba(255,255,255,0.13);
-    backdrop-filter: blur(24px);
-    border-radius: 16px;
-    padding: 12px 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    opacity: 0;
-    transform: translateY(12px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-  }
-  .notif-card.shown { opacity: 1; transform: none; }
-
-  .notif-icon {
-    width: 36px; height: 36px;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; flex-shrink: 0;
-  }
-  .notif-app { font-size: 11px; color: rgba(255,255,255,0.55); margin-bottom: 2px; }
-  .notif-text { font-size: 13px; color: #fff; font-weight: 500; }
-  .notif-badge {
-    background: var(--red);
-    color: #fff;
-    font-size: 11px; font-weight: 800;
-    padding: 3px 8px;
-    border-radius: 10px;
-    margin-left: auto;
-    min-width: 30px;
-    text-align: center;
-  }
-
-  .notif-mini-row { display: flex; gap: 9px; margin-top: 4px; }
-  .notif-mini {
-    flex: 1;
-    background: rgba(255,255,255,0.09);
-    backdrop-filter: blur(12px);
-    border-radius: 12px;
-    padding: 10px 10px;
-    text-align: center;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-  }
-  .notif-mini.shown { opacity: 1; transform: none; }
-  .notif-mini-num { font-size: 20px; font-weight: 900; color: #fff; }
-  .notif-mini-lbl { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 1px; }
-
-  .lock-hint { text-align: center; font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 10px; }
-
-  /* ══════════════════════════════════════
-     SCENE 6 — ENJO
-  ═══════════════════════════════════════ */
-  #scene6 { background: #fff; display: flex; flex-direction: column; }
-
-  .post-header-wrap {
-    border-bottom: 1px solid var(--border);
-    padding: 10px 14px;
-    display: flex; align-items: center;
-    gap: 10px;
-  }
-  .post-user-av {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-  }
-  .post-user-name { font-size: 13px; font-weight: 700; flex: 1; }
-  .post-user-sub { font-size: 10px; color: var(--gray); margin-top: 1px; font-weight: 400; }
-  .post-more { color: var(--gray); font-size: 22px; }
-
-  .post-img {
-    width: 100%;
-    aspect-ratio: 1;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 56px;
-    position: relative;
-    flex-shrink: 0;
-  }
-  .post-img-caption {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    background: linear-gradient(transparent, rgba(0,0,0,0.65));
-    color: #fff;
-    padding: 24px 14px 12px;
-    font-size: 13px; line-height: 1.45;
-  }
-
-  .post-actions { display: flex; padding: 10px 14px; gap: 16px; align-items: center; }
-  .post-action { font-size: 24px; cursor: pointer; }
-
-  .post-likes { padding: 0 14px 6px; font-size: 13px; font-weight: 800; color: var(--text); }
-
-  .comments-wrap { flex: 1; overflow-y: auto; padding: 0 14px 8px; }
-
-  .cmt-item {
-    display: flex; gap: 10px;
-    padding: 9px 0;
-    border-bottom: 1px solid #f5f5f5;
-    opacity: 0; transform: translateY(4px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-  .cmt-item.shown { opacity: 1; transform: none; }
-  .cmt-av {
-    width: 28px; height: 28px; border-radius: 50%;
-    background: #e8e8e8;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; flex-shrink: 0;
-  }
-  .cmt-name { font-size: 12px; font-weight: 700; }
-  .cmt-text { font-size: 13px; line-height: 1.4; }
-  .cmt-time { font-size: 10px; color: var(--gray); margin-top: 2px; }
-  .cmt-warn { color: var(--red); }
-  .cmt-neutral { color: #555; }
-
-  .enjo-impact {
-    display: flex;
-    padding: 11px 14px;
-    background: #fff5f5;
-    border-top: 1px solid #ffd5d5;
-    gap: 0;
-  }
-  .impact-col { flex: 1; text-align: center; border-right: 1px solid #ffd5d5; }
-  .impact-col:last-child { border-right: none; }
-  .impact-val { font-size: 16px; font-weight: 900; }
-  .impact-lbl { font-size: 10px; color: var(--gray); margin-top: 1px; }
-
-  /* ══════════════════════════════════════
-     SCENE 7 — TAIOU
-  ═══════════════════════════════════════ */
-  #scene7 { background: #fff; display: flex; flex-direction: column; }
-
-  .taiou-head { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-  .taiou-head-title { font-size: 17px; font-weight: 800; }
-  .taiou-head-sub { font-size: 12px; color: var(--gray); margin-top: 3px; }
-
-  .taiou-alert {
-    padding: 12px 16px;
-    background: #fff3f3;
-    border-bottom: 1px solid #ffd5d5;
-    font-size: 12px; color: #c0392b; line-height: 1.6;
-  }
-
-  .taiou-options { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1; overflow-y: auto; }
-
-  .taiou-opt {
-    border: 2px solid var(--border);
-    border-radius: 14px;
-    padding: 13px 16px;
-    cursor: pointer;
-    transition: transform 0.15s, border-color 0.15s, background 0.15s;
-    display: flex; align-items: center; gap: 12px;
-    background: #fff;
-  }
-  .taiou-opt:hover { border-color: var(--blue); background: var(--light-blue); transform: scale(1.01); }
-  .taiou-opt:active { transform: scale(0.98); }
-  .taiou-opt-icon { font-size: 24px; flex-shrink: 0; }
-  .taiou-opt-title { font-size: 14px; font-weight: 700; color: var(--text); }
-  .taiou-opt-desc { font-size: 11px; color: var(--gray); margin-top: 2px; line-height: 1.4; }
-
-  /* ══════════════════════════════════════
-     RESULT SHEET
-  ═══════════════════════════════════════ */
-  .result-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.65);
-    display: flex; align-items: flex-end; justify-content: center;
-    z-index: 200;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.3s ease;
-  }
-  .result-overlay.shown { opacity: 1; pointer-events: all; }
-  .result-sheet {
-    background: #fff;
-    border-radius: 24px 24px 0 0;
-    padding: 18px 20px 36px;
-    width: 100%;
-    transform: translateY(100%);
-    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
-  }
-  .result-overlay.shown .result-sheet { transform: none; }
-  .result-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 18px; }
-  .result-title { font-size: 19px; font-weight: 900; margin-bottom: 10px; color: var(--text); }
-  .result-body { font-size: 13px; color: #444; line-height: 1.7; margin-bottom: 16px; white-space: pre-line; }
-  .result-stats { background: var(--light-gray); border-radius: 12px; padding: 12px; display: flex; gap: 8px; margin-bottom: 18px; }
-  .result-stat { flex: 1; text-align: center; }
-  .result-stat-val { font-size: 18px; font-weight: 900; }
-  .result-stat-lbl { font-size: 10px; color: var(--gray); margin-top: 2px; }
-
-  /* ══════════════════════════════════════
-     SCENE 8 — ENDING
-  ═══════════════════════════════════════ */
-  #scene8 {
-    background: #fff;
-    display: flex; flex-direction: column;
-    align-items: center;
-    padding: 52px 22px 36px;
-    gap: 18px;
-    overflow-y: auto;
-  }
-
-  .ending-day { font-size: 11px; font-weight: 700; color: var(--gray); letter-spacing: 1px; }
-  .ending-title { font-size: 24px; font-weight: 900; color: var(--text); }
-
-  .ending-msg {
-    font-size: 15px; color: #444; line-height: 1.8;
-    text-align: center; padding: 0 4px;
-  }
-
-  .ending-stats {
-    background: var(--light-gray);
-    border-radius: 20px;
-    padding: 18px 16px;
-    width: 100%;
-  }
-  .ending-stats-title { font-size: 11px; font-weight: 700; color: var(--gray); text-align: center; margin-bottom: 14px; letter-spacing: 1px; }
-
-  .end-row {
-    display: flex; align-items: center;
-    padding: 9px 0;
-    border-bottom: 1px solid var(--border);
-    gap: 10px;
-  }
-  .end-row:last-child { border-bottom: none; }
-  .end-icon { font-size: 16px; width: 22px; text-align: center; }
-  .end-name { font-size: 13px; flex: 1; color: var(--text); }
-  .end-bar-wrap { width: 90px; }
-  .end-bar-bg { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; }
-  .end-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
-  .end-val { font-size: 14px; font-weight: 900; width: 28px; text-align: right; }
-
-  .ending-reflection {
-    background: linear-gradient(135deg, #f0f4ff, #f5f0ff);
-    border: 1px solid #c7d2fe;
-    border-radius: 16px;
-    padding: 18px;
-    width: 100%;
-  }
-  .refl-title { font-size: 13px; font-weight: 800; color: #4338ca; margin-bottom: 10px; }
-  .refl-text { font-size: 13px; color: #374151; line-height: 1.75; white-space: pre-line; }
-
-  /* ══════════════════════════════════════
-     TITLE SCREEN
-  ═══════════════════════════════════════ */
-  #title-screen {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(150deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    z-index: 300;
-    padding: 40px 28px;
-    transition: opacity 0.7s ease;
-  }
-
-  .title-notif {
-    position: relative;
-    margin-bottom: 12px;
-    display: inline-block;
-  }
-  .title-phone { font-size: 80px; line-height: 1; }
-  .title-badge {
-    position: absolute;
-    top: -2px; right: -14px;
-    background: var(--red);
-    color: #fff;
-    font-size: 13px; font-weight: 900;
-    padding: 4px 8px;
-    border-radius: 12px;
-    border: 2px solid #1a1a2e;
-  }
-
-  .title-main { font-size: 34px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
-  .title-sub { font-size: 14px; color: rgba(255,255,255,0.55); margin-top: 6px; text-align: center; }
-
-  .title-day {
-    margin: 32px 0 28px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 20px;
-    padding: 8px 22px;
-    color: rgba(255,255,255,0.75);
-    font-size: 13px;
-  }
-
-  .title-start {
-    background: #fff;
-    color: #1a1a2e;
-    border: none;
-    border-radius: 30px;
-    padding: 16px 50px;
-    font-size: 16px; font-weight: 900;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    letter-spacing: 0.2px;
-  }
-  .title-start:hover { transform: scale(1.04); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
-
-  .title-note {
-    margin-top: 22px;
-    font-size: 11px;
-    color: rgba(255,255,255,0.35);
-    text-align: center;
-    line-height: 1.7;
-  }
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --blue:#0095f6;--green:#25d366;--red:#ed4956;
+  --gray:#8e8e8e;--border:#dbdbdb;--text:#262626;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif;
+  background:#111;display:flex;justify-content:center;align-items:center;
+  min-height:100vh;overflow:hidden;
+}
+#app{
+  width:390px;height:844px;background:#fff;border-radius:44px;
+  overflow:hidden;position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,0.6);
+  transition:opacity 0.3s ease;
+}
+@media(max-height:900px){#app{width:100vw;height:100vh;border-radius:0;}}
+@media(max-width:430px){#app{width:100vw;height:100vh;border-radius:0;}}
+
+/* ── TITLE ── */
+.t-screen{
+  width:100%;height:100%;
+  background:linear-gradient(160deg,#0d0d1a,#1a1a3e,#0d1a2e);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px;position:relative;overflow:hidden;
+}
+.t-stars{
+  position:absolute;inset:0;
+  background-image:
+    radial-gradient(1px 1px at 15% 25%,rgba(255,255,255,0.7) 0%,transparent 100%),
+    radial-gradient(1px 1px at 80% 15%,rgba(255,255,255,0.5) 0%,transparent 100%),
+    radial-gradient(2px 2px at 45% 65%,rgba(255,255,255,0.4) 0%,transparent 100%),
+    radial-gradient(1px 1px at 90% 70%,rgba(255,255,255,0.6) 0%,transparent 100%),
+    radial-gradient(1px 1px at 25% 85%,rgba(255,255,255,0.5) 0%,transparent 100%),
+    radial-gradient(2px 2px at 65% 40%,rgba(255,255,255,0.3) 0%,transparent 100%);
+}
+.t-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.t-icon{font-size:52px;margin-bottom:8px;}
+.t-logo{font-size:38px;font-weight:900;color:#fff;letter-spacing:2px;text-shadow:0 0 40px rgba(100,150,255,0.8);}
+.t-logo span{color:#64b5f6;}
+.t-tag{font-size:13px;color:rgba(255,255,255,0.45);text-align:center;line-height:1.6;margin-bottom:32px;}
+.t-btn{
+  background:linear-gradient(135deg,#42a5f5,#1565c0);
+  color:#fff;border:none;padding:16px 56px;border-radius:30px;
+  font-size:17px;font-weight:800;cursor:pointer;letter-spacing:0.5px;
+  box-shadow:0 8px 32px rgba(66,165,245,0.4);transition:transform 0.2s,box-shadow 0.2s;
+}
+.t-btn:hover{transform:scale(1.04);box-shadow:0 12px 40px rgba(66,165,245,0.5);}
+.t-note{margin-top:24px;font-size:11px;color:rgba(255,255,255,0.25);text-align:center;line-height:1.7;}
+
+/* ── DAY CARD ── */
+.dc{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;}
+.dc-bg{font-size:110px;font-weight:900;color:rgba(255,255,255,0.1);line-height:1;letter-spacing:-6px;}
+.dc-label{font-size:34px;font-weight:900;color:#fff;letter-spacing:4px;}
+.dc-sub{font-size:14px;color:rgba(255,255,255,0.55);}
+.dc-btn{
+  margin-top:36px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);
+  color:#fff;padding:14px 40px;border-radius:30px;font-size:15px;font-weight:700;cursor:pointer;
+  transition:background 0.2s;
+}
+.dc-btn:hover{background:rgba(255,255,255,0.25);}
+
+/* ── NOVEL ── */
+.nv{width:100%;height:100%;position:relative;cursor:pointer;user-select:none;}
+.nv-bg{position:absolute;inset:0;}
+.bg-cd{background:linear-gradient(180deg,#7ec8e3 0%,#b8d4f0 35%,#fff8e7 65%,#d2b48c 85%,#8b7355 100%);}
+.bg-ce{background:linear-gradient(180deg,#ff8c42 0%,#ff6b35 30%,#fff3e0 65%,#d2b48c 85%,#8b7355 100%);}
+.bg-cn{background:linear-gradient(180deg,#1a1a3e 0%,#2d2d5e 40%,#1a1a2e 100%);}
+.nv-box{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(8,8,24,0.88);backdrop-filter:blur(10px);
+  padding:20px 22px 32px;border-top:1px solid rgba(255,255,255,0.1);
+  min-height:160px;
+}
+.nv-sp{font-size:12px;font-weight:700;color:#64b5f6;margin-bottom:8px;letter-spacing:0.5px;}
+.nv-tx{font-size:15px;color:#fff;line-height:1.8;transition:opacity 0.15s;}
+.nv-adv{
+  position:absolute;bottom:14px;right:20px;
+  font-size:11px;color:rgba(255,255,255,0.35);
+  animation:blink 1.2s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+/* ── TUTORIAL ── */
+.tu{width:100%;height:100%;background:linear-gradient(160deg,#e3f2fd,#f3e5f5);display:flex;flex-direction:column;padding:48px 22px 28px;overflow-y:auto;gap:0;}
+.tu-h{font-size:22px;font-weight:900;color:#1565c0;margin-bottom:6px;}
+.tu-s{font-size:12px;color:var(--gray);margin-bottom:20px;}
+.tu-item{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;border-left:4px solid #42a5f5;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+.tu-it{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.tu-id{font-size:12px;color:var(--gray);line-height:1.5;}
+.spc{flex:1;}
+
+/* ── SNS ── */
+.sns{width:100%;height:100%;background:#fff;display:flex;flex-direction:column;overflow:hidden;}
+.sns-nav{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sns-logo{font-size:20px;font-weight:700;font-style:italic;color:var(--text);}
+.sns-icons{display:flex;gap:18px;font-size:22px;}
+.pw{flex:1;overflow-y:auto;}
+.pur{display:flex;align-items:center;gap:10px;padding:12px 14px;}
+.pav{width:36px;height:36px;border-radius:50%;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.pun{font-size:13px;font-weight:700;flex:1;}
+.pm{color:var(--gray);font-size:22px;}
+.pi{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0;}
+.pie{font-size:80px;position:relative;z-index:1;}
+.pil{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.5));color:#fff;padding:20px 14px 10px;font-size:12px;z-index:2;}
+.pi-prep{background:linear-gradient(135deg,#a8edea,#fed6e3);}
+.pi-deco{background:linear-gradient(135deg,#f6d365,#fda085);}
+.pi-tea{background:linear-gradient(135deg,#a18cd1,#fbc2eb);}
+.pi-grp{background:linear-gradient(135deg,#667eea,#764ba2);}
+.pi-vrl{background:linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff);background-size:300%;animation:gshift 3s ease infinite;}
+@keyframes gshift{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
+.par{display:flex;padding:10px 14px;gap:16px;align-items:center;flex-shrink:0;}
+.pa{font-size:24px;cursor:pointer;}
+.plr{padding:0 14px 4px;font-size:13px;font-weight:800;flex-shrink:0;}
+.pcr{padding:0 14px 10px;font-size:13px;line-height:1.5;flex-shrink:0;}
+.pcu{font-weight:700;}
+.psr{padding:0 14px 8px;font-size:11px;color:var(--gray);display:flex;gap:12px;flex-shrink:0;}
+.sf{padding:12px 16px 20px;border-top:1px solid var(--border);flex-shrink:0;}
+
+/* ── VIRAL ── */
+.vr{width:100%;height:100%;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;padding:24px;}
+.vr-lbl{font-size:12px;color:rgba(255,255,255,0.35);letter-spacing:1px;}
+.vr-ctr{font-size:58px;font-weight:900;color:#fff;display:flex;align-items:center;gap:12px;letter-spacing:-2px;transition:transform 0.2s;}
+.vr-ctr.pop{transform:scale(1.1);}
+.vr-heart{color:var(--red);}
+.vr-badge{background:linear-gradient(135deg,#FFD700,#FFA500);color:#333;font-size:18px;font-weight:900;padding:12px 28px;border-radius:30px;margin-top:16px;display:none;box-shadow:0 8px 24px rgba(255,165,0,0.4);}
+
+/* ── LINE ── */
+.lc{width:100%;height:100%;background:#e5ddd5;display:flex;flex-direction:column;}
+.lch{padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.lca{width:38px;height:38px;border-radius:8px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;}
+.lcn{color:#fff;font-size:16px;font-weight:700;}
+.lcs{color:rgba(255,255,255,0.65);font-size:11px;margin-top:1px;}
+.lm{flex:1;padding:12px 12px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;}
+.lmsg{display:flex;align-items:flex-end;gap:8px;opacity:0;transform:translateY(8px);transition:opacity 0.3s,transform 0.3s;}
+.lmsg.s{opacity:1;transform:none;}
+.lmsg.r{flex-direction:row-reverse;}
+.lav{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;}
+.lmb{max-width:65%;}
+.lmn{font-size:10px;color:rgba(0,0,0,0.45);margin-bottom:3px;padding-left:2px;}
+.lb{border-radius:18px;padding:10px 14px;font-size:14px;line-height:1.45;box-shadow:0 1px 2px rgba(0,0,0,0.1);}
+.lb-w{background:#fff;color:var(--text);border-bottom-left-radius:4px;}
+.lb-g{background:#25d366;color:#fff;border-bottom-right-radius:4px;}
+.lt{font-size:10px;color:rgba(0,0,0,0.35);padding-bottom:2px;}
+.lf{padding:12px 16px 20px;background:rgba(0,0,0,0.04);border-top:1px solid rgba(0,0,0,0.08);flex-shrink:0;}
+
+/* ── RANKING ── */
+.rk{width:100%;height:100%;background:#fff;display:flex;flex-direction:column;}
+.rkh{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.rkht{font-size:18px;font-weight:800;}
+.rkhs{font-size:12px;color:var(--gray);margin-top:2px;}
+.rkl{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;}
+.rki{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px 16px;}
+.rki.mine{background:#e8f4fd;border-color:#90caf9;}
+@keyframes cpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+.rki.cel{animation:cpulse 0.6s ease 3;}
+.rkn{font-size:22px;font-weight:900;width:32px;text-align:center;}
+.rkc{flex:1;}
+.rkcn{font-size:15px;font-weight:600;}
+.rkch{font-size:11px;color:var(--gray);margin-top:1px;}
+.rkl2{font-size:15px;font-weight:800;}
+.rkmsg{margin:0 16px 12px;padding:14px;background:#fffde7;border:1px solid #fff176;border-radius:12px;font-size:14px;font-weight:600;color:#f57f17;text-align:center;}
+.rkf{padding:0 16px 20px;flex-shrink:0;}
+
+/* ── POST CREATE ── */
+.pc{width:100%;height:100%;background:#fff;display:flex;flex-direction:column;}
+.pch{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.pcht{font-size:17px;font-weight:800;}
+.pchs{font-size:12px;color:var(--gray);margin-top:2px;}
+.pcb{flex:1;padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;}
+.pcpv{border:2px solid var(--border);border-radius:16px;overflow:hidden;}
+.pcpi{width:100%;aspect-ratio:1;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:80px;}
+.pcca{padding:14px;background:#fafafa;border-top:1px solid var(--border);}
+.pccl{font-size:10px;color:var(--gray);margin-bottom:6px;}
+.pcct{font-size:14px;color:var(--text);line-height:1.6;white-space:pre-line;}
+.pcnt{background:#e3f2fd;border-radius:12px;padding:14px;font-size:12px;color:#1565c0;line-height:1.6;}
+.pcf{padding:12px 16px 24px;flex-shrink:0;}
+
+/* ── LOCK ── */
+.lks{width:100%;height:100%;background:linear-gradient(150deg,#1a1a2e,#16213e,#0f3460);display:flex;flex-direction:column;justify-content:space-between;padding:56px 22px 36px;}
+.lkt{font-size:80px;font-weight:200;color:#fff;letter-spacing:-3px;line-height:1;}
+.lkd{font-size:14px;color:rgba(255,255,255,0.55);margin-top:4px;margin-bottom:28px;}
+.lkns{display:flex;flex-direction:column;gap:10px;}
+.lkn{background:rgba(255,255,255,0.12);backdrop-filter:blur(20px);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px;opacity:0;transform:translateY(10px);transition:opacity 0.4s,transform 0.4s;}
+.lkn.s{opacity:1;transform:none;}
+.lkni{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.lkna{font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:2px;}
+.lknt{font-size:13px;color:#fff;font-weight:500;}
+.lkbdg{background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;margin-left:auto;min-width:30px;text-align:center;}
+.lkh{font-size:12px;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:10px;}
+
+/* ── QUOTE FEED ── */
+.qf{width:100%;height:100%;background:#0a0a0a;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;gap:14px;}
+.qfl{font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:2px;text-transform:uppercase;}
+.qfc{font-size:88px;font-weight:900;color:#fff;letter-spacing:-4px;line-height:1;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);}
+.qfc.ch{color:rgba(255,255,255,0.2);}
+.qfs{font-size:13px;color:rgba(255,255,255,0.3);text-align:center;line-height:1.6;}
+.qfp{width:100%;max-width:180px;}
+.qfpb{height:2px;background:rgba(255,255,255,0.08);border-radius:1px;overflow:hidden;}
+.qfpf{height:100%;background:rgba(255,255,255,0.35);border-radius:1px;transition:width 1s ease;}
+
+/* ── COMMENTS ── */
+.cs{width:100%;height:100%;background:#fff;display:flex;flex-direction:column;}
+.csm{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;background:#fafafa;}
+.csmt{width:48px;height:48px;border-radius:8px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.csmca{font-size:12px;color:var(--text);line-height:1.4;}
+.csmst{font-size:11px;color:var(--gray);margin-top:3px;}
+.clist{flex:1;overflow-y:auto;}
+.cr{padding:12px 16px;border-bottom:1px solid #f5f5f5;display:flex;gap:10px;opacity:0;transform:translateY(5px);transition:opacity 0.35s,transform 0.35s;}
+.cr.s{opacity:1;transform:none;}
+.cav{width:30px;height:30px;border-radius:50%;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.cname{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.ctxt{font-size:13px;color:var(--text);line-height:1.45;}
+.ctm{font-size:10px;color:var(--gray);margin-top:3px;}
+.ctag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px;vertical-align:middle;}
+.tg-s{background:#d4edda;color:#155724;}
+.tg-n{background:#e8e8e8;color:#555;}
+.tg-c{background:#fff3cd;color:#856404;}
+.cnote{padding:12px 16px;background:#fffde7;border-top:1px solid #fff176;font-size:12px;color:#856404;line-height:1.6;flex-shrink:0;}
+.cf{padding:12px 16px 20px;flex-shrink:0;}
+
+/* ── ENDING ── */
+.en{width:100%;height:100%;background:linear-gradient(160deg,#1a1a2e,#2d1b3d);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;gap:22px;}
+.en-ic{font-size:44px;}
+.en-ln{width:60px;height:1px;background:rgba(255,255,255,0.2);}
+.en-tx{font-size:15px;color:rgba(255,255,255,0.82);line-height:1.95;text-align:center;white-space:pre-line;}
+
+/* ── REFLECTION ── */
+.rf{width:100%;height:100%;background:#fff;display:flex;flex-direction:column;align-items:center;padding:48px 24px 32px;gap:18px;overflow-y:auto;}
+.rf-ic{font-size:40px;}
+.rf-q{font-size:19px;font-weight:900;color:var(--text);text-align:center;line-height:1.5;}
+.rf-bd{font-size:13px;color:var(--gray);line-height:1.7;text-align:center;}
+.rf-sp{width:100%;background:#f5f5f5;border:2px dashed var(--border);border-radius:16px;padding:20px;text-align:center;font-size:13px;color:#bbb;font-style:italic;line-height:1.6;}
+.rf-facts{padding:14px;background:#f9f9f9;border-radius:12px;width:100%;}
+.rf-ft{font-size:12px;font-weight:700;color:#555;margin-bottom:8px;}
+.rf-fd{font-size:12px;color:var(--gray);line-height:1.8;}
+
+/* ── BUTTONS ── */
+.btn{display:block;width:100%;padding:15px;font-size:15px;font-weight:700;border:none;border-radius:12px;cursor:pointer;transition:transform 0.15s,opacity 0.15s;text-align:center;}
+.btn:active{transform:scale(0.97);opacity:0.85;}
+.btn-bl{background:#0095f6;color:#fff;}
+.btn-bl:hover{background:#0082d6;}
+.btn-gr{background:#25d366;color:#fff;}
+.btn-gr:hover{background:#20b858;}
+.btn-dk{background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25);}
+.btn-dk:hover{background:rgba(255,255,255,0.22);}
+.btn-ol{background:#fff;color:#0095f6;border:2px solid #0095f6;}
+.btn-ol:hover{background:#e8f4fd;}
 </style>
 </head>
 <body>
-<div id="phone">
-
-  <!-- ── Title ── -->
-  <div id="title-screen">
-    <div class="title-notif">
-      <div class="title-phone">📱</div>
-      <div class="title-badge">99+</div>
-    </div>
-    <div class="title-main">通知99+</div>
-    <div class="title-sub">文化祭広報係の7日間</div>
-    <div class="title-day">📅 Day 5 → Day 6</div>
-    <button class="title-start" onclick="startGame()">はじめる</button>
-    <p class="title-note">このゲームは炎上を疑似体験する<br>教育コンテンツです</p>
-  </div>
-
-  <!-- ── Status Bar ── -->
-  <div id="status-bar">
-    <div class="status-day" id="status-day-label">DAY 5 — 文化祭まであと2日</div>
-    <div class="status-items">
-      <div class="status-item">
-        <div class="status-label">❤️ 友人</div>
-        <div class="status-track"><div class="status-fill" id="sf-friends" style="background:#ed4956;width:80%"></div></div>
-        <div class="status-val" id="sv-friends">80</div>
-      </div>
-      <div class="status-item">
-        <div class="status-label">🧠 メンタル</div>
-        <div class="status-track"><div class="status-fill" id="sf-mental" style="background:#0095f6;width:80%"></div></div>
-        <div class="status-val" id="sv-mental">80</div>
-      </div>
-      <div class="status-item">
-        <div class="status-label">📱 SNS</div>
-        <div class="status-track"><div class="status-fill" id="sf-sns" style="background:#f77737;width:50%"></div></div>
-        <div class="status-val" id="sv-sns">50</div>
-      </div>
-      <div class="status-item">
-        <div class="status-label">🎉 成功度</div>
-        <div class="status-track"><div class="status-fill" id="sf-fes" style="background:#25d366;width:50%"></div></div>
-        <div class="status-val" id="sv-fes">50</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ Scene 1: LINE ══ -->
-  <div class="scene" id="scene1" style="display:flex;flex-direction:column;">
-    <div class="line-header">
-      <div class="line-avatar" style="background:rgba(255,255,255,0.25);border-radius:8px;font-size:18px;">🏫</div>
-      <div>
-        <div class="line-header-name">2-B 文化祭グループ</div>
-        <div class="line-header-members">メンバー 38人</div>
-      </div>
-    </div>
-    <div class="line-messages" id="line-messages"></div>
-    <div class="scene-footer">
-      <div style="text-align:center;font-size:11px;color:var(--gray);margin-bottom:10px;">Day 5 — 放課後 17:30</div>
-      <button class="btn btn-green" onclick="goScene(2)">📊 SNSランキングを確認する</button>
-    </div>
-  </div>
-
-  <!-- ══ Scene 2: Ranking ══ -->
-  <div class="scene" id="scene2" style="display:flex;flex-direction:column;">
-    <div class="insta-nav">
-      <div class="insta-wordmark">Karuta</div>
-      <div class="insta-nav-icons"><span>🔔</span><span>📤</span></div>
-    </div>
-    <div class="ranking-body">
-      <div class="ranking-title">🏆 文化祭SNSランキング</div>
-      <div class="ranking-sub">リアルタイム更新 · 残り2日</div>
-      <div class="rank-card">
-        <div class="rank-row">
-          <div class="rank-num" style="color:#f6c90e;">1</div>
-          <div><div class="rank-class-name">A組</div><div class="rank-class-handle">@bunka_A_class</div></div>
-          <div class="rank-likes">❤️ 2,300</div>
-        </div>
-        <div class="rank-row mine">
-          <div class="rank-num" style="color:#9e9e9e;">2</div>
-          <div><div class="rank-class-name">B組（あなた）</div><div class="rank-class-handle">@bunka_B_class</div></div>
-          <div class="rank-likes">❤️ 1,200</div>
-        </div>
-        <div class="rank-row">
-          <div class="rank-num" style="color:#cd7f32;">3</div>
-          <div><div class="rank-class-name">C組</div><div class="rank-class-handle">@bunka_C_class</div></div>
-          <div class="rank-likes">❤️ 900</div>
-        </div>
-      </div>
-      <div class="rank-gap-banner">💪 あと <strong>1,100いいね</strong> でA組に追いつける！</div>
-      <div class="rank-hint">昨日のB組投稿、いい感じに伸びてる。<br>あと一押しで逆転できそうだ…！</div>
-    </div>
-    <div class="scene-footer">
-      <button class="btn btn-blue" onclick="goScene(3)">✏️ 今夜の投稿を考える</button>
-    </div>
-  </div>
-
-  <!-- ══ Scene 3: Post Select ══ -->
-  <div class="scene" id="scene3" style="display:flex;flex-direction:column;">
-    <div class="post-head">
-      <div class="post-head-title">どんな投稿をする？</div>
-      <div class="post-head-sub">今夜の投稿で、明日の順位が決まる</div>
-    </div>
-    <div class="post-options">
-
-      <div class="post-opt" onclick="selectPost('effort')" style="border-left:4px solid #0095f6;">
-        <div class="post-opt-tag" style="background:#e8f4fd;color:#0095f6;">🌸 安全</div>
-        <div class="post-opt-title">努力アピール</div>
-        <div class="post-opt-desc">準備中の様子を投稿。好感度は高いが、インパクトは薄め。</div>
-        <div class="post-opt-boost" style="color:#0095f6;">+20 📈</div>
-      </div>
-
-      <div class="post-opt" onclick="selectPost('teacher')" style="border-left:4px solid #f77737;">
-        <div class="post-opt-tag" style="background:#fff3e0;color:#f77737;">😂 面白い</div>
-        <div class="post-opt-title">先生ネタ</div>
-        <div class="post-opt-desc">先生の面白い瞬間を投稿。バズりやすいが、許可は取っていない。</div>
-        <div class="post-opt-boost" style="color:#f77737;">+80 🔥</div>
-      </div>
-
-      <div class="post-opt" onclick="selectPost('inner')" style="border-left:4px solid #25d366;">
-        <div class="post-opt-tag" style="background:#e8f8f0;color:#25d366;">🤝 内輪受け</div>
-        <div class="post-opt-title">内輪ネタ</div>
-        <div class="post-opt-desc">クラスだけわかるネタ。クラス内の盛り上がりは最高潮。</div>
-        <div class="post-opt-boost" style="color:#25d366;">+70 ✨</div>
-      </div>
-
-      <div class="post-opt" onclick="selectPost('rival')" style="border-left:4px solid #ed4956;">
-        <div class="post-opt-tag" style="background:#fce8ea;color:#ed4956;">⚡ 刺激的</div>
-        <div class="post-opt-title">ライバルいじり</div>
-        <div class="post-opt-desc">A組を軽く煽る投稿。拡散力は最高。でも笑えない人には笑えない。</div>
-        <div class="post-opt-boost" style="color:#ed4956;">+90 💥</div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ══ Scene 4: Buzz ══ -->
-  <div class="scene" id="scene4">
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px 24px;gap:4px;">
-      <div class="buzz-label">投稿が広がっています…</div>
-      <div class="buzz-counter" id="buzz-counter">
-        <span style="color:#ed4956;">❤️</span>
-        <span id="buzz-num">1,200</span>
-      </div>
-      <div class="buzz-comments" id="buzz-cmts">
-        <div class="buzz-cmt" id="bc0"><div class="buzz-cmt-av" style="background:#e91e63;">🙋</div><span>すごい！！！</span></div>
-        <div class="buzz-cmt" id="bc1"><div class="buzz-cmt-av" style="background:#2196f3;">🙋</div><span>神投稿！！バズってる笑</span></div>
-        <div class="buzz-cmt" id="bc2"><div class="buzz-cmt-av" style="background:#ff9800;">🙋</div><span>優勝いける！！！！</span></div>
-        <div class="buzz-cmt" id="bc3"><div class="buzz-cmt-av" style="background:#4caf50;">🙋</div><span>わろた 最高すぎ</span></div>
-      </div>
-      <div class="line-buzz-wrap">
-        <div class="line-buzz-label">💬 2-B 文化祭グループ</div>
-        <div class="line-buzz-msgs">
-          <div class="line-buzz-msg" id="lb0">神！！！😭</div>
-          <div class="line-buzz-msg" id="lb1">ありがとう！！！</div>
-          <div class="line-buzz-msg" id="lb2">優勝あるぞ！！🏆</div>
-          <div class="line-buzz-msg" id="lb3">広報係神すぎる</div>
-        </div>
-      </div>
-    </div>
-    <div class="ss-overlay" id="ss-overlay">
-      <div class="ss-icon">📱</div>
-      <div class="ss-title">スクリーンショットが<br>保存されました</div>
-      <div class="ss-sub">このページの画像は<br>すでに保存・拡散されています</div>
-    </div>
-  </div>
-
-  <!-- ══ Scene 5: Lock ══ -->
-  <div class="scene" id="scene5">
-    <div>
-      <div class="lock-clock">7:01</div>
-      <div class="lock-date">木曜日 2024年11月14日</div>
-      <div class="notif-stack">
-        <div class="notif-card" id="nc0">
-          <div class="notif-icon" style="background:#25d366;">💬</div>
-          <div style="flex:1;">
-            <div class="notif-app">LINE</div>
-            <div class="notif-text">2-Bグループ — 新しいメッセージ</div>
-          </div>
-          <div class="notif-badge">34</div>
-        </div>
-        <div class="notif-card" id="nc1">
-          <div class="notif-icon" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);">📸</div>
-          <div style="flex:1;">
-            <div class="notif-app">Karuta</div>
-            <div class="notif-text">投稿へのコメントが急増しています</div>
-          </div>
-          <div class="notif-badge">99+</div>
-        </div>
-        <div class="notif-mini-row" id="nmr">
-          <div class="notif-mini" id="nm0"><div class="notif-mini-num">34</div><div class="notif-mini-lbl">💬 LINE</div></div>
-          <div class="notif-mini" id="nm1"><div class="notif-mini-num">124</div><div class="notif-mini-lbl">❤️ SNS</div></div>
-          <div class="notif-mini" id="nm2"><div class="notif-mini-num">17</div><div class="notif-mini-lbl">✉️ DM</div></div>
-        </div>
-      </div>
-    </div>
-    <div>
-      <div class="lock-hint">↑ スワイプしてロック解除</div>
-      <button class="btn btn-white" onclick="goScene(6)">📱 SNSを開く</button>
-    </div>
-  </div>
-
-  <!-- ══ Scene 6: Enjo ══ -->
-  <div class="scene" id="scene6" style="display:flex;flex-direction:column;">
-    <div class="insta-nav">
-      <div class="insta-wordmark">Karuta</div>
-      <div class="insta-nav-icons"><span>🔔</span></div>
-    </div>
-    <div class="post-header-wrap">
-      <div class="post-user-av">🏫</div>
-      <div style="flex:1;">
-        <div class="post-user-name">bunka_B_class</div>
-        <div class="post-user-sub">昨日 22:34 · 投稿</div>
-      </div>
-      <div class="post-more">···</div>
-    </div>
-    <div class="post-img" id="post-img">
-      <span>📸</span>
-      <div class="post-img-caption" id="post-caption">昨日の投稿</div>
-    </div>
-    <div class="post-actions">
-      <span class="post-action">❤️</span>
-      <span class="post-action">💬</span>
-      <span class="post-action">📤</span>
-      <div style="flex:1;"></div>
-      <span class="post-action">🔖</span>
-    </div>
-    <div class="post-likes" id="enjo-likes">❤️ 12,048いいね</div>
-    <div class="comments-wrap" id="comments-wrap"></div>
-    <div class="enjo-impact" id="enjo-impact">
-      <div class="impact-col"><div class="impact-val" id="imp-friends" style="color:#ed4956;">−15</div><div class="impact-lbl">❤️ 友人</div></div>
-      <div class="impact-col"><div class="impact-val" id="imp-mental" style="color:#0095f6;">−20</div><div class="impact-lbl">🧠 メンタル</div></div>
-      <div class="impact-col"><div class="impact-val" id="imp-sns" style="color:#f77737;">↑</div><div class="impact-lbl">📱 SNS</div></div>
-    </div>
-    <div class="scene-footer">
-      <button class="btn btn-blue" onclick="goScene(7)">😰 どうする…？</button>
-    </div>
-  </div>
-
-  <!-- ══ Scene 7: Taiou ══ -->
-  <div class="scene" id="scene7" style="display:flex;flex-direction:column;">
-    <div class="taiou-head">
-      <div class="taiou-head-title">どう対応する？</div>
-      <div class="taiou-head-sub">コメントは今も増え続けている</div>
-    </div>
-    <div class="taiou-alert" id="taiou-alert">
-      📊 SNS評価は上がったが…<br>コメント欄が荒れ始めている。<br>「学校どこ？」「拡散します」という声も出ている。
-    </div>
-    <div class="taiou-options">
-      <div class="taiou-opt" onclick="chooseTaiou('delete')">
-        <div class="taiou-opt-icon">🗑️</div>
-        <div><div class="taiou-opt-title">削除する</div><div class="taiou-opt-desc">投稿を今すぐ消す。でも、すでにスクショされているかも。</div></div>
-      </div>
-      <div class="taiou-opt" onclick="chooseTaiou('apology')">
-        <div class="taiou-opt-icon">🙏</div>
-        <div><div class="taiou-opt-title">謝罪する</div><div class="taiou-opt-desc">「配慮が足りませんでした」と正直に謝る。</div></div>
-      </div>
-      <div class="taiou-opt" onclick="chooseTaiou('explain')">
-        <div class="taiou-opt-icon">💬</div>
-        <div><div class="taiou-opt-title">説明する</div><div class="taiou-opt-desc">「悪意はなかった」「問題ない」と説明する。</div></div>
-      </div>
-      <div class="taiou-opt" onclick="chooseTaiou('ignore')">
-        <div class="taiou-opt-icon">🙈</div>
-        <div><div class="taiou-opt-title">無視する</div><div class="taiou-opt-desc">関係ない。そのうち落ち着くだろう。</div></div>
-      </div>
-      <div class="taiou-opt" onclick="chooseTaiou('teacher')">
-        <div class="taiou-opt-icon">👨‍🏫</div>
-        <div><div class="taiou-opt-title">先生に相談する</div><div class="taiou-opt-desc">大人に頼る。怒られるかもしれないけど、一人じゃない。</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ Scene 8: Ending ══ -->
-  <div class="scene" id="scene8">
-    <div class="ending-day">DAY 6 終了</div>
-    <div class="ending-title">📱</div>
-    <div class="ending-msg">
-      SNSは便利で楽しい。<br>
-      でも一度拡散された投稿は、<br>
-      自分の手を離れることがある。
-    </div>
-    <div class="ending-stats">
-      <div class="ending-stats-title">FINAL STATUS</div>
-      <div class="end-row">
-        <div class="end-icon">❤️</div>
-        <div class="end-name">友人関係</div>
-        <div class="end-bar-wrap"><div class="end-bar-bg"><div class="end-bar-fill" id="eb-friends" style="background:#ed4956;width:0%"></div></div></div>
-        <div class="end-val" id="ev-friends">—</div>
-      </div>
-      <div class="end-row">
-        <div class="end-icon">🧠</div>
-        <div class="end-name">メンタル</div>
-        <div class="end-bar-wrap"><div class="end-bar-bg"><div class="end-bar-fill" id="eb-mental" style="background:#0095f6;width:0%"></div></div></div>
-        <div class="end-val" id="ev-mental">—</div>
-      </div>
-      <div class="end-row">
-        <div class="end-icon">📱</div>
-        <div class="end-name">SNS評価</div>
-        <div class="end-bar-wrap"><div class="end-bar-bg"><div class="end-bar-fill" id="eb-sns" style="background:#f77737;width:0%"></div></div></div>
-        <div class="end-val" id="ev-sns">—</div>
-      </div>
-      <div class="end-row">
-        <div class="end-icon">🎉</div>
-        <div class="end-name">文化祭成功度</div>
-        <div class="end-bar-wrap"><div class="end-bar-bg"><div class="end-bar-fill" id="eb-fes" style="background:#25d366;width:0%"></div></div></div>
-        <div class="end-val" id="ev-fes">—</div>
-      </div>
-    </div>
-    <div class="ending-reflection">
-      <div class="refl-title">🤔 考えてみよう</div>
-      <div class="refl-text" id="refl-text">あなたが選んだ投稿は、なぜ「面白い」と思ったのだろう？\n\n投稿する前に止まれたとしたら、何が必要だっただろう？</div>
-    </div>
-    <div style="width:100%;">
-      <button class="btn btn-blue" onclick="restartGame()">🔄 もう一度プレイする</button>
-    </div>
-  </div>
-
-  <!-- ══ Result Sheet ══ -->
-  <div class="result-overlay" id="result-overlay">
-    <div class="result-sheet">
-      <div class="result-handle"></div>
-      <div class="result-title" id="result-title"></div>
-      <div class="result-body" id="result-body"></div>
-      <div class="result-stats" id="result-stats"></div>
-      <button class="btn btn-blue" onclick="closeResult()">次へ →</button>
-    </div>
-  </div>
-
-</div><!-- /phone -->
-
+<div id="app"></div>
 <script>
-// ─── State ─────────────────────────────────────────────────
-const S = { friends: 80, mental: 80, sns: 50, fes: 50, post: null, taiou: null };
-let curScene = 0;
+// ════════════════════════════════════════
+//  SCENE DATA
+// ════════════════════════════════════════
+const S = [
+  {t:'title'},
 
-function clamp(v) { return Math.max(0, Math.min(100, v)); }
+  // DAY 1
+  {t:'dc',day:1,sub:'文化祭まで7日',bg:'#1b5e20'},
+  {t:'nv',bg:'cd',ln:[
+    {sp:'',tx:'去年の文化祭は、来場者が少なかった。クラスのみんなは今年こそと意気込んでいる。'},
+    {sp:'担任・田中先生',tx:'今年から文化祭SNS広報コンテストを開催します。各クラスの広報担当が投稿を管理し、いいね数の合計で順位を競います。'},
+    {sp:'クラスメイト',tx:'やばい！！うちのクラス絶対やれる気がする！！'},
+    {sp:'親友・アキ',tx:'ねえ、広報係やってみなよ。写真センスあるじゃん。絶対向いてると思う！'},
+    {sp:'',tx:'あなたはB組のSNS広報責任者になった。文化祭まであと7日。'},
+  ]},
+  {t:'tu'},
 
-function applyDelta(d) {
-  Object.keys(d).forEach(k => { if (S[k] !== undefined) S[k] = clamp(S[k] + d[k]); });
-  renderStatus();
-}
+  // DAY 2
+  {t:'dc',day:2,sub:'文化祭まで6日',bg:'#0d47a1'},
+  {t:'nv',bg:'cd',ln:[
+    {sp:'',tx:'放課後、準備が始まった。みんながワイワイしながら作業している。'},
+    {sp:'',tx:'準備の様子を写真に撮り、初めての投稿をした。'},
+  ]},
+  {t:'post',post:{img:'prep',lbl:'B組 準備スタート！',
+    cap:'文化祭まで6日！B組の準備が始まりました🎊\nみんなで力を合わせて頑張ります！\n#文化祭 #B組 #BCMediaQuest',
+    likes:120,comments:8,shares:3,anim:false}},
+  {t:'line',room:'class',hdr:'#4caf93',msgs:[
+    {f:'アキ',av:'A',c:'#e91e63',tx:'いいじゃん！！',d:500},
+    {f:'委員長・ユイ',av:'Y',c:'#2196f3',tx:'いいね数増えてきてる！',d:1100},
+    {f:'クラスメイト',av:'M',c:'#ff9800',tx:'写真かわいい！',d:1700},
+  ]},
 
-function renderStatus() {
-  const keys = ['friends','mental','sns','fes'];
-  keys.forEach(k => {
-    document.getElementById('sf-'+k).style.width = S[k] + '%';
-    document.getElementById('sv-'+k).textContent = S[k];
-  });
-}
+  // DAY 3
+  {t:'dc',day:3,sub:'文化祭まで5日',bg:'#4a148c'},
+  {t:'nv',bg:'ce',ln:[
+    {sp:'',tx:'放課後、装飾作りが本格化してきた。'},
+    {sp:'委員長・ユイ',tx:'これ絶対バズるよ！メイキング動画好きな人多いし。'},
+    {sp:'',tx:'装飾メイキングの様子を投稿した。'},
+  ]},
+  {t:'post',post:{img:'deco',lbl:'✨ 装飾メイキング中！',
+    cap:'✨装飾メイキング✨\n放課後残って作業中！完成が楽しみ〜\n#文化祭 #B組 #手作り #メイキング',
+    likes:700,comments:34,shares:12,anim:true,from:120}},
+  {t:'rank',data:{rows:[
+    {r:1,n:'A組',l:'850',medal:'🥇'},
+    {r:2,n:'C組',l:'780',medal:'🥈'},
+    {r:3,n:'B組（あなた）',l:'700',medal:'🥉',mine:true},
+    {r:4,n:'D組',l:'340',medal:''},
+  ],msg:'🥉 3位に浮上！もっと上を目指せる！'}},
 
-// ─── Scene Navigation ───────────────────────────────────────
-function goScene(n) {
-  if (curScene) document.getElementById('scene'+curScene).classList.remove('active');
-  curScene = n;
-  const el = document.getElementById('scene'+n);
-  el.classList.add('active');
-  el.scrollTop = 0;
-  if (n === 1) initS1();
-  if (n === 5) initS5();
-  if (n === 6) initS6();
-  if (n === 8) initS8();
-}
+  // DAY 4
+  {t:'dc',day:4,sub:'文化祭まで4日',bg:'#bf360c'},
+  {t:'nv',bg:'cd',ln:[
+    {sp:'担任・田中先生',tx:'せっかくだから先生もカウントダウン動画に参加しますよ。「文化祭まで4日！」…こんな感じ？'},
+    {sp:'クラスメイト',tx:'先生ウケるｗｗｗ 絶対投稿して！！！'},
+    {sp:'',tx:'先生のカウントダウン動画を撮影して投稿した。これは絶対バズる気がする。'},
+  ]},
+  {t:'post',post:{img:'tea',lbl:'カウントダウン あと4日！',
+    cap:'【文化祭カウントダウン】あと4日！\n田中先生も一緒にカウントダウン🎤\n先生ノリノリすぎてウケるｗ\n#文化祭 #B組 #あと4日',
+    likes:2000,comments:89,shares:45,anim:true,from:700}},
+  {t:'rank',data:{rows:[
+    {r:1,n:'A組',l:'1,800',medal:'🥇'},
+    {r:2,n:'B組（あなた）',l:'2,000',medal:'🥈',mine:true},
+    {r:3,n:'C組',l:'1,200',medal:'🥉'},
+    {r:4,n:'D組',l:'680',medal:''},
+  ],msg:'🥈 2位に浮上！A組まであと少し！'}},
+  {t:'line',room:'friend',hdr:'#00897b',msgs:[
+    {f:'アキ',av:'A',c:'#e91e63',tx:'やば！！2位なった！！！',d:500},
+    {f:'アキ',av:'A',c:'#e91e63',tx:'先生の動画めちゃくちゃバズってるじゃん笑',d:1200},
+    {f:'you',tx:'先生が協力してくれたおかげだよ笑',d:2000},
+    {f:'アキ',av:'A',c:'#e91e63',tx:'明日も投稿楽しみにしてるね！！',d:2800},
+  ]},
 
-// ─── Title ─────────────────────────────────────────────────
-function startGame() {
-  const ts = document.getElementById('title-screen');
-  ts.style.opacity = '0';
-  ts.style.pointerEvents = 'none';
-  setTimeout(() => ts.style.display = 'none', 700);
-  document.getElementById('status-bar').classList.add('visible');
-  renderStatus();
-  // nudge scenes down for status bar
-  document.querySelectorAll('.scene:not(#scene5)').forEach(s => s.style.paddingTop = '76px');
-  goScene(1);
-}
+  // DAY 5
+  {t:'dc',day:5,sub:'文化祭前日',bg:'#880e4f'},
+  {t:'nv',bg:'cd',ln:[
+    {sp:'',tx:'文化祭の前日。クラス全員がクラスTシャツを着て、教室に集合した。'},
+    {sp:'親友・アキ',tx:'ねえ！集合写真撮って投稿しようよ！みんなで！'},
+    {sp:'委員長・ユイ',tx:'いいね！せっかくだし記念にもなるし。'},
+    {sp:'',tx:'クラス全員で集合写真を撮った。キャプションを考える。どんな言葉を添えよう…'},
+  ]},
+  {t:'pcreate'},
+  {t:'viral'},
+  {t:'rank',data:{rows:[
+    {r:1,n:'B組（あなた）',l:'15,000',medal:'🏆',mine:true,cel:true},
+    {r:2,n:'A組',l:'3,200',medal:'🥇'},
+    {r:3,n:'C組',l:'2,100',medal:'🥈'},
+    {r:4,n:'D組',l:'890',medal:'🥉'},
+  ],msg:'🏆 逆転！圧倒的1位！！',cel:true}},
+  {t:'line',room:'class',hdr:'#4caf93',msgs:[
+    {f:'アキ',av:'A',c:'#e91e63',tx:'マジで！？1位！！！！！',d:400},
+    {f:'委員長・ユイ',av:'Y',c:'#2196f3',tx:'すごすぎる…！！！！',d:1000},
+    {f:'クラスメイトA',av:'M',c:'#ff9800',tx:'広報係神すぎ！！！！',d:1600},
+    {f:'クラスメイトB',av:'K',c:'#4caf50',tx:'ありがとう！！明日最高にしよう！！',d:2300},
+    {f:'アキ',av:'A',c:'#e91e63',tx:'明日絶対楽しもうね！！！',d:3000},
+  ]},
 
-// ─── Scene 1 ───────────────────────────────────────────────
-const LINE_MSGS = [
-  { color: '#e91e63', init: 'A', name: 'Aちゃん', text: 'もっと伸ばしたい！！', t: 300 },
-  { color: '#2196f3', init: 'B', name: 'Bくん',   text: '神投稿頼む！🙏',       t: 900 },
-  { color: '#ff9800', init: 'C', name: 'Cさん',   text: '今年こそ絶対優勝したい', t: 1600 },
-  { color: '#4caf50', init: 'D', name: 'Dくん',   text: '広報係、頼んだぞ！！', t: 2400 },
+  // DAY 6
+  {t:'dc',day:6,sub:'文化祭当日の朝',bg:'#263238'},
+  {t:'lock'},
+  {t:'qfeed'},
+  {t:'cmts'},
+
+  // DAY 7
+  {t:'dc',day:7,sub:'文化祭当日',bg:'#1a237e'},
+  {t:'line',room:'friend',hdr:'#00897b',msgs:[
+    {f:'アキ',av:'A',c:'#e91e63',tx:'昨日の投稿…なんかいろいろ言われてるね',d:700},
+    {f:'you',tx:'うん…悪気はなかったんだけど',d:1600},
+    {f:'アキ',av:'A',c:'#e91e63',tx:'悪気はなかったよな、絶対。みんなも分かってると思うよ。',d:2500},
+    {f:'アキ',av:'A',c:'#e91e63',tx:'でも…なんか複雑だよね。',d:3400},
+  ]},
+  {t:'line',room:'rep',hdr:'#1565c0',msgs:[
+    {f:'委員長・ユイ',av:'Y',c:'#2196f3',tx:'昨日の投稿の件、少し話せる？',d:700},
+    {f:'you',tx:'うん。何かあった？',d:1600},
+    {f:'委員長・ユイ',av:'Y',c:'#2196f3',tx:'クラスのみんなは喜んでたよ。でも…顔が映ってた人の中に、SNSに載るの嫌だった人もいたかもしれない。',d:2600},
+    {f:'委員長・ユイ',av:'Y',c:'#2196f3',tx:'難しいよね。良いことのつもりでも、全員が同じ気持ちとは限らないから。',d:3800},
+  ]},
+  {t:'nv',bg:'cd',ln:[
+    {sp:'担任・田中先生',tx:'ちょっといい？昨日の投稿のことなんだけど。'},
+    {sp:'担任・田中先生',tx:'投稿した時と、見る人の立場は違う。それを忘れないでほしい。'},
+    {sp:'担任・田中先生',tx:'君のクラスへの想いは伝わったよ。でも…投稿には、その場にいなかった人も見ている。'},
+    {sp:'担任・田中先生',tx:'送り手が「良いこと」だと思っていても、受け取る人の景色は違うことがある。'},
+    {sp:'',tx:'先生の言葉が、頭の中でずっと回り続けた。'},
+  ]},
+
+  // ENDING
+  {t:'end'},
+  {t:'refl'},
 ];
 
-function initS1() {
-  const c = document.getElementById('line-messages');
-  c.innerHTML = '';
-  LINE_MSGS.forEach(({ color, init, name, text, t }) => {
-    const div = document.createElement('div');
-    div.className = 'line-msg';
-    div.innerHTML = `
-      <div class="line-avatar" style="background:${color};">${init}</div>
-      <div>
-        <div class="line-msg-name">${name}</div>
-        <div class="line-bubble">${text}</div>
-      </div>
-      <div class="line-time">17:${String(30 + Math.floor(t/600)).padStart(2,'0')}</div>
-    `;
-    c.appendChild(div);
-    setTimeout(() => div.classList.add('shown'), t);
-  });
-}
+// ════════════════════════════════════════
+//  ENGINE
+// ════════════════════════════════════════
+const G = {
+  i: 0,
+  nl: 0,
 
-// ─── Scene 3: Post Config ──────────────────────────────────
-const POST_CFG = {
-  effort: {
-    snsDelta: 20,
-    caption: '🌸 文化祭の準備中！みんな頑張ってます！ #文化祭 #B組',
-    comments: [
-      { av:'😊', text:'応援してるよ！', cls:'cmt-neutral' },
-      { av:'👍', text:'いいね！頑張って', cls:'cmt-neutral' },
-    ],
-    enjo: false,
-    friendsDelta: -3, mentalDelta: -3,
+  start() { this.render(0); },
+
+  next() {
+    this.i = Math.min(this.i + 1, S.length - 1);
+    this.nl = 0;
+    const app = document.getElementById('app');
+    app.style.opacity = '0';
+    setTimeout(() => {
+      this.render(this.i);
+      setTimeout(() => app.style.opacity = '1', 40);
+    }, 280);
   },
-  teacher: {
-    snsDelta: 80,
-    caption: '😂 先生のまさかな一面が撮れましたwww #文化祭 #B組',
-    comments: [
-      { av:'😟', text:'これ大丈夫？先生かわいそう', cls:'cmt-warn' },
-      { av:'😐', text:'笑えない', cls:'cmt-warn' },
-      { av:'🔍', text:'学校どこ？', cls:'cmt-warn' },
-      { av:'👁️', text:'この制服見たことある', cls:'cmt-warn' },
-      { av:'📢', text:'拡散します', cls:'cmt-warn' },
-    ],
-    enjo: true,
-    friendsDelta: -15, mentalDelta: -20,
+
+  render(i) {
+    const sc = S[i];
+    const app = document.getElementById('app');
+    const fn = this['r_' + sc.t];
+    if (fn) {
+      app.innerHTML = fn.call(this, sc);
+      this['s_' + sc.t] && this['s_' + sc.t].call(this, sc);
+    }
   },
-  inner: {
-    snsDelta: 70,
-    caption: '🤣 B組しかわからない例のやつwww #内輪ネタ #B組',
-    comments: [
-      { av:'🤔', text:'これ何？意味わからん笑', cls:'cmt-neutral' },
-      { av:'😅', text:'内輪すぎて草', cls:'cmt-neutral' },
-      { av:'😶', text:'一部だけ盛り上がってる感…', cls:'cmt-neutral' },
-    ],
-    enjo: false,
-    friendsDelta: -5, mentalDelta: -5,
+
+  imgEmoji(img) {
+    return {prep:'🎨',deco:'✨',tea:'👨‍🏫',grp:'👥'}[img] || '📸';
   },
-  rival: {
-    snsDelta: 90,
-    caption: '😏 A組さん、抜かしますね〜w #B組の逆襲 #文化祭バトル',
-    comments: [
-      { av:'😢', text:'A組ファンとして悲しい', cls:'cmt-warn' },
-      { av:'🔥', text:'これ炎上案件じゃん', cls:'cmt-warn' },
-      { av:'🔍', text:'学校特定した', cls:'cmt-warn' },
-      { av:'📢', text:'拡散します', cls:'cmt-warn' },
-      { av:'😤', text:'こういうのやめてほしい', cls:'cmt-warn' },
-    ],
-    enjo: true,
-    friendsDelta: -15, mentalDelta: -20,
-  },
-};
 
-function selectPost(type) {
-  S.post = type;
-  const cfg = POST_CFG[type];
-  applyDelta({ sns: cfg.snsDelta, fes: 10 });
-  goScene(4);
-  runBuzz(cfg);
-}
-
-// ─── Scene 4: Buzz ─────────────────────────────────────────
-function runBuzz(cfg) {
-  // Reset
-  for (let i=0;i<4;i++) {
-    const bc = document.getElementById('bc'+i);
-    const lb = document.getElementById('lb'+i);
-    if(bc) bc.classList.remove('shown');
-    if(lb) lb.classList.remove('shown');
-  }
-  document.getElementById('ss-overlay').classList.remove('shown');
-  const ssOverlay = document.getElementById('ss-overlay');
-  const existBtn = ssOverlay.querySelector('button');
-  if (existBtn) existBtn.remove();
-
-  const numEl = document.getElementById('buzz-num');
-  numEl.textContent = '1,200';
-
-  const steps = [2500, 4200, 6800, 12000];
-
-  function animCount(target, dur) {
-    const startVal = parseInt(numEl.textContent.replace(/,/g,''));
+  animNum(el, from, to, dur) {
     const t0 = performance.now();
-    const counter = document.getElementById('buzz-counter');
     (function tick(now) {
-      const p = Math.min((now - t0) / dur, 1);
-      const ease = 1 - Math.pow(1-p, 3);
-      numEl.textContent = Math.round(startVal + (target - startVal) * ease).toLocaleString();
-      counter.classList.toggle('pop', p > 0 && p < 0.5);
+      const p = Math.min((now-t0)/dur, 1);
+      const e = 1-Math.pow(1-p,3);
+      el.textContent = Math.round(from+(to-from)*e).toLocaleString();
       if (p < 1) requestAnimationFrame(tick);
     })(t0);
-  }
-
-  const schedule = [
-    [300,  () => document.getElementById('bc0').classList.add('shown')],
-    [700,  () => animCount(steps[0], 500)],
-    [1200, () => document.getElementById('bc1').classList.add('shown')],
-    [1800, () => animCount(steps[1], 500)],
-    [2400, () => document.getElementById('bc2').classList.add('shown')],
-    [3000, () => animCount(steps[2], 500)],
-    [3500, () => document.getElementById('bc3').classList.add('shown')],
-    [3900, () => document.getElementById('lb0').classList.add('shown')],
-    [4300, () => document.getElementById('lb1').classList.add('shown')],
-    [4700, () => document.getElementById('lb2').classList.add('shown')],
-    [5100, () => document.getElementById('lb3').classList.add('shown')],
-    [5600, () => animCount(steps[3], 700)],
-    [6500, () => {
-      ssOverlay.classList.add('shown');
-      setTimeout(() => {
-        const btn = document.createElement('button');
-        btn.className = 'btn btn-white';
-        btn.style.cssText = 'margin-top:16px;max-width:240px;';
-        btn.textContent = '次の日へ →';
-        btn.onclick = () => goScene(5);
-        ssOverlay.appendChild(btn);
-      }, 800);
-    }],
-  ];
-
-  schedule.forEach(([delay, fn]) => setTimeout(fn, delay));
-}
-
-// ─── Scene 5: Lock ─────────────────────────────────────────
-function initS5() {
-  ['nc0','nc1'].forEach((id, i) => {
-    const el = document.getElementById(id);
-    el.classList.remove('shown');
-    setTimeout(() => el.classList.add('shown'), 600 + i * 450);
-  });
-  ['nm0','nm1','nm2'].forEach((id, i) => {
-    const el = document.getElementById(id);
-    el.classList.remove('shown');
-    setTimeout(() => el.classList.add('shown'), 1500 + i * 200);
-  });
-}
-
-// ─── Scene 6: Enjo ─────────────────────────────────────────
-function initS6() {
-  const cfg = POST_CFG[S.post] || POST_CFG.teacher;
-  applyDelta({ friends: cfg.friendsDelta, mental: cfg.mentalDelta });
-
-  document.getElementById('imp-friends').textContent = cfg.friendsDelta > 0 ? '+'+cfg.friendsDelta : cfg.friendsDelta;
-  document.getElementById('imp-mental').textContent  = cfg.mentalDelta  > 0 ? '+'+cfg.mentalDelta  : cfg.mentalDelta;
-
-  document.getElementById('post-caption').textContent = cfg.caption;
-
-  // set taiou alert text
-  if (cfg.enjo) {
-    document.getElementById('taiou-alert').innerHTML = '📊 SNS評価は急上昇したが…<br>コメント欄が荒れ始めている。<br>「学校どこ？」「拡散します」という声も。';
-  } else {
-    document.getElementById('taiou-alert').innerHTML = '📊 投稿は伸びている。<br>でも、気になるコメントもいくつかある。<br>どう向き合う？';
-  }
-
-  // comments
-  const wrap = document.getElementById('comments-wrap');
-  wrap.innerHTML = '';
-  cfg.comments.forEach(({ av, text, cls }, i) => {
-    const div = document.createElement('div');
-    div.className = 'cmt-item';
-    div.innerHTML = `
-      <div class="cmt-av">${av}</div>
-      <div>
-        <div class="cmt-name ${cls}">匿名ユーザー${i+1}</div>
-        <div class="cmt-text ${cls}">${text}</div>
-        <div class="cmt-time">${i + 1}分前</div>
-      </div>
-    `;
-    wrap.appendChild(div);
-    setTimeout(() => div.classList.add('shown'), 500 + i * 400);
-  });
-}
-
-// ─── Scene 7: Taiou ────────────────────────────────────────
-const TAIOU_RESULTS = {
-  delete: {
-    title: '🗑️ 削除した',
-    body: '投稿を消した。\nでも通知は止まらなかった。\nスクリーンショットはすでに広まっているかもしれない。\n\n削除は終わりではなく、始まりだった。',
-    delta: { friends: +5, mental: -10, sns: -20 },
   },
-  apology: {
-    title: '🙏 謝罪した',
-    body: '「配慮が足りませんでした」と投稿した。\n一部のコメントは収まった。\nでも「何で今さら」という声も残った。\n\n誠実さは、必ずしも全員に届くわけじゃない。',
-    delta: { friends: +10, mental: -5, sns: -10 },
-  },
-  explain: {
-    title: '💬 説明した',
-    body: '「悪意はなかった」と説明した。\nでも「そういう問題じゃない」というコメントが増えた。\n\n意図と影響は、別の話だということを知った。',
-    delta: { friends: 0, mental: -15, sns: +5 },
-  },
-  ignore: {
-    title: '🙈 無視した',
-    body: '関係ない、と思って画面を閉じた。\nでも気になって、また開いてしまった。\n\n気にしないふりをするのが、一番しんどかった。',
-    delta: { friends: -10, mental: -25, sns: +15 },
-  },
-  teacher: {
-    title: '👨‍🏫 先生に相談した',
-    body: '怖かったけど、先生に話した。\n「教えてくれてありがとう」と言われた。\n\n一人で抱えなかった。それだけで、少し楽になった。',
-    delta: { friends: +5, mental: +15, sns: -15 },
-  },
-};
 
-function chooseTaiou(type) {
-  S.taiou = type;
-  const r = TAIOU_RESULTS[type];
-  applyDelta(r.delta);
+  // ── TITLE ──
+  r_title() {
+    return `<div class="t-screen"><div class="t-stars"></div>
+    <div class="t-inner">
+      <div class="t-icon">📱</div>
+      <div class="t-logo">BC<span>Media</span>Quest</div>
+      <div class="t-tag">高校生SNS広報コンテスト<br>あなたの投稿が、世界を変えるかもしれない。</div>
+      <button class="t-btn" onclick="G.next()">ゲームをはじめる</button>
+      <div class="t-note">このゲームはSNSリテラシーについて<br>考えるための教育コンテンツです</div>
+    </div></div>`;
+  },
 
-  document.getElementById('result-title').textContent = r.title;
-  document.getElementById('result-body').textContent = r.body;
-
-  const labels = { friends: '❤️ 友人', mental: '🧠 メンタル', sns: '📱 SNS' };
-  document.getElementById('result-stats').innerHTML = Object.entries(r.delta).map(([k, v]) => {
-    const sign = v > 0 ? '+' : '';
-    const color = v > 0 ? '#25d366' : v < 0 ? '#ed4956' : '#888';
-    return `<div class="result-stat">
-      <div class="result-stat-val" style="color:${color}">${sign}${v}</div>
-      <div class="result-stat-lbl">${labels[k] || k}</div>
+  // ── DAY CARD ──
+  r_dc(sc) {
+    return `<div class="dc" style="background:linear-gradient(160deg,${sc.bg}ee,${sc.bg}aa);">
+      <div class="dc-bg">${sc.day}</div>
+      <div class="dc-label">DAY ${sc.day}</div>
+      <div class="dc-sub">${sc.sub}</div>
+      <button class="dc-btn" onclick="G.next()">つづきを見る →</button>
     </div>`;
-  }).join('');
+  },
 
-  document.getElementById('result-overlay').classList.add('shown');
-}
+  // ── TUTORIAL ──
+  r_tu() {
+    return `<div class="tu">
+      <div class="tu-h">📱 SNS広報コンテスト</div>
+      <div class="tu-s">ルールを確認しよう</div>
+      <div class="tu-item"><div class="tu-it">🎯 目標</div><div class="tu-id">文化祭のSNS投稿でいいね数を集め、クラスを優勝に導こう。</div></div>
+      <div class="tu-item"><div class="tu-it">📸 投稿</div><div class="tu-id">準備の様子、装飾、クラスの仲間たちの姿を投稿していく。</div></div>
+      <div class="tu-item"><div class="tu-it">❤️ いいね</div><div class="tu-id">文化祭終了時、最もいいねを集めたクラスが優勝。全7日間で競う。</div></div>
+      <div class="tu-item"><div class="tu-it">⚠️ 注意</div><div class="tu-id">SNSの投稿は、思わぬ形で広がることがある。慎重に、でも大胆に。</div></div>
+      <div class="spc"></div>
+      <button class="btn btn-bl" onclick="G.next()">準備完了！はじめよう</button>
+    </div>`;
+  },
 
-function closeResult() {
-  document.getElementById('result-overlay').classList.remove('shown');
-  goScene(8);
-}
+  // ── NOVEL ──
+  r_nv(sc) {
+    const l = sc.ln[0];
+    return `<div class="nv" onclick="G.nva()">
+      <div class="nv-bg bg-${sc.bg}"></div>
+      <div class="nv-box">
+        <div class="nv-sp" id="nv-sp" style="display:${l.sp?'block':'none'}">${l.sp||''}</div>
+        <div class="nv-tx" id="nv-tx">${l.tx}</div>
+        <div class="nv-adv" id="nv-adv">▼ タップで進む</div>
+      </div>
+    </div>`;
+  },
 
-// ─── Scene 8: Ending ───────────────────────────────────────
-const REFLECTIONS = {
-  effort:  'あなたは安全な投稿を選んだ。\nでも「もっとバズる方法があったのに」という気持ち、なかった？\n\nその葛藤こそが、炎上への入口だ。',
-  teacher: 'あなたは「先生ネタ」を選んだ。\n投稿した瞬間、それは面白かった。悪意はなかった。\n\nでもそれだけで、誰かが傷ついた。\nなぜ止まれなかったのかを、考えてみよう。',
-  inner:   'あなたは「内輪ネタ」を選んだ。\nクラス内では最高に盛り上がった。\n\nでも知らない人に届いたとき、それは「排除」に見えることがある。',
-  rival:   'あなたは「ライバルいじり」を選んだ。\n煽りは、笑えない人にとっては攻撃になる。\n\nSNSには「笑えない人」も必ずいる。それを忘れてしまっていた。',
+  s_nv(sc) { this.nl = 0; },
+
+  nva() {
+    const sc = S[this.i];
+    if (sc.t !== 'nv') return;
+    this.nl++;
+    if (this.nl >= sc.ln.length) { this.next(); return; }
+    const l = sc.ln[this.nl];
+    const tx = document.getElementById('nv-tx');
+    const sp = document.getElementById('nv-sp');
+    const adv = document.getElementById('nv-adv');
+    if (tx) {
+      tx.style.opacity = '0';
+      setTimeout(() => {
+        tx.textContent = l.tx;
+        tx.style.opacity = '1';
+      }, 130);
+    }
+    if (sp) {
+      sp.textContent = l.sp || '';
+      sp.style.display = l.sp ? 'block' : 'none';
+    }
+    if (adv) adv.textContent = this.nl === sc.ln.length-1 ? '▼ 次へ' : '▼ タップで進む';
+  },
+
+  // ── SNS POST ──
+  r_post(sc) {
+    const p = sc.post;
+    const cls = {prep:'pi-prep',deco:'pi-deco',tea:'pi-tea',grp:'pi-grp'}[p.img]||'pi-prep';
+    return `<div class="sns">
+      <div class="sns-nav"><div class="sns-logo">BCMedia</div><div class="sns-icons"><span>🔔</span><span>📤</span></div></div>
+      <div class="pw">
+        <div class="pur"><div class="pav">🏫</div>
+          <div><div class="pun">bunka_B_class</div><div style="font-size:10px;color:var(--gray);">B組公式アカウント</div></div>
+          <div class="pm">···</div></div>
+        <div class="pi ${cls}"><div class="pie">${this.imgEmoji(p.img)}</div><div class="pil">${p.lbl}</div></div>
+        <div class="par"><span class="pa">❤️</span><span class="pa">💬</span><span class="pa">📤</span><div style="flex:1"></div><span class="pa">🔖</span></div>
+        <div class="plr">❤️ <span id="plikes">${(p.anim?p.from:p.likes).toLocaleString()}</span>いいね</div>
+        <div class="pcr"><span class="pcu">bunka_B_class</span> ${p.cap.split('\n')[0]}<br>
+          <span style="font-size:11px;color:var(--gray)">${p.cap.split('\n').slice(1).join(' ')}</span></div>
+        <div class="psr"><span>💬 ${p.comments}件</span><span>📤 ${p.shares}件</span></div>
+      </div>
+      <div class="sf"><button class="btn btn-bl" id="pnxt" onclick="G.next()">次へ →</button></div>
+    </div>`;
+  },
+
+  s_post(sc) {
+    const p = sc.post;
+    if (!p.anim) return;
+    setTimeout(() => {
+      const el = document.getElementById('plikes');
+      if (el) this.animNum(el, p.from, p.likes, 1200);
+    }, 700);
+  },
+
+  // ── POST CREATE ──
+  r_pcreate() {
+    return `<div class="pc">
+      <div class="pch"><div class="pcht">投稿を作成する</div><div class="pchs">DAY 5 — クラスT集合写真</div></div>
+      <div class="pcb">
+        <div class="pcpv">
+          <div class="pcpi">👥</div>
+          <div class="pcca">
+            <div class="pccl">キャプション</div>
+            <div class="pcct">ここまで頑張ってきた。\n明日は最高の文化祭にしよう！🔥</div>
+            <div style="font-size:11px;color:#0095f6;margin-top:6px;">#文化祭 #B組 #クラスT #青春</div>
+          </div>
+        </div>
+        <div class="pcnt">💡 クラス全員の集合写真を投稿します。これまでの頑張りと、明日への想いが込められています。</div>
+      </div>
+      <div class="pcf"><button class="btn btn-bl" onclick="G.next()">📤 投稿する</button></div>
+    </div>`;
+  },
+
+  // ── VIRAL ──
+  r_viral() {
+    return `<div class="vr">
+      <div class="vr-lbl">投稿が広がっています…</div>
+      <div class="vr-ctr" id="vctr"><span class="vr-heart">❤️</span><span id="vnum">0</span></div>
+      <div class="vr-badge" id="vbdg">🏆 1位 獲得！！</div>
+      <div id="vnxt" style="display:none;margin-top:20px;width:100%;max-width:280px;">
+        <button class="btn btn-dk" onclick="G.next()">次へ →</button>
+      </div>
+    </div>`;
+  },
+
+  s_viral() {
+    const steps = [
+      {to:300,delay:800,dur:600},
+      {to:1200,delay:2100,dur:700},
+      {to:5000,delay:3800,dur:900},
+      {to:15000,delay:5800,dur:1100},
+    ];
+    steps.forEach(({to,delay,dur}) => {
+      setTimeout(() => {
+        const el = document.getElementById('vnum');
+        const ctr = document.getElementById('vctr');
+        if (!el) return;
+        const from = parseInt(el.textContent.replace(/,/g,''))||0;
+        this.animNum(el, from, to, dur);
+        ctr.classList.add('pop');
+        setTimeout(()=>ctr.classList.remove('pop'),300);
+      }, delay);
+    });
+    setTimeout(()=>{ const b=document.getElementById('vbdg'); if(b) b.style.display='block'; }, 7500);
+    setTimeout(()=>{ const n=document.getElementById('vnxt'); if(n) n.style.display='block'; }, 8400);
+  },
+
+  // ── LINE ──
+  r_line(sc) {
+    const nm = {class:'B組 文化祭グループ',friend:'アキ',rep:'委員長・ユイ'};
+    const sb = {class:'メンバー 38人',friend:'オンライン',rep:'オンライン'};
+    const ic = {class:'🏫',friend:'😊',rep:'📋'};
+    return `<div class="lc">
+      <div class="lch" style="background:${sc.hdr};">
+        <div class="lca">${ic[sc.room]||'💬'}</div>
+        <div><div class="lcn">${nm[sc.room]||sc.room}</div><div class="lcs">${sb[sc.room]||''}</div></div>
+      </div>
+      <div class="lm" id="lmsgs"></div>
+      <div class="lf"><button class="btn btn-gr" id="lnxt" style="display:none;" onclick="G.next()">次へ →</button></div>
+    </div>`;
+  },
+
+  s_line(sc) {
+    const c = document.getElementById('lmsgs');
+    let max = 0;
+    sc.msgs.forEach(m => {
+      const isYou = m.f === 'you';
+      const div = document.createElement('div');
+      div.className = 'lmsg' + (isYou ? ' r' : '');
+      if (isYou) {
+        div.innerHTML = `<div style="max-width:65%;"><div class="lb lb-g">${m.tx}</div></div>`;
+      } else {
+        div.innerHTML = `<div class="lav" style="background:${m.c||'#888'}">${m.av||'?'}</div>
+          <div class="lmb"><div class="lmn">${m.f}</div><div class="lb lb-w">${m.tx}</div></div>`;
+      }
+      c.appendChild(div);
+      if (m.d > max) max = m.d;
+      setTimeout(()=>div.classList.add('s'), m.d);
+    });
+    setTimeout(()=>{ const b=document.getElementById('lnxt'); if(b) b.style.display='block'; }, max+700);
+  },
+
+  // ── RANKING ──
+  r_rank(sc) {
+    const rows = sc.data.rows.map(r=>`
+      <div class="rki${r.mine?' mine':''}${r.cel?' cel':''}" id="${r.mine?'myrank':''}">
+        <div class="rkn">${r.medal||r.r}</div>
+        <div class="rkc"><div class="rkcn">${r.n}</div><div class="rkch">@bunka_class</div></div>
+        <div class="rkl2">❤️ ${r.l}</div>
+      </div>`).join('');
+    return `<div class="rk">
+      <div class="rkh"><div class="rkht">🏆 SNS広報コンテスト</div><div class="rkhs">リアルタイム順位</div></div>
+      <div class="rkl">${rows}</div>
+      ${sc.data.msg?`<div class="rkmsg">${sc.data.msg}</div>`:''}
+      <div class="rkf"><button class="btn btn-bl" onclick="G.next()">次へ →</button></div>
+    </div>`;
+  },
+
+  // ── LOCK SCREEN ──
+  r_lock() {
+    return `<div class="lks">
+      <div>
+        <div class="lkt">6:47</div>
+        <div class="lkd">金曜日 — 文化祭当日</div>
+        <div class="lkns">
+          <div class="lkn" id="lk0">
+            <div class="lkni" style="background:#25d366;">💬</div>
+            <div style="flex:1"><div class="lkna">LINE</div><div class="lknt">B組グループ — 新しいメッセージ</div></div>
+            <div class="lkbdg">34</div>
+          </div>
+          <div class="lkn" id="lk1">
+            <div class="lkni" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);">📸</div>
+            <div style="flex:1"><div class="lkna">BCMedia</div><div class="lknt">投稿への反応が急増しています</div></div>
+            <div class="lkbdg">99+</div>
+          </div>
+          <div class="lkn" id="lk2">
+            <div class="lkni" style="background:#1da1f2;">🔁</div>
+            <div style="flex:1"><div class="lkna">引用投稿</div><div class="lknt">あなたの投稿が引用されています</div></div>
+            <div class="lkbdg" id="qbdg">3</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="lkh">↑ スワイプしてロック解除</div>
+        <button class="btn btn-dk" onclick="G.next()">📱 SNSを開く</button>
+      </div>
+    </div>`;
+  },
+
+  s_lock() {
+    [0,1,2].forEach((n,i)=>setTimeout(()=>{ const e=document.getElementById('lk'+n); if(e) e.classList.add('s'); },700+i*500));
+  },
+
+  // ── QUOTE FEED ──
+  r_qfeed() {
+    return `<div class="qf">
+      <div class="qfl">QUOTE POSTS</div>
+      <div class="qfc" id="qfc">3</div>
+      <div class="qfs" id="qfs">引用投稿が増えています</div>
+      <div class="qfp"><div class="qfpb"><div class="qfpf" id="qfpf" style="width:1%"></div></div></div>
+      <div id="qnxt" style="display:none;margin-top:32px;width:100%;max-width:280px;">
+        <button class="btn btn-dk" onclick="G.next()">SNSのコメントを見る</button>
+      </div>
+    </div>`;
+  },
+
+  s_qfeed() {
+    const steps = [
+      {v:12,d:2200,p:25,s:'引用投稿が広がっています…'},
+      {v:49,d:4800,p:55,s:'さらに拡散されています…'},
+      {v:211,d:7800,p:100,s:'211件の引用投稿'},
+    ];
+    steps.forEach(({v,d,p,s})=>{
+      setTimeout(()=>{
+        const c=document.getElementById('qfc');
+        const fs=document.getElementById('qfs');
+        const pf=document.getElementById('qfpf');
+        if(!c) return;
+        c.classList.add('ch');
+        setTimeout(()=>{ if(c){c.textContent=v;c.classList.remove('ch');} if(fs)fs.textContent=s; if(pf)pf.style.width=p+'%'; },350);
+      },d);
+    });
+    setTimeout(()=>{ const n=document.getElementById('qnxt'); if(n) n.style.display='block'; },9200);
+  },
+
+  // ── COMMENTS ──
+  r_cmts() {
+    return `<div class="cs">
+      <div class="sns-nav"><div class="sns-logo">BCMedia</div><div class="sns-icons"><span>🔔</span></div></div>
+      <div class="csm">
+        <div class="csmt">👥</div>
+        <div><div class="csmca">ここまで頑張ってきた。明日は最高の文化祭にしよう！🔥</div>
+        <div class="csmst">❤️ 15,248いいね · 💬 311件 · 🔁 211件の引用</div></div>
+      </div>
+      <div class="clist" id="clist"></div>
+      <div class="cnote">💭 様々なコメントが届いています。「問題」が何なのか、意見が分かれています。</div>
+      <div class="cf"><button class="btn btn-bl" id="cnxt" style="display:none;" onclick="G.next()">次へ →</button></div>
+    </div>`;
+  },
+
+  s_cmts() {
+    const data = [
+      {av:'😊',n:'user_2847',tx:'青春って感じで良いね',tag:'tg-s',tl:'好意的'},
+      {av:'🤔',n:'通りすがり',tx:'準備やりすぎでは…？',tag:'tg-n',tl:'疑問'},
+      {av:'😶',n:'unknown_301',tx:'顔出し大丈夫？本人たちは知ってるの？',tag:'tg-c',tl:'懸念'},
+      {av:'💬',n:'学校OB',tx:'クラスTの名前が気になる',tag:'tg-n',tl:'中立'},
+      {av:'🙂',n:'保護者らしき人',tx:'別に問題なくない？楽しそうだし',tag:'tg-s',tl:'好意的'},
+      {av:'😐',n:'名無し',tx:'本人たちはどう思ってるんだろう',tag:'tg-c',tl:'懸念'},
+      {av:'✌️',n:'同じ学校かも',tx:'うちの学校っぽい',tag:'tg-n',tl:'中立'},
+      {av:'😔',n:'関係者らしき人',tx:'あの場にいたけど…なんか複雑',tag:'tg-c',tl:'懸念'},
+    ];
+    const c = document.getElementById('clist');
+    let max = 0;
+    data.forEach((d,i)=>{
+      const div = document.createElement('div');
+      div.className = 'cr';
+      div.innerHTML = `<div class="cav">${d.av}</div>
+        <div><div class="cname">${d.n}<span class="ctag ${d.tag}">${d.tl}</span></div>
+        <div class="ctxt">${d.tx}</div><div class="ctm">${i+1}分前</div></div>`;
+      c.appendChild(div);
+      const delay = 600 + i*480;
+      if (delay > max) max = delay;
+      setTimeout(()=>div.classList.add('s'), delay);
+    });
+    setTimeout(()=>{ const b=document.getElementById('cnxt'); if(b) b.style.display='block'; }, max+900);
+  },
+
+  // ── ENDING ──
+  r_end() {
+    return `<div class="en">
+      <div class="en-ic">📱</div>
+      <div class="en-ln"></div>
+      <div class="en-tx">あなたはクラスを盛り上げたいと思っていた。
+
+みんなも喜んでいた。
+
+投稿は成功した。
+
+それでも投稿はあなたの意図とは
+違う意味で広がった。
+
+SNSでは送り手と受け手が
+同じ景色を見ているとは限らない。</div>
+      <div class="en-ln"></div>
+      <button class="btn btn-dk" style="max-width:200px;" onclick="G.next()">次へ →</button>
+    </div>`;
+  },
+
+  // ── REFLECTION ──
+  r_refl() {
+    return `<div class="rf">
+      <div class="rf-ic">🤔</div>
+      <div class="rf-q">あなたは何が<br>問題だったと思いますか？</div>
+      <div class="rf-bd">正解はありません。<br>自分の言葉で、自由に考えてみてください。</div>
+      <div class="rf-sp">ここに自分の考えを書いてみよう<br><br>（ノートや、身近な人と話してみるのもいいかもしれません）</div>
+      <div class="rf-facts">
+        <div class="rf-ft">📋 ゲーム中の出来事</div>
+        <div class="rf-fd">
+          • クラス全員の顔が映った集合写真を投稿した<br>
+          • 投稿前に、クラスメイト全員の同意を確認していなかった<br>
+          • 投稿は意図せず211件以上に引用・拡散された<br>
+          • 受け取った人の感想は様々だった
+        </div>
+      </div>
+      <button class="btn btn-ol" onclick="G.i=0;G.nl=0;const a=document.getElementById('app');a.style.opacity='0';setTimeout(()=>{G.render(0);setTimeout(()=>a.style.opacity='1',40);},280);">🔄 もう一度プレイする</button>
+    </div>`;
+  },
 };
 
-function initS8() {
-  document.getElementById('refl-text').textContent = REFLECTIONS[S.post] || REFLECTIONS.teacher;
-  setTimeout(() => {
-    ['friends','mental','sns','fes'].forEach(k => {
-      document.getElementById('eb-'+k).style.width = S[k] + '%';
-      document.getElementById('ev-'+k).textContent = S[k];
-    });
-  }, 200);
-}
-
-// ─── Restart ───────────────────────────────────────────────
-function restartGame() {
-  Object.assign(S, { friends: 80, mental: 80, sns: 50, fes: 50, post: null, taiou: null });
-  renderStatus();
-  document.getElementById('buzz-num').textContent = '1,200';
-  ['bc0','bc1','bc2','bc3','lb0','lb1','lb2','lb3'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.classList.remove('shown');
-  });
-  const ss = document.getElementById('ss-overlay');
-  ss.classList.remove('shown');
-  const btn = ss.querySelector('button');
-  if(btn) btn.remove();
-  goScene(1);
-}
+window.addEventListener('load', () => {
+  document.getElementById('app').style.transition = 'opacity 0.28s ease';
+  G.start();
+});
 </script>
 </body>
 </html>
