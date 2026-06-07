@@ -1,10 +1,15 @@
 export type Screen =
   | "title"
-  | "op1_line"       // OPシーン1: LINE通知
-  | "op2_teacher"    // OPシーン2: 担任の話
-  | "op2_ranking"    // OPシーン2: 去年の順位発表（アニメーション）
-  | "op2_reaction"   // OPシーン2: クラスメイトの反応
-  | "op2_goal"       // OPシーン2: 目的表示
+  | "profile_q1"
+  | "profile_q2"
+  | "profile_q3"
+  | "profile_q4"
+  | "profile_result"
+  | "op1_line"
+  | "op2_teacher"
+  | "op2_ranking"
+  | "op2_reaction"
+  | "op2_goal"
   | "classroom"
   | "sns"
   | "line_chat"
@@ -17,8 +22,19 @@ export type Screen =
   | "post_result"
   | "day1_end";
 
+export interface PlayerProfile {
+  festivalType: string;   // 質問1の回答
+  snsType: string;        // 質問2の回答
+  interest: string;       // 質問3の回答
+  motivation: string;     // 質問4の回答
+  // 将来のDay2-7で使う派生ラベル
+  festivalLabel: string;
+  snsLabel: string;
+}
+
 export interface GameState {
   screen: Screen;
+  playerProfile: PlayerProfile | null;
   visitedAreas: Set<string>;
   collectedMaterials: string[];
   selectedMaterial: string | null;
@@ -29,6 +45,98 @@ export interface GameState {
   likes: number;
 }
 
+// ─── 診断質問データ ────────────────────────────────────────────────
+
+export const PROFILE_QUESTIONS = [
+  {
+    id: "q1",
+    text: "文化祭で一番気になるのは？",
+    note: "1年3組 文化祭アンケート",
+    options: [
+      { value: "together", label: "みんなで盛り上がること" },
+      { value: "plan",     label: "出し物や企画" },
+      { value: "sns",      label: "SNSや広報" },
+      { value: "memory",   label: "友達との思い出" },
+      { value: "none",     label: "正直あまり興味ない" },
+    ],
+  },
+  {
+    id: "q2",
+    text: "SNSでよく見るのは？",
+    note: "1年3組 文化祭アンケート",
+    options: [
+      { value: "funny",   label: "面白い投稿" },
+      { value: "useful",  label: "役立つ情報" },
+      { value: "friends", label: "友達の日常" },
+      { value: "fandom",  label: "推しや趣味" },
+      { value: "rarely",  label: "あまり見ない" },
+    ],
+  },
+  {
+    id: "q3",
+    text: "SNSで投稿する側？見る側？",
+    note: "1年3組 文化祭アンケート",
+    options: [
+      { value: "post_often",  label: "よく投稿する" },
+      { value: "post_some",   label: "時々投稿する" },
+      { value: "view_only",   label: "ほとんど見るだけ" },
+    ],
+  },
+  {
+    id: "q4",
+    text: "文化祭への熱量は？",
+    note: "1年3組 文化祭アンケート",
+    options: [
+      { value: "high",   label: "めちゃくちゃ楽しみ" },
+      { value: "mid",    label: "まあ楽しみ" },
+      { value: "normal", label: "普通" },
+      { value: "low",    label: "面倒くさい" },
+    ],
+  },
+] as const;
+
+// 診断結果ラベル生成
+export function buildProfile(answers: {
+  q1: string; q2: string; q3: string; q4: string;
+}): PlayerProfile {
+  const festivalLabelMap: Record<string, string> = {
+    together: "盛り上がり重視型",
+    plan:     "企画派",
+    sns:      "SNS広報型",
+    memory:   "思い出重視型",
+    none:     "クールな傍観者",
+  };
+  const snsLabelMap: Record<string, string> = {
+    post_often: "発信タイプ",
+    post_some:  "バランス型",
+    view_only:  "閲覧中心",
+  };
+  const interestLabelMap: Record<string, string> = {
+    funny:   "面白いもの",
+    useful:  "役立つ情報",
+    friends: "友達の日常",
+    fandom:  "推しや趣味",
+    rarely:  "あまり見ない",
+  };
+  const motivationLabelMap: Record<string, string> = {
+    high:   "高め",
+    mid:    "まあまあ",
+    normal: "普通",
+    low:    "低め",
+  };
+
+  return {
+    festivalType:  answers.q1,
+    snsType:       answers.q3,
+    interest:      answers.q2,
+    motivation:    answers.q4,
+    festivalLabel: festivalLabelMap[answers.q1] ?? "—",
+    snsLabel:      snsLabelMap[answers.q3] ?? "—",
+  };
+}
+
+// ─── ゲームデータ定数 ──────────────────────────────────────────────
+
 export const OP1_MESSAGES = [
   { id: "m1", sender: "委員長", text: "去年の結果見た？" },
   { id: "m2", sender: "親友", text: "8位かー" },
@@ -36,27 +144,9 @@ export const OP1_MESSAGES = [
 ];
 
 export const SNS_POSTS_A_CLASS = [
-  {
-    id: "a1",
-    title: "A組文化祭PV",
-    description: "1週間の準備を30秒にまとめた動画",
-    likes: 824,
-    comments: 91,
-  },
-  {
-    id: "a2",
-    title: "ダンス部練習風景",
-    description: "今年も全力で踊ります",
-    likes: 532,
-    comments: 47,
-  },
-  {
-    id: "a3",
-    title: "先生インタビュー",
-    description: "文化祭への想いを聞いてみた",
-    likes: 301,
-    comments: 25,
-  },
+  { id: "a1", title: "A組文化祭PV", description: "1週間の準備を30秒にまとめた動画", likes: 824, comments: 91 },
+  { id: "a2", title: "ダンス部練習風景", description: "今年も全力で踊ります", likes: 532, comments: 47 },
+  { id: "a3", title: "先生インタビュー", description: "文化祭への想いを聞いてみた", likes: 301, comments: 25 },
 ];
 
 export const SNS_POSTS_OWN_CLASS = [
@@ -66,12 +156,12 @@ export const SNS_POSTS_OWN_CLASS = [
 ];
 
 export const LINE_MESSAGES = [
-  { id: "l1", sender: "委員長", text: "今日放課後、残れる人いますか？", type: "left" as const },
-  { id: "l2", sender: "ムードメーカー", text: "眠すぎる", type: "left" as const },
-  { id: "l3", sender: "親友", text: "まだ装飾終わってないんだけど", type: "left" as const },
+  { id: "l1", sender: "委員長",      text: "今日放課後、残れる人いますか？", type: "left" as const },
+  { id: "l2", sender: "ムードメーカー", text: "眠すぎる",                   type: "left" as const },
+  { id: "l3", sender: "親友",         text: "まだ装飾終わってないんだけど",   type: "left" as const },
   { id: "l4", sender: "クラスメイトA", text: "去年、人あんまり来なかったよな", type: "left" as const },
-  { id: "l5", sender: "ムードメーカー", text: "今年は勝とうぜ笑", type: "left" as const },
-  { id: "l6", sender: "親友", text: "見る専門です", type: "left" as const },
+  { id: "l5", sender: "ムードメーカー", text: "今年は勝とうぜ笑",            type: "left" as const },
+  { id: "l6", sender: "親友",         text: "見る専門です",                  type: "left" as const },
 ];
 
 export const CAPTIONS = [
@@ -83,10 +173,10 @@ export const CAPTIONS = [
 export const LIKES_SEQUENCE = [1, 4, 9, 17, 28];
 
 export const POST_REACTIONS = [
-  { sender: "親友", text: "見た" },
-  { sender: "委員長", text: "ちゃんとしてる！" },
+  { sender: "親友",        text: "見た" },
+  { sender: "委員長",      text: "ちゃんとしてる！" },
   { sender: "ムードメーカー", text: "いいじゃん笑" },
-  { sender: "クラスメイト", text: "明日から頼むわ" },
+  { sender: "クラスメイト",  text: "明日から頼むわ" },
 ];
 
 export const ROLE_CHOICES = [
@@ -107,7 +197,7 @@ export const LAST_YEAR_RANKING = [
 ];
 
 export const OP2_REACTIONS = [
-  { sender: "親友", text: "頑張ったのにな" },
-  { sender: "クラスメイト", text: "全然人来なかったよな" },
+  { sender: "親友",        text: "頑張ったのにな" },
+  { sender: "クラスメイト",  text: "全然人来なかったよな" },
   { sender: "ムードメーカー", text: "今年は上狙いたい" },
 ];
