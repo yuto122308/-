@@ -6,6 +6,7 @@ import SnsPostCard from "@/components/SnsPostCard";
 import LineChat from "@/components/LineChat";
 import ChoiceButton from "@/components/ChoiceButton";
 import StatusBar from "@/components/StatusBar";
+import ConceptImage from "@/components/ConceptImage";
 import {
   Screen,
   GameState,
@@ -96,7 +97,9 @@ function ClassroomScreen({
 
   return (
     <div className="flex flex-col min-h-[calc(100svh-28px)] bg-white">
-      <div className="px-5 py-5 border-b border-gray-100">
+      {/* 教室背景画像 */}
+      <ConceptImage panel="classroom_bg" className="w-full h-36" />
+      <div className="px-5 py-4 border-b border-gray-100">
         <div className="text-xs text-gray-400 mb-1">現在地</div>
         <h2 className="text-lg font-bold text-gray-900">教室</h2>
         <p className="text-xs text-gray-500 mt-1">クラスの様子を見てみよう</p>
@@ -269,6 +272,9 @@ function ShopScreen({
         <span className="text-sm font-semibold text-gray-800">模擬店</span>
       </div>
 
+      {/* 模擬店背景 */}
+      <ConceptImage panel="shop_bg" className="w-full h-36" />
+
       <div className="flex-1 px-5 py-5">
         <div className="text-xs text-gray-400 mb-1">場所</div>
         <h3 className="text-base font-bold text-gray-900 mb-4">模擬店準備スペース</h3>
@@ -290,12 +296,7 @@ function ShopScreen({
           <div className="text-xs font-semibold tracking-wider text-gray-400 mb-2 uppercase">
             {alreadyCollected ? "✓ 素材を獲得しました" : "素材を獲得しました"}
           </div>
-          <div className="bg-gray-200 rounded-lg flex items-center justify-center h-28 mb-2">
-            <div className="text-center">
-              <div className="text-xs text-gray-400 tracking-wider mb-0.5">[ PLACEHOLDER ]</div>
-              <div className="text-xs text-gray-500 font-medium">模擬店の試作品</div>
-            </div>
-          </div>
+          <ConceptImage panel="post_shop" className="w-full h-28 rounded-lg mb-2" label="模擬店の試作品" />
           <div className="text-xs text-gray-500 text-center">模擬店の試作品</div>
         </div>
 
@@ -331,6 +332,9 @@ function DecorationScreen({
         <span className="text-sm font-semibold text-gray-800">装飾班</span>
       </div>
 
+      {/* 装飾班背景 */}
+      <ConceptImage panel="decoration_bg" className="w-full h-36" />
+
       <div className="flex-1 px-5 py-5">
         <div className="text-xs text-gray-400 mb-1">場所</div>
         <h3 className="text-base font-bold text-gray-900 mb-4">教室後方 / 装飾スペース</h3>
@@ -350,12 +354,7 @@ function DecorationScreen({
           <div className="text-xs font-semibold tracking-wider text-gray-400 mb-2 uppercase">
             {alreadyCollected ? "✓ 素材を獲得しました" : "素材を獲得しました"}
           </div>
-          <div className="bg-gray-200 rounded-lg flex items-center justify-center h-28 mb-2">
-            <div className="text-center">
-              <div className="text-xs text-gray-400 tracking-wider mb-0.5">[ PLACEHOLDER ]</div>
-              <div className="text-xs text-gray-500 font-medium">装飾制作風景</div>
-            </div>
-          </div>
+          <ConceptImage panel="post_decoration" className="w-full h-28 rounded-lg mb-2" label="装飾制作風景" />
           <div className="text-xs text-gray-500 text-center">装飾制作風景</div>
         </div>
 
@@ -597,7 +596,14 @@ function FirstPostScreen({
             写真素材を選ぶ
           </div>
           <div className="space-y-2">
-            {materials.map((m) => (
+            {materials.map((m) => {
+            const panel =
+              m === "模擬店の試作品"
+                ? "post_shop" as const
+                : m === "装飾制作風景"
+                ? "post_decoration" as const
+                : "post_classroom" as const;
+            return (
               <button
                 key={m}
                 onClick={() => setSelectedMaterial(m)}
@@ -607,15 +613,14 @@ function FirstPostScreen({
                     : "border-gray-200 hover:border-gray-400"
                 }`}
               >
-                <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-gray-400 text-xs">IMG</span>
-                </div>
+                <ConceptImage panel={panel} className="w-12 h-12 rounded-lg flex-shrink-0" />
                 <span className="text-sm text-gray-800">{m}</span>
                 {selectedMaterial === m && (
                   <span className="ml-auto text-gray-900 font-bold text-sm">✓</span>
                 )}
               </button>
-            ))}
+            );
+          })}
           </div>
         </div>
 
@@ -722,12 +727,15 @@ function PostResultScreen({
             </div>
             <span className="text-xs font-medium text-gray-700">@festival_class</span>
           </div>
-          <div className="bg-gray-100 h-28 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-xs text-gray-400 mb-0.5">[ PLACEHOLDER ]</div>
-              <div className="text-xs text-gray-500">{state.selectedMaterial}</div>
-            </div>
-          </div>
+          {state.selectedMaterial && (() => {
+            const panelMap: Record<string, import("@/components/ConceptImage").PanelId> = {
+              "教室の様子": "post_classroom",
+              "模擬店の試作品": "post_shop",
+              "装飾制作風景": "post_decoration",
+            };
+            const panel = panelMap[state.selectedMaterial] ?? "post_classroom";
+            return <ConceptImage panel={panel} className="w-full h-28" />;
+          })()}
           <div className="p-3">
             <p className="text-sm text-gray-800">{state.selectedCaption}</p>
             <div className="flex items-center gap-1 mt-2">
