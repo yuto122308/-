@@ -1,10 +1,11 @@
 export type Screen =
   | "title"
+  | "profile_create"   // アカウント作成（名前・アイコン）
   | "profile_q1"
   | "profile_q2"
   | "profile_q3"
   | "profile_q4"
-  | "profile_result"
+  | "profile_result"   // プロフィール完成カード
   | "op1_line"
   | "op2_teacher"
   | "op2_ranking"
@@ -23,13 +24,20 @@ export type Screen =
   | "day1_end";
 
 export interface PlayerProfile {
-  festivalType: string;   // 質問1の回答
-  snsType: string;        // 質問2の回答
-  interest: string;       // 質問3の回答
-  motivation: string;     // 質問4の回答
-  // 将来のDay2-7で使う派生ラベル
+  // アカウント作成
+  name: string;
+  nickname: string;
+  comment: string;
+  icon: string;
+  // アンケート（raw値）
+  festivalInterest: string;
+  snsInterest: string;
+  snsUsage: string;
+  motivation: string;
+  // 派生ラベル（Day2-7で利用）
   festivalLabel: string;
   snsLabel: string;
+  motivationLabel: string;
 }
 
 export interface GameState {
@@ -45,13 +53,16 @@ export interface GameState {
   likes: number;
 }
 
-// ─── 診断質問データ ────────────────────────────────────────────────
+// ─── アイコン選択肢 ────────────────────────────────────────────────
 
-export const PROFILE_QUESTIONS = [
+export const ICON_OPTIONS = ["📸", "🎨", "🍟", "🎵", "🎭", "📚", "⭐", "🙂"];
+
+// ─── アンケート質問 ────────────────────────────────────────────────
+
+export const SURVEY_QUESTIONS = [
   {
     id: "q1",
     text: "文化祭で一番気になるのは？",
-    note: "1年3組 文化祭アンケート",
     options: [
       { value: "together", label: "みんなで盛り上がること" },
       { value: "plan",     label: "出し物や企画" },
@@ -63,7 +74,6 @@ export const PROFILE_QUESTIONS = [
   {
     id: "q2",
     text: "SNSでよく見るのは？",
-    note: "1年3組 文化祭アンケート",
     options: [
       { value: "funny",   label: "面白い投稿" },
       { value: "useful",  label: "役立つ情報" },
@@ -74,18 +84,16 @@ export const PROFILE_QUESTIONS = [
   },
   {
     id: "q3",
-    text: "SNSで投稿する側？見る側？",
-    note: "1年3組 文化祭アンケート",
+    text: "SNSとの距離感は？",
     options: [
-      { value: "post_often",  label: "よく投稿する" },
-      { value: "post_some",   label: "時々投稿する" },
-      { value: "view_only",   label: "ほとんど見るだけ" },
+      { value: "post_often", label: "よく投稿する" },
+      { value: "post_some",  label: "時々投稿する" },
+      { value: "view_only",  label: "ほとんど見るだけ" },
     ],
   },
   {
     id: "q4",
     text: "文化祭への熱量は？",
-    note: "1年3組 文化祭アンケート",
     options: [
       { value: "high",   label: "めちゃくちゃ楽しみ" },
       { value: "mid",    label: "まあ楽しみ" },
@@ -95,64 +103,66 @@ export const PROFILE_QUESTIONS = [
   },
 ] as const;
 
-// 診断結果ラベル生成
-export function buildProfile(answers: {
-  q1: string; q2: string; q3: string; q4: string;
-}): PlayerProfile {
-  const festivalLabelMap: Record<string, string> = {
-    together: "盛り上がり重視型",
-    plan:     "企画派",
-    sns:      "SNS広報型",
-    memory:   "思い出重視型",
-    none:     "クールな傍観者",
-  };
-  const snsLabelMap: Record<string, string> = {
-    post_often: "発信タイプ",
-    post_some:  "バランス型",
-    view_only:  "閲覧中心",
-  };
-  const interestLabelMap: Record<string, string> = {
-    funny:   "面白いもの",
-    useful:  "役立つ情報",
-    friends: "友達の日常",
-    fandom:  "推しや趣味",
-    rarely:  "あまり見ない",
-  };
-  const motivationLabelMap: Record<string, string> = {
-    high:   "高め",
-    mid:    "まあまあ",
-    normal: "普通",
-    low:    "低め",
-  };
+// ─── ラベル変換 ────────────────────────────────────────────────────
 
+const FESTIVAL_LABEL: Record<string, string> = {
+  together: "盛り上がり重視型",
+  plan:     "企画派",
+  sns:      "SNS広報型",
+  memory:   "思い出重視型",
+  none:     "クールな傍観者",
+};
+
+const SNS_LABEL: Record<string, string> = {
+  post_often: "発信タイプ",
+  post_some:  "バランス型",
+  view_only:  "閲覧中心",
+};
+
+const MOTIVATION_LABEL: Record<string, string> = {
+  high:   "高め",
+  mid:    "まあまあ",
+  normal: "普通",
+  low:    "低め",
+};
+
+export function buildProfile(
+  base: { name: string; nickname: string; comment: string; icon: string },
+  answers: { q1: string; q2: string; q3: string; q4: string }
+): PlayerProfile {
   return {
-    festivalType:  answers.q1,
-    snsType:       answers.q3,
-    interest:      answers.q2,
-    motivation:    answers.q4,
-    festivalLabel: festivalLabelMap[answers.q1] ?? "—",
-    snsLabel:      snsLabelMap[answers.q3] ?? "—",
+    name:     base.name     || "名無し",
+    nickname: base.nickname || base.name || "名無し",
+    comment:  base.comment  || "",
+    icon:     base.icon     || "🙂",
+    festivalInterest: answers.q1,
+    snsInterest:      answers.q2,
+    snsUsage:         answers.q3,
+    motivation:       answers.q4,
+    festivalLabel:   FESTIVAL_LABEL[answers.q1]   ?? "—",
+    snsLabel:        SNS_LABEL[answers.q3]         ?? "—",
+    motivationLabel: MOTIVATION_LABEL[answers.q4]  ?? "—",
   };
 }
 
-// ─── ゲームデータ定数 ──────────────────────────────────────────────
+// ─── ゲームデータ ──────────────────────────────────────────────────
 
 export const OP1_MESSAGES = [
-  { id: "m1", sender: "委員長", text: "去年の結果見た？" },
-  { id: "m2", sender: "親友", text: "8位かー" },
+  { id: "m1", sender: "委員長",      text: "去年の結果見た？" },
+  { id: "m2", sender: "親友",         text: "8位かー" },
   { id: "m3", sender: "ムードメーカー", text: "今年こそ勝ちたい笑" },
 ];
 
 export const SNS_POSTS_A_CLASS = [
-  { id: "a1", title: "A組文化祭PV", description: "1週間の準備を30秒にまとめた動画", likes: 824, comments: 91 },
-  { id: "a2", title: "ダンス部練習風景", description: "今年も全力で踊ります", likes: 532, comments: 47 },
-  { id: "a3", title: "先生インタビュー", description: "文化祭への想いを聞いてみた", likes: 301, comments: 25 },
+  { id: "a1", title: "A組文化祭PV",   description: "1週間の準備を30秒にまとめた動画", likes: 824, comments: 91 },
+  { id: "a2", title: "ダンス部練習風景", description: "今年も全力で踊ります",           likes: 532, comments: 47 },
+  { id: "a3", title: "先生インタビュー", description: "文化祭への想いを聞いてみた",       likes: 301, comments: 25 },
 ];
 
 export const SNS_POSTS_OWN_CLASS = [
   { id: "o1", title: "文化祭まであと3日", description: "", likes: 21, comments: 2 },
-  { id: "o2", title: "準備中", description: "", likes: 15, comments: 1 },
-  { id: "o3", title: "文化祭スタート", description: "", likes: 34, comments: 3 },
+  { id: "o2", title: "準備中",           description: "", likes: 15, comments: 1 },
+  { id: "o3", title: "文化祭スタート",   description: "", likes: 34, comments: 3 },
 ];
 
 export const LINE_MESSAGES = [

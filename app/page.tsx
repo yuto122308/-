@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import PhoneFrame from "@/components/PhoneFrame";
 import SnsPostCard from "@/components/SnsPostCard";
 import LineChat from "@/components/LineChat";
@@ -11,7 +11,8 @@ import {
   Screen,
   GameState,
   PlayerProfile,
-  PROFILE_QUESTIONS,
+  ICON_OPTIONS,
+  SURVEY_QUESTIONS,
   buildProfile,
   OP1_MESSAGES,
   SNS_POSTS_A_CLASS,
@@ -38,6 +39,12 @@ const INITIAL_STATE: GameState = {
   likes: 0,
 };
 
+const PANEL_MAP: Record<string, import("@/components/ConceptImage").PanelId> = {
+  "教室の様子":    "post_classroom",
+  "模擬店の試作品": "post_shop",
+  "装飾制作風景":  "post_decoration",
+};
+
 // ─── タイトル ────────────────────────────────────────────────────────
 
 function TitleScreen({ onNext }: { onNext: () => void }) {
@@ -47,9 +54,7 @@ function TitleScreen({ onNext }: { onNext: () => void }) {
         <div className="mb-2 text-xs tracking-[0.3em] text-gray-400 uppercase">Day 1</div>
         <h1 className="text-5xl font-black tracking-tight text-gray-900 mb-1">通知</h1>
         <h1 className="text-5xl font-black tracking-tight text-red-500 mb-6">99+</h1>
-        <p className="text-sm text-gray-500 leading-relaxed">
-          文化祭SNS広報責任者の7日間
-        </p>
+        <p className="text-sm text-gray-500 leading-relaxed">文化祭SNS広報責任者の7日間</p>
       </div>
       <div className="w-full">
         <ChoiceButton onClick={onNext}>はじめる</ChoiceButton>
@@ -58,48 +63,139 @@ function TitleScreen({ onNext }: { onNext: () => void }) {
   );
 }
 
-// ─── プロフィール診断（1問ずつ） ─────────────────────────────────────
+// ─── プロフィール作成 ────────────────────────────────────────────────
 
-function ProfileQuestionScreen({
+function ProfileCreateScreen({
+  onNext,
+}: {
+  onNext: (base: { name: string; nickname: string; comment: string; icon: string }) => void;
+}) {
+  const [name, setName]       = useState("");
+  const [nickname, setNickname] = useState("");
+  const [comment, setComment] = useState("");
+  const [icon, setIcon]       = useState(ICON_OPTIONS[7]); // 🙂
+
+  const canNext = name.trim().length > 0;
+
+  return (
+    <div className="flex flex-col min-h-[calc(100svh-28px)] bg-white">
+      {/* ヘッダー */}
+      <div className="px-5 pt-7 pb-5 border-b border-gray-100">
+        <div className="text-xs text-gray-400 mb-1">1年3組 文化祭SNSアカウント</div>
+        <h2 className="text-lg font-bold text-gray-900">アカウントを作ろう</h2>
+      </div>
+
+      <div className="flex-1 px-5 py-6 space-y-6 overflow-y-auto">
+        {/* アイコン選択 */}
+        <div>
+          <div className="text-xs text-gray-500 mb-3">アイコン</div>
+          <div className="flex flex-wrap gap-3">
+            {ICON_OPTIONS.map((ic) => (
+              <button
+                key={ic}
+                onClick={() => setIcon(ic)}
+                className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all ${
+                  icon === ic
+                    ? "bg-gray-900 ring-2 ring-gray-900 ring-offset-2"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
+              >
+                {ic}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 名前 */}
+        <div>
+          <label className="text-xs text-gray-500 block mb-2">名前</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="例：山田太郎"
+            maxLength={20}
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-500 bg-white"
+          />
+        </div>
+
+        {/* 呼ばれ方 */}
+        <div>
+          <label className="text-xs text-gray-500 block mb-2">呼ばれ方（ニックネーム）</label>
+          <input
+            type="text"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder="例：たろう"
+            maxLength={10}
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-500 bg-white"
+          />
+        </div>
+
+        {/* 一言コメント */}
+        <div>
+          <label className="text-xs text-gray-500 block mb-2">一言コメント</label>
+          <input
+            type="text"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="例：今年は頑張る"
+            maxLength={30}
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-500 bg-white"
+          />
+        </div>
+      </div>
+
+      <div className="px-5 pb-6 border-t border-gray-100 pt-4">
+        <ChoiceButton
+          onClick={() => onNext({ name: name.trim(), nickname: nickname.trim() || name.trim(), comment: comment.trim(), icon })}
+          disabled={!canNext}
+        >
+          次へ
+        </ChoiceButton>
+        {!canNext && (
+          <p className="text-xs text-gray-400 text-center mt-2">名前を入力してください</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── アンケート（1問ずつ） ──────────────────────────────────────────
+
+function SurveyQuestionScreen({
   questionIndex,
   onAnswer,
 }: {
   questionIndex: number;
   onAnswer: (value: string) => void;
 }) {
-  const q = PROFILE_QUESTIONS[questionIndex];
-  const total = PROFILE_QUESTIONS.length;
+  const q = SURVEY_QUESTIONS[questionIndex];
+  const total = SURVEY_QUESTIONS.length;
 
   return (
     <div className="flex flex-col min-h-[calc(100svh-28px)] bg-white">
-      {/* ヘッダー */}
       <div className="px-5 pt-6 pb-4 border-b border-gray-100">
-        <div className="text-xs text-gray-400 mb-1">{q.note}</div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">
-            {questionIndex + 1} / {total}
-          </span>
-          <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gray-400 rounded-full transition-all duration-300"
-              style={{ width: `${((questionIndex + 1) / total) * 100}%` }}
-            />
-          </div>
+        <div className="text-xs text-gray-400 mb-2">アカウント設定 {questionIndex + 1}/{total}</div>
+        <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gray-400 rounded-full transition-all duration-300"
+            style={{ width: `${((questionIndex + 1) / total) * 100}%` }}
+          />
         </div>
       </div>
 
       <div className="flex-1 px-5 py-8 flex flex-col">
-        <h2 className="text-lg font-bold text-gray-900 mb-8 leading-snug">{q.text}</h2>
-
-        <div className="space-y-3">
+        <h2 className="text-base font-bold text-gray-900 mb-6 leading-snug">{q.text}</h2>
+        <div className="space-y-2.5">
           {q.options.map((opt) => (
-            <ChoiceButton
+            <button
               key={opt.value}
-              variant="choice"
               onClick={() => onAnswer(opt.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-left text-sm text-gray-800 hover:border-gray-500 hover:bg-gray-50 transition-colors active:scale-[0.98]"
             >
               {opt.label}
-            </ChoiceButton>
+            </button>
           ))}
         </div>
       </div>
@@ -107,80 +203,84 @@ function ProfileQuestionScreen({
   );
 }
 
-// ─── プロフィール生成結果 ─────────────────────────────────────────────
+// ─── プロフィール完成 ────────────────────────────────────────────────
 
-const INTEREST_LABEL: Record<string, string> = {
-  funny:   "面白いもの",
-  useful:  "役立つ情報",
-  friends: "友達の日常",
-  fandom:  "推しや趣味",
-  rarely:  "あまり見ない",
-};
-
-const MOTIVATION_LABEL: Record<string, string> = {
-  high:   "高め",
-  mid:    "まあまあ",
-  normal: "普通",
-  low:    "低め",
-};
-
-function ProfileResultScreen({
-  profile,
-  onNext,
-}: {
-  profile: PlayerProfile;
-  onNext: () => void;
-}) {
-  const [showMonologue, setShowMonologue] = useState(false);
+function ProfileResultScreen({ profile, onNext }: { profile: PlayerProfile; onNext: () => void }) {
+  const [showMono, setShowMono] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setShowMonologue(true), 600);
+    const t = setTimeout(() => setShowMono(true), 500);
     return () => clearTimeout(t);
   }, []);
 
-  const rows = [
-    { label: "文化祭タイプ", value: profile.festivalLabel },
-    { label: "SNSスタイル",  value: profile.snsLabel },
-    { label: "興味",         value: INTEREST_LABEL[profile.interest] ?? "—" },
-    { label: "文化祭熱量",   value: MOTIVATION_LABEL[profile.motivation] ?? "—" },
-  ];
-
   return (
-    <div className="flex flex-col min-h-[calc(100svh-28px)] bg-white px-6 py-8">
-      <div className="flex-1">
-        <div className="text-xs text-gray-400 tracking-widest mb-4 uppercase">Your Profile</div>
+    <div className="flex flex-col min-h-[calc(100svh-28px)] bg-white px-5 py-8">
+      <div className="text-xs text-gray-400 tracking-widest mb-5 uppercase">Profile</div>
 
-        {/* プロフィールカード */}
-        <div className="border border-gray-200 rounded-2xl overflow-hidden mb-6">
-          <div className="bg-gray-50 px-5 py-4 border-b border-gray-100">
-            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-              <span className="text-gray-400 text-xs">YOU</span>
-            </div>
-            <div className="text-sm font-bold text-gray-900">1年3組</div>
-            <div className="text-xs text-gray-500">@festival_class</div>
+      {/* SNSアカウントカード風 */}
+      <div className="border border-gray-200 rounded-2xl overflow-hidden mb-6 shadow-sm">
+        {/* カードヘッダー */}
+        <div className="bg-gray-50 px-5 py-5 flex items-center gap-4 border-b border-gray-100">
+          <div className="w-14 h-14 rounded-full bg-white border border-gray-200 flex items-center justify-center text-3xl flex-shrink-0">
+            {profile.icon}
           </div>
-          <div className="px-5 py-4 space-y-3">
-            {rows.map((row) => (
-              <div key={row.label} className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">{row.label}</span>
-                <span className="text-sm font-medium text-gray-800">{row.value}</span>
-              </div>
-            ))}
+          <div className="min-w-0">
+            <div className="text-base font-bold text-gray-900 truncate">{profile.name}</div>
+            <div className="text-xs text-gray-500 truncate">
+              {profile.nickname !== profile.name ? `「${profile.nickname}」` : ""}
+              　@festival_class
+            </div>
+            {profile.comment && (
+              <div className="text-xs text-gray-600 mt-1 truncate">{profile.comment}</div>
+            )}
           </div>
         </div>
 
-        {showMonologue && (
-          <div className="bg-gray-50 border border-gray-100 rounded-xl px-5 py-4">
-            <p className="text-sm text-gray-700 leading-relaxed">
-              「文化祭まであと1週間か。」
-            </p>
+        {/* ステータス行 */}
+        <div className="flex border-b border-gray-100">
+          <div className="flex-1 text-center py-3 border-r border-gray-100">
+            <div className="text-sm font-bold text-gray-900">12</div>
+            <div className="text-xs text-gray-400">フォロワー</div>
           </div>
-        )}
+          <div className="flex-1 text-center py-3 border-r border-gray-100">
+            <div className="text-sm font-bold text-gray-900">0</div>
+            <div className="text-xs text-gray-400">投稿</div>
+          </div>
+          <div className="flex-1 text-center py-3">
+            <div className="text-sm font-bold text-gray-900">0</div>
+            <div className="text-xs text-gray-400">広報Pt</div>
+          </div>
+        </div>
+
+        {/* タグ */}
+        <div className="px-5 py-4 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-500">文化祭タイプ</span>
+            <span className="font-medium text-gray-800">{profile.festivalLabel}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-500">SNSスタイル</span>
+            <span className="font-medium text-gray-800">{profile.snsLabel}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-500">文化祭熱量</span>
+            <span className="font-medium text-gray-800">{profile.motivationLabel}</span>
+          </div>
+        </div>
       </div>
 
-      <div className="mt-6">
-        <ChoiceButton onClick={onNext} disabled={!showMonologue}>
-          教室へ
+      {/* モノローグ */}
+      {showMono && (
+        <div className="bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 mb-6">
+          <p className="text-sm text-gray-700 leading-relaxed">
+            「文化祭まであと1週間か。」
+          </p>
+        </div>
+      )}
+
+      <div className="mt-auto">
+        <ChoiceButton onClick={onNext} disabled={!showMono}>
+          通知を確認する
         </ChoiceButton>
       </div>
     </div>
@@ -189,12 +289,12 @@ function ProfileResultScreen({
 
 // ─── OP1: LINEグループ通知 ───────────────────────────────────────────
 
-function Op1LineScreen({ onNext }: { onNext: () => void }) {
+function Op1LineScreen({ profile, onNext }: { profile: PlayerProfile | null; onNext: () => void }) {
   const [visible, setVisible] = useState(0);
 
   useEffect(() => {
     if (visible < OP1_MESSAGES.length) {
-      const t = setTimeout(() => setVisible((n) => n + 1), 800);
+      const t = setTimeout(() => setVisible((n) => n + 1), 850);
       return () => clearTimeout(t);
     }
   }, [visible]);
@@ -227,40 +327,32 @@ function Op1LineScreen({ onNext }: { onNext: () => void }) {
         ))}
 
         {done && (
-          <div className="pt-4">
-            <div className="bg-gray-800/80 rounded-xl px-4 py-3 text-center mx-4">
-              <p className="text-sm text-white/90 leading-relaxed">
-                「去年の文化祭か……」
-              </p>
+          <div className="flex justify-end pt-2">
+            <div className="bg-yellow-300 rounded-2xl rounded-tr-sm px-3 py-2 text-sm text-gray-800 max-w-[240px]">
+              去年の文化祭か……
             </div>
           </div>
         )}
       </div>
 
       <div className="px-5 pb-6">
-        <ChoiceButton onClick={onNext} disabled={!done}>
-          教室へ行く
-        </ChoiceButton>
+        <ChoiceButton onClick={onNext} disabled={!done}>教室へ行く</ChoiceButton>
       </div>
     </div>
   );
 }
 
-// ─── OP2: 担任の話 ───────────────────────────────────────────────────
+// ─── OP2: 担任 ───────────────────────────────────────────────────────
 
 function Op2TeacherScreen({ onNext }: { onNext: () => void }) {
   return (
     <div className="flex flex-col min-h-[calc(100svh-28px)] bg-white px-6 py-10">
       <div className="flex-1 flex flex-col justify-center">
         <ConceptImage panel="classroom_bg" className="w-full h-40 rounded-xl mb-6" />
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-4">
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
           <div className="text-xs text-gray-400 mb-3">担任</div>
-          <p className="text-sm text-gray-800 leading-relaxed mb-3">
-            「文化祭まであと7日です。」
-          </p>
-          <p className="text-sm text-gray-800 leading-relaxed">
-            「まず去年の結果を振り返りましょう。」
-          </p>
+          <p className="text-sm text-gray-800 leading-relaxed mb-3">「文化祭まであと7日です。」</p>
+          <p className="text-sm text-gray-800 leading-relaxed">「まず去年の結果を振り返りましょう。」</p>
         </div>
       </div>
       <ChoiceButton onClick={onNext}>次へ</ChoiceButton>
@@ -272,7 +364,7 @@ function Op2TeacherScreen({ onNext }: { onNext: () => void }) {
 
 function Op2RankingScreen({ onNext }: { onNext: () => void }) {
   const [revealed, setRevealed] = useState(0);
-  const [showOwn, setShowOwn] = useState(false);
+  const [showOwn, setShowOwn]   = useState(false);
 
   useEffect(() => {
     if (revealed < LAST_YEAR_RANKING.length - 1) {
@@ -299,22 +391,16 @@ function Op2RankingScreen({ onNext }: { onNext: () => void }) {
               <span className="text-sm text-gray-700 ml-2">{item.name}</span>
             </div>
           ))}
-
           {showOwn && (
             <div className="flex items-center px-4 py-3 bg-gray-900">
               <span className="w-8 text-sm font-bold text-gray-300">8位</span>
               <span className="text-sm font-bold text-white ml-2">自分たちのクラス</span>
-              <span className="ml-auto text-xs text-gray-400 border border-gray-600 rounded px-1.5 py-0.5">
-                自分たち
-              </span>
+              <span className="ml-auto text-xs text-gray-400 border border-gray-600 rounded px-1.5 py-0.5">自分たち</span>
             </div>
           )}
         </div>
       </div>
-
-      <ChoiceButton onClick={onNext} disabled={!showOwn}>
-        {showOwn ? "次へ" : "……"}
-      </ChoiceButton>
+      <ChoiceButton onClick={onNext} disabled={!showOwn}>{showOwn ? "次へ" : "……"}</ChoiceButton>
     </div>
   );
 }
@@ -338,7 +424,6 @@ function Op2ReactionScreen({ onNext }: { onNext: () => void }) {
       <div className="bg-white border-b border-gray-200 px-5 py-3">
         <span className="text-sm font-semibold text-gray-800">クラスの反応</span>
       </div>
-
       <div className="flex-1 px-4 py-5 space-y-3">
         {OP2_REACTIONS.slice(0, visible).map((r, i) => (
           <div key={i} className="flex items-end gap-2">
@@ -353,7 +438,6 @@ function Op2ReactionScreen({ onNext }: { onNext: () => void }) {
             </div>
           </div>
         ))}
-
         {done && (
           <div className="pt-4 mx-2">
             <div className="bg-gray-800/80 rounded-xl px-4 py-3 text-center">
@@ -364,7 +448,6 @@ function Op2ReactionScreen({ onNext }: { onNext: () => void }) {
           </div>
         )}
       </div>
-
       <div className="px-5 pb-6">
         <ChoiceButton onClick={onNext} disabled={!done}>次へ</ChoiceButton>
       </div>
@@ -372,7 +455,7 @@ function Op2ReactionScreen({ onNext }: { onNext: () => void }) {
   );
 }
 
-// ─── OP2: 目的表示 ───────────────────────────────────────────────────
+// ─── OP2: 目的 ───────────────────────────────────────────────────────
 
 function Op2GoalScreen({ onNext }: { onNext: () => void }) {
   return (
@@ -381,9 +464,7 @@ function Op2GoalScreen({ onNext }: { onNext: () => void }) {
         <div className="text-xs text-gray-400 tracking-widest mb-6 uppercase">Mission</div>
         <div className="border-l-2 border-gray-900 pl-5 mb-8">
           <div className="text-xs text-gray-500 mb-1">目的</div>
-          <p className="text-xl font-bold text-gray-900 leading-snug">
-            去年の文化祭を<br />調べてみよう
-          </p>
+          <p className="text-xl font-bold text-gray-900 leading-snug">去年の文化祭を<br />調べてみよう</p>
         </div>
         <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 space-y-2">
           <p className="text-sm text-gray-700">上位クラスは何が違ったのか。</p>
@@ -424,7 +505,6 @@ function ClassroomScreen({
         <h2 className="text-lg font-bold text-gray-900">教室</h2>
         <p className="text-xs text-gray-500 mt-1">去年との差を探してみよう</p>
       </div>
-
       <div className="flex-1 px-5 py-4 space-y-2">
         {areas.map((area) => (
           <button
@@ -445,16 +525,13 @@ function ClassroomScreen({
           </button>
         ))}
       </div>
-
       {canContinue ? (
         <div className="px-5 pb-6">
           <div className="text-xs text-gray-400 text-center mb-3">{visited.size}か所確認しました</div>
           <ChoiceButton onClick={onContinue}>教室で続きを見る</ChoiceButton>
         </div>
       ) : (
-        <div className="px-5 pb-6 text-center text-xs text-gray-400">
-          あと{2 - visited.size}か所見てみよう
-        </div>
+        <div className="px-5 pb-6 text-center text-xs text-gray-400">あと{2 - visited.size}か所見てみよう</div>
       )}
     </div>
   );
@@ -469,14 +546,10 @@ function SnsScreen({ onBack }: { onBack: () => void }) {
         <button onClick={onBack} className="text-gray-500 text-sm">← 戻る</button>
         <span className="text-sm font-semibold text-gray-800">SNSを見る</span>
       </div>
-
       <div className="flex-1 px-4 py-4">
         <div className="bg-gray-800/80 rounded-xl px-4 py-3 mb-5 text-center">
-          <p className="text-sm text-white/90 leading-relaxed">
-            「去年1位のA組は、何を投稿していたんだろう」
-          </p>
+          <p className="text-sm text-white/90 leading-relaxed">「去年1位のA組は、何を投稿していたんだろう」</p>
         </div>
-
         <div className="mb-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">A</div>
@@ -490,7 +563,6 @@ function SnsScreen({ onBack }: { onBack: () => void }) {
             <SnsPostCard key={post.id} title={post.title} description={post.description} likes={post.likes} comments={post.comments} />
           ))}
         </div>
-
         <div className="mb-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-400">自</div>
@@ -503,14 +575,10 @@ function SnsScreen({ onBack }: { onBack: () => void }) {
             <SnsPostCard key={post.id} title={post.title} description={post.description} likes={post.likes} comments={post.comments} isOwn />
           ))}
         </div>
-
         <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-gray-700 leading-relaxed text-center italic">
-            「同じ文化祭でも、見せ方でこんなに違うんだ……」
-          </p>
+          <p className="text-sm text-gray-700 leading-relaxed text-center italic">「同じ文化祭でも、見せ方でこんなに違うんだ……」</p>
         </div>
       </div>
-
       <div className="px-5 pb-6">
         <ChoiceButton onClick={onBack} variant="secondary">教室に戻る</ChoiceButton>
       </div>
@@ -688,16 +756,18 @@ function RoleDecisionScreen({ onDecide }: { onDecide: () => void }) {
 // ─── アカウント確認 ─────────────────────────────────────────────────
 
 function AccountCheckScreen({ state, onNext }: { state: GameState; onNext: () => void }) {
+  const p = state.playerProfile;
   return (
     <div className="flex flex-col min-h-[calc(100svh-28px)] bg-white">
       <div className="px-5 pt-8 pb-4 border-b border-gray-100">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-500 text-xs font-medium">ICON</span>
+          <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-3xl">
+            {p?.icon ?? "🙂"}
           </div>
           <div>
-            <div className="text-base font-bold text-gray-900">公式アカウント</div>
+            <div className="text-base font-bold text-gray-900">{p?.name ?? "公式アカウント"}</div>
             <div className="text-sm text-gray-500">@festival_class</div>
+            {p?.comment && <div className="text-xs text-gray-500 mt-0.5">{p.comment}</div>}
           </div>
         </div>
       </div>
@@ -730,16 +800,11 @@ function AccountCheckScreen({ state, onNext }: { state: GameState; onNext: () =>
 
 // ─── 初投稿作成 ─────────────────────────────────────────────────────
 
-const PANEL_MAP: Record<string, import("@/components/ConceptImage").PanelId> = {
-  "教室の様子":    "post_classroom",
-  "模擬店の試作品": "post_shop",
-  "装飾制作風景":  "post_decoration",
-};
-
 function FirstPostScreen({ state, onPost }: { state: GameState; onPost: (material: string, caption: string) => void }) {
   const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null);
-  const [selectedCaption, setSelectedCaption] = useState<string | null>(null);
+  const [selectedCaption, setSelectedCaption]   = useState<string | null>(null);
   const canPost = selectedMaterial !== null && selectedCaption !== null;
+  const p = state.playerProfile;
 
   return (
     <div className="flex flex-col min-h-[calc(100svh-28px)] bg-white">
@@ -784,8 +849,11 @@ function FirstPostScreen({ state, onPost }: { state: GameState; onPost: (materia
             <div className="text-xs font-semibold text-gray-500 mb-3 tracking-wider uppercase">プレビュー</div>
             <div className="border border-gray-300 rounded-xl overflow-hidden">
               <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
-                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">自</div>
-                <span className="text-xs font-medium text-gray-700">@festival_class</span>
+                <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-sm">
+                  {p?.icon ?? "🙂"}
+                </div>
+                <span className="text-xs font-medium text-gray-700">{p?.name ?? "公式アカウント"}</span>
+                <span className="text-xs text-gray-400 ml-1">@festival_class</span>
               </div>
               <SnsPostCard title={selectedCaption!} previewMaterial={selectedMaterial!} likes={0} />
             </div>
@@ -804,9 +872,10 @@ function FirstPostScreen({ state, onPost }: { state: GameState; onPost: (materia
 // ─── 投稿結果 ────────────────────────────────────────────────────────
 
 function PostResultScreen({ state, onEnd }: { state: GameState; onEnd: () => void }) {
-  const [likesIndex, setLikesIndex] = useState(0);
-  const [showReactions, setShowReactions] = useState(false);
+  const [likesIndex, setLikesIndex]           = useState(0);
+  const [showReactions, setShowReactions]     = useState(false);
   const [visibleReactions, setVisibleReactions] = useState(0);
+  const p = state.playerProfile;
 
   useEffect(() => {
     if (likesIndex < LIKES_SEQUENCE.length - 1) {
@@ -836,8 +905,11 @@ function PostResultScreen({ state, onEnd }: { state: GameState; onEnd: () => voi
       <div className="flex-1 px-5 py-5 overflow-y-auto">
         <div className="border border-gray-200 rounded-xl overflow-hidden mb-6">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
-            <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">自</div>
-            <span className="text-xs font-medium text-gray-700">@festival_class</span>
+            <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-sm">
+              {p?.icon ?? "🙂"}
+            </div>
+            <span className="text-xs font-medium text-gray-700">{p?.name ?? "公式アカウント"}</span>
+            <span className="text-xs text-gray-400 ml-1">@festival_class</span>
           </div>
           {state.selectedMaterial && (
             <ConceptImage panel={PANEL_MAP[state.selectedMaterial] ?? "post_classroom"} className="w-full h-28" />
@@ -926,8 +998,9 @@ export default function Home() {
     visitedAreas: new Set<string>(),
   }));
 
-  // 診断回答を一時保持
-  const [profileAnswers, setProfileAnswers] = useState<Record<string, string>>({});
+  // アカウント作成の一時データ
+  const baseRef = useRef<{ name: string; nickname: string; comment: string; icon: string } | null>(null);
+  const answersRef = useRef<Record<string, string>>({});
 
   const go = useCallback((screen: Screen) => {
     setState((s) => ({ ...s, screen }));
@@ -938,34 +1011,33 @@ export default function Home() {
     setState((s) => {
       const next = new Set(s.visitedAreas);
       next.add(key);
-      const newMaterials = [...s.collectedMaterials];
-      if (key === "shop" && !newMaterials.includes("模擬店の試作品")) newMaterials.push("模擬店の試作品");
-      if (key === "decoration" && !newMaterials.includes("装飾制作風景")) newMaterials.push("装飾制作風景");
-      return { ...s, screen, visitedAreas: next, collectedMaterials: newMaterials };
+      const mats = [...s.collectedMaterials];
+      if (key === "shop" && !mats.includes("模擬店の試作品")) mats.push("模擬店の試作品");
+      if (key === "decoration" && !mats.includes("装飾制作風景")) mats.push("装飾制作風景");
+      return { ...s, screen, visitedAreas: next, collectedMaterials: mats };
     });
     window.scrollTo(0, 0);
   }, []);
 
-  // 質問番号ごとの回答を受け取り次の画面へ
-  const handleProfileAnswer = useCallback((qKey: string, value: string, nextScreen: Screen) => {
-    setProfileAnswers((prev) => {
-      const updated = { ...prev, [qKey]: value };
-      // q4（最後）なら確定してprofileを生成
-      if (qKey === "q4") {
-        const profile = buildProfile({
-          q1: updated.q1 ?? "none",
-          q2: updated.q2 ?? "rarely",
-          q3: updated.q3 ?? "view_only",
-          q4: updated.q4 ?? "normal",
-        });
-        setState((s) => ({ ...s, playerProfile: profile, screen: "profile_result" }));
-      } else {
-        setState((s) => ({ ...s, screen: nextScreen }));
-      }
-      return updated;
-    });
-    window.scrollTo(0, 0);
-  }, []);
+  const handleBaseCreated = useCallback((base: { name: string; nickname: string; comment: string; icon: string }) => {
+    baseRef.current = base;
+    go("profile_q1");
+  }, [go]);
+
+  const handleSurveyAnswer = useCallback((qKey: string, value: string) => {
+    answersRef.current[qKey] = value;
+    const next: Screen = qKey === "q1" ? "profile_q2" : qKey === "q2" ? "profile_q3" : qKey === "q3" ? "profile_q4" : "profile_result";
+    if (qKey === "q4") {
+      const profile = buildProfile(
+        baseRef.current ?? { name: "名無し", nickname: "名無し", comment: "", icon: "🙂" },
+        { q1: answersRef.current.q1 ?? "none", q2: answersRef.current.q2 ?? "rarely", q3: answersRef.current.q3 ?? "view_only", q4: value }
+      );
+      setState((s) => ({ ...s, playerProfile: profile, screen: "profile_result" }));
+      window.scrollTo(0, 0);
+    } else {
+      go(next);
+    }
+  }, [go]);
 
   const handlePost = useCallback((material: string, caption: string) => {
     setState((s) => ({
@@ -982,17 +1054,10 @@ export default function Home() {
 
   const { screen } = state;
 
-  const showStatusBar =
-    screen !== "title" &&
-    !screen.startsWith("profile_") &&
-    screen !== "op1_line" &&
-    screen !== "op2_teacher" &&
-    screen !== "op2_ranking" &&
-    screen !== "op2_reaction" &&
-    screen !== "op2_goal" &&
-    screen !== "day1_end" &&
-    screen !== "contest_announcement" &&
-    screen !== "role_decision";
+  const showStatusBar = [
+    "classroom", "sns", "line_chat", "shop", "decoration",
+    "account_check", "first_post", "post_result",
+  ].includes(screen);
 
   return (
     <PhoneFrame>
@@ -1000,32 +1065,28 @@ export default function Home() {
         <StatusBar followers={state.followers} prPoints={state.prPoints} classExpectation={state.classExpectation} />
       )}
 
-      {screen === "title"       && <TitleScreen onNext={() => go("profile_q1")} />}
-
-      {/* 診断 */}
-      {screen === "profile_q1"  && <ProfileQuestionScreen questionIndex={0} onAnswer={(v) => handleProfileAnswer("q1", v, "profile_q2")} />}
-      {screen === "profile_q2"  && <ProfileQuestionScreen questionIndex={1} onAnswer={(v) => handleProfileAnswer("q2", v, "profile_q3")} />}
-      {screen === "profile_q3"  && <ProfileQuestionScreen questionIndex={2} onAnswer={(v) => handleProfileAnswer("q3", v, "profile_q4")} />}
-      {screen === "profile_q4"  && <ProfileQuestionScreen questionIndex={3} onAnswer={(v) => handleProfileAnswer("q4", v, "profile_result")} />}
+      {screen === "title"          && <TitleScreen onNext={() => go("profile_create")} />}
+      {screen === "profile_create" && <ProfileCreateScreen onNext={handleBaseCreated} />}
+      {screen === "profile_q1"     && <SurveyQuestionScreen questionIndex={0} onAnswer={(v) => handleSurveyAnswer("q1", v)} />}
+      {screen === "profile_q2"     && <SurveyQuestionScreen questionIndex={1} onAnswer={(v) => handleSurveyAnswer("q2", v)} />}
+      {screen === "profile_q3"     && <SurveyQuestionScreen questionIndex={2} onAnswer={(v) => handleSurveyAnswer("q3", v)} />}
+      {screen === "profile_q4"     && <SurveyQuestionScreen questionIndex={3} onAnswer={(v) => handleSurveyAnswer("q4", v)} />}
       {screen === "profile_result" && state.playerProfile && (
         <ProfileResultScreen profile={state.playerProfile} onNext={() => go("op1_line")} />
       )}
 
-      {/* OP */}
-      {screen === "op1_line"     && <Op1LineScreen     onNext={() => go("op2_teacher")} />}
-      {screen === "op2_teacher"  && <Op2TeacherScreen  onNext={() => go("op2_ranking")} />}
-      {screen === "op2_ranking"  && <Op2RankingScreen  onNext={() => go("op2_reaction")} />}
+      {screen === "op1_line"     && <Op1LineScreen profile={state.playerProfile} onNext={() => go("op2_teacher")} />}
+      {screen === "op2_teacher"  && <Op2TeacherScreen onNext={() => go("op2_ranking")} />}
+      {screen === "op2_ranking"  && <Op2RankingScreen onNext={() => go("op2_reaction")} />}
       {screen === "op2_reaction" && <Op2ReactionScreen onNext={() => go("op2_goal")} />}
-      {screen === "op2_goal"     && <Op2GoalScreen     onNext={() => go("classroom")} />}
+      {screen === "op2_goal"     && <Op2GoalScreen onNext={() => go("classroom")} />}
 
-      {/* 自由探索 */}
       {screen === "classroom"  && <ClassroomScreen state={state} onNavigate={visitArea} onContinue={() => go("contest_announcement")} />}
       {screen === "sns"        && <SnsScreen onBack={() => go("classroom")} />}
       {screen === "line_chat"  && <LineChatScreen onBack={() => go("classroom")} />}
       {screen === "shop"       && <ShopScreen onBack={() => go("classroom")} alreadyCollected={state.collectedMaterials.includes("模擬店の試作品")} />}
       {screen === "decoration" && <DecorationScreen onBack={() => go("classroom")} alreadyCollected={state.collectedMaterials.includes("装飾制作風景")} />}
 
-      {/* 後半 */}
       {screen === "contest_announcement" && <ContestAnnouncementScreen onNext={() => go("role_decision")} />}
       {screen === "role_decision"        && <RoleDecisionScreen onDecide={() => go("account_check")} />}
       {screen === "account_check"        && <AccountCheckScreen state={state} onNext={() => go("first_post")} />}
