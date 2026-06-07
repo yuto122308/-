@@ -1,12 +1,15 @@
 export type Screen =
   | "title"
-  | "day1_start"
+  | "op1_line"       // OPシーン1: LINE通知
+  | "op2_teacher"    // OPシーン2: 担任の話
+  | "op2_ranking"    // OPシーン2: 去年の順位発表（アニメーション）
+  | "op2_reaction"   // OPシーン2: クラスメイトの反応
+  | "op2_goal"       // OPシーン2: 目的表示
   | "classroom"
   | "sns"
   | "line_chat"
   | "shop"
   | "decoration"
-  | "last_year_result"
   | "contest_announcement"
   | "role_decision"
   | "account_check"
@@ -22,9 +25,15 @@ export interface GameState {
   selectedCaption: string | null;
   followers: number;
   prPoints: number;
-  classExpectation: number; // 0-100
+  classExpectation: number;
   likes: number;
 }
+
+export const OP1_MESSAGES = [
+  { id: "m1", sender: "委員長", text: "去年の結果見た？" },
+  { id: "m2", sender: "親友", text: "8位かー" },
+  { id: "m3", sender: "ムードメーカー", text: "今年こそ勝ちたい笑" },
+];
 
 export const SNS_POSTS_A_CLASS = [
   {
@@ -95,4 +104,10 @@ export const LAST_YEAR_RANKING = [
   { rank: 6, name: "G組" },
   { rank: 7, name: "E組" },
   { rank: 8, name: "自分たちのクラス", isOwn: true },
+];
+
+export const OP2_REACTIONS = [
+  { sender: "親友", text: "頑張ったのにな" },
+  { sender: "クラスメイト", text: "全然人来なかったよな" },
+  { sender: "ムードメーカー", text: "今年は上狙いたい" },
 ];
