@@ -320,7 +320,7 @@ function PlayerResultScreen({ profile, onNext }: { profile: PlayerProfile; onNex
       )}
 
       <div className="mt-auto">
-        <ChoiceButton onClick={onNext} disabled={!show}>教室へ</ChoiceButton>
+        <ChoiceButton onClick={onNext} disabled={!show}>アカウントを作る</ChoiceButton>
       </div>
     </div>
   );
@@ -1113,7 +1113,7 @@ export default function Home() {
   }, [go]);
 
   const handleAccountComplete = useCallback((account: FestivalAccount) => {
-    setState((s) => ({ ...s, festivalAccount: account, screen: "first_post" }));
+    setState((s) => ({ ...s, festivalAccount: account, screen: "op2_teacher" }));
     window.scrollTo(0, 0);
   }, []);
 
@@ -1143,7 +1143,7 @@ export default function Home() {
       {screen === "player_q2"    && <PlayerQuestionScreen questionIndex={1} onAnswer={(v) => handleSurveyAnswer("q2", v)} />}
       {screen === "player_q3"    && <PlayerQuestionScreen questionIndex={2} onAnswer={(v) => handleSurveyAnswer("q3", v)} />}
       {screen === "player_result" && state.playerProfile && (
-        <PlayerResultScreen profile={state.playerProfile} onNext={() => go("op2_teacher")} />
+        <PlayerResultScreen profile={state.playerProfile} onNext={() => go("account_handover")} />
       )}
 
       {/* OP / 自由探索 */}
@@ -1158,10 +1158,9 @@ export default function Home() {
       {screen === "decoration"   && <DecorationScreen onBack={() => go("classroom")} alreadyCollected={state.collectedMaterials.includes("装飾制作風景")} />}
 
       {/* SNS広報担当〜アカウント設定 */}
-      {screen === "contest_announcement" && <ContestAnnouncementScreen onNext={() => go("role_decision")} />}
-      {screen === "role_decision"        && <RoleDecisionScreen playerName={state.playerProfile?.nickname ?? "あなた"} onDecide={() => go("account_handover")} />}
       {screen === "account_handover"     && <AccountHandoverScreen onNext={() => go("festival_account_setup")} />}
       {screen === "festival_account_setup" && <FestivalAccountSetupScreen onComplete={handleAccountComplete} />}
+      {screen === "contest_announcement" && <ContestAnnouncementScreen onNext={() => go("first_post")} />}
 
       {/* 投稿 */}
       {screen === "first_post"  && <FirstPostScreen state={state} onPost={handlePost} />}
