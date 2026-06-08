@@ -1,5 +1,6 @@
 export type Screen =
   | "title"
+  | "scene_set"        // 場面設定カード
   | "notify_intro"     // スマホ通知演出
   | "prologue"         // 世界観プロローグ
   | "profile_create"   // アカウント作成（名前・アイコン）

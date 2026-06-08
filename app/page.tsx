@@ -65,6 +65,55 @@ function TitleScreen({ onNext }: { onNext: () => void }) {
   );
 }
 
+// ─── 場面設定カード ──────────────────────────────────────────────────
+
+function SceneSetScreen({ onNext }: { onNext: () => void }) {
+  const [step, setStep] = useState(0);
+
+  // 0→1→2→3 と段階的に表示
+  useEffect(() => {
+    if (step < 3) {
+      const t = setTimeout(() => setStep((n) => n + 1), step === 0 ? 400 : 800);
+      return () => clearTimeout(t);
+    }
+  }, [step]);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[calc(100svh-28px)] bg-white px-8">
+      <div className="w-full max-w-xs space-y-5 text-center">
+        {step >= 1 && (
+          <div className="space-y-1 transition-opacity duration-500">
+            <div className="text-xs text-gray-400 tracking-widest uppercase">Scene</div>
+            <div className="text-sm text-gray-500">○○高校　1年3組</div>
+          </div>
+        )}
+
+        {step >= 2 && (
+          <div className="border-t border-b border-gray-100 py-5 transition-opacity duration-500">
+            <div className="text-3xl font-black text-gray-900 mb-1">文化祭まで</div>
+            <div className="text-5xl font-black text-gray-900">あと7日</div>
+          </div>
+        )}
+
+        {step >= 3 && (
+          <div className="space-y-1 transition-opacity duration-500">
+            <div className="text-sm text-gray-600 leading-relaxed">
+              あなたは高校1年生。<br />
+              クラスの文化祭準備が始まっている。
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="absolute bottom-8 left-0 right-0 px-8">
+        <ChoiceButton onClick={onNext} disabled={step < 3}>
+          {step < 3 ? "　" : "つづきを見る"}
+        </ChoiceButton>
+      </div>
+    </div>
+  );
+}
+
 // ─── スマホ通知演出 ──────────────────────────────────────────────────
 
 function NotifyIntroScreen({ onNext }: { onNext: () => void }) {
@@ -1190,7 +1239,8 @@ export default function Home() {
         <StatusBar followers={state.followers} prPoints={state.prPoints} classExpectation={state.classExpectation} />
       )}
 
-      {screen === "title"          && <TitleScreen onNext={() => go("notify_intro")} />}
+      {screen === "title"          && <TitleScreen onNext={() => go("scene_set")} />}
+      {screen === "scene_set"      && <SceneSetScreen onNext={() => go("notify_intro")} />}
       {screen === "notify_intro"   && <NotifyIntroScreen onNext={() => go("prologue")} />}
       {screen === "prologue"       && <PrologueScreen onNext={() => go("profile_create")} />}
       {screen === "profile_create" && <ProfileCreateScreen onNext={handleBaseCreated} />}
