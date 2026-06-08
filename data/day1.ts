@@ -13,9 +13,9 @@ export type Screen =
   | "op2_teacher"
   | "op2_ranking"
   | "op2_reaction"
+  | "op2_sns"
   | "op2_goal"
   | "classroom"
-  | "sns"
   | "line_chat"
   | "shop"
   | "decoration"
@@ -218,6 +218,12 @@ export const POST_REACTIONS = [
   { sender: "ムードメーカー", text: "いいじゃん笑" },
   { sender: "クラスメイト",  text: "明日から頼むわ" },
 ];
+
+export const INTERVIEW_MEMOS: Record<string, { emoji: string; text: string }> = {
+  shop:       { emoji: "🍟", text: "チュロスの試作品ができた！\n焦げてるけど、みんな笑いながらやり直してた" },
+  decoration: { emoji: "🎨", text: "巨大装飾、去年より本気で作ってる\nまだ完成には遠いけど気合いが違う" },
+  line_chat:  { emoji: "💬", text: "クラスのみんな、実は文化祭を楽しみにしてる\nLINEで見えてなかった本音が見えた気がした" },
+};
 
 export const ROLE_CHOICES = [
   { id: "a", text: "やってみる" },

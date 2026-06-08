@@ -14,7 +14,7 @@ import {
   NOTIFY_INTRO, PROLOGUE_LINES,
   SNS_POSTS_A_CLASS, SNS_POSTS_OWN_CLASS,
   LINE_MESSAGES, CAPTIONS, LIKES_SEQUENCE, POST_REACTIONS,
-  ROLE_CHOICES, LAST_YEAR_RANKING, OP2_REACTIONS,
+  ROLE_CHOICES, LAST_YEAR_RANKING, OP2_REACTIONS, INTERVIEW_MEMOS,
 } from "@/data/day1";
 
 const INITIAL_STATE: GameState = {
@@ -413,9 +413,9 @@ function Op2ReactionScreen({ onNext }: { onNext: () => void }) {
           </div>
         ))}
         {done && (
-          <div className="pt-4 mx-2">
+          <div className="pt-4 mx-2 space-y-3">
             <div className="bg-gray-800/80 rounded-xl px-4 py-3 text-center">
-              <p className="text-sm text-white/90 leading-relaxed">「同じ文化祭なのに、どうしてこんな差がついたんだろう」</p>
+              <p className="text-sm text-white/90 leading-relaxed">「去年は頑張ったはずなのに。何が足りなかったんだろう」</p>
             </div>
           </div>
         )}
@@ -427,23 +427,122 @@ function Op2ReactionScreen({ onNext }: { onNext: () => void }) {
   );
 }
 
-// ─── OP2: 目的 ───────────────────────────────────────────────────────
+// ─── OP2: A組のSNSを見る（必須ナラティブ） ──────────────────────────
+
+function Op2SnsScreen({ onNext }: { onNext: () => void }) {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (step < SNS_POSTS_A_CLASS.length) {
+      const t = setTimeout(() => setStep((n) => n + 1), step === 0 ? 500 : 800);
+      return () => clearTimeout(t);
+    }
+  }, [step]);
+
+  const allLoaded = step >= SNS_POSTS_A_CLASS.length;
+
+  return (
+    <div className="flex flex-col min-h-[calc(100svh-28px)] bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-5 py-3">
+        <div className="text-xs text-gray-400 mb-0.5">確認する</div>
+        <span className="text-sm font-semibold text-gray-800">去年1位 A組のSNS</span>
+      </div>
+      <div className="flex-1 px-4 py-4 overflow-y-auto">
+        <div className="bg-white/80 rounded-xl px-4 py-3 mb-4 text-center border border-gray-100">
+          <p className="text-sm text-gray-600 leading-relaxed">「去年1位のA組は、何を投稿していたんだろう……」</p>
+        </div>
+        <div className="flex items-center gap-2 mb-3 px-1">
+          <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-xs font-bold text-white">A</div>
+          <div>
+            <div className="text-sm font-semibold text-gray-900">A組 公式アカウント</div>
+            <div className="text-xs text-gray-400 flex items-center gap-1"><span className="text-yellow-500">★</span>去年 1位</div>
+          </div>
+        </div>
+        <div className="space-y-0">
+          {SNS_POSTS_A_CLASS.slice(0, step).map((post) => (
+            <SnsPostCard key={post.id} title={post.title} description={post.description} likes={post.likes} comments={post.comments} />
+          ))}
+        </div>
+        {allLoaded && (
+          <div className="mt-4 bg-gray-900 rounded-xl px-4 py-4 text-center">
+            <p className="text-sm text-white leading-relaxed">「同じ文化祭なのに……<br />全然違う。」</p>
+          </div>
+        )}
+      </div>
+      <div className="px-5 pb-6 pt-3 bg-gray-50 border-t border-gray-200">
+        <ChoiceButton onClick={onNext} disabled={!allLoaded}>
+          {allLoaded ? "次へ" : "……"}
+        </ChoiceButton>
+      </div>
+    </div>
+  );
+}
+
+// ─── OP2: 委員長との会話・ミッション発生 ─────────────────────────────
 
 function Op2GoalScreen({ onNext }: { onNext: () => void }) {
+  const [step, setStep] = useState(0);
+
+  const advance = () => setStep((n) => Math.min(n + 1, 3));
+
   return (
-    <div className="flex flex-col min-h-[calc(100svh-28px)] bg-white px-6 py-10">
-      <div className="flex-1 flex flex-col justify-center">
-        <div className="text-xs text-gray-400 tracking-widest mb-6 uppercase">Mission</div>
-        <div className="border-l-2 border-gray-900 pl-5 mb-8">
-          <div className="text-xs text-gray-500 mb-1">目的</div>
-          <p className="text-xl font-bold text-gray-900 leading-snug">去年の文化祭を<br />調べてみよう</p>
-        </div>
-        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 space-y-2">
-          <p className="text-sm text-gray-700">上位クラスは何が違ったのか。</p>
-          <p className="text-sm text-gray-700">今年変えるために、まず知るところから始めよう。</p>
-        </div>
+    <div className="flex flex-col min-h-[calc(100svh-28px)] bg-gray-100">
+      <div className="bg-white border-b border-gray-200 px-5 py-3 flex items-center gap-2">
+        <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium">委</div>
+        <span className="text-sm font-semibold text-gray-800">委員長</span>
       </div>
-      <ChoiceButton onClick={onNext}>探索を始める</ChoiceButton>
+      <div className="flex-1 px-4 py-5 space-y-3 overflow-y-auto">
+        {/* 委員長メッセージ1 */}
+        {step >= 0 && (
+          <div className="flex items-end gap-2">
+            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium flex-shrink-0">委</div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">委員長</div>
+              <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-3 py-2 text-sm text-gray-800 max-w-[240px]">
+                今年はSNSコンテストもあるし、本気で上位を狙いたいんだ
+              </div>
+            </div>
+          </div>
+        )}
+        {/* 委員長メッセージ2 */}
+        {step >= 1 && (
+          <div className="flex items-end gap-2">
+            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium flex-shrink-0">委</div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">委員長</div>
+              <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-3 py-2 text-sm text-gray-800 max-w-[240px]">
+                でもまずは、自分たちの文化祭の魅力を知らないと始まらないよね
+              </div>
+            </div>
+          </div>
+        )}
+        {/* ミッションカード */}
+        {step >= 2 && (
+          <div className="mx-2 mt-2 bg-gray-900 text-white rounded-2xl p-5">
+            <div className="text-xs text-gray-400 mb-2 tracking-widest uppercase">Mission</div>
+            <div className="text-base font-bold mb-3">文化祭の魅力を<br />3つ見つけよう</div>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1">
+                {[0,1,2].map((i) => (
+                  <div key={i} className="w-3 h-3 rounded-full border border-gray-500 bg-gray-800" />
+                ))}
+              </div>
+              <span className="text-xs text-gray-400">0 / 3</span>
+            </div>
+          </div>
+        )}
+        {/* タップ促進 */}
+        {step < 2 && (
+          <button onClick={advance} className="w-full text-center text-xs text-gray-400 py-3 active:opacity-60">
+            タップして続きを読む
+          </button>
+        )}
+      </div>
+      <div className="px-5 pb-6 border-t border-gray-200 bg-gray-100 pt-4">
+        <ChoiceButton onClick={onNext} disabled={step < 2}>
+          {step >= 2 ? "取材を始める" : "　"}
+        </ChoiceButton>
+      </div>
     </div>
   );
 }
@@ -456,100 +555,76 @@ function ClassroomScreen({ state, onNavigate, onContinue }: {
   onContinue: () => void;
 }) {
   const visited = state.visitedAreas;
-  const canContinue = visited.size >= 2;
+  const REQUIRED = ["shop", "decoration", "line_chat"] as const;
+  const doneCount = REQUIRED.filter((k) => visited.has(k)).length;
+  const canContinue = doneCount >= 3;
+
   const areas: { label: string; key: string; screen: Screen; desc: string }[] = [
-    { label: "SNSを見る",        key: "sns",        screen: "sns",       desc: "去年1位のA組は何を投稿した？" },
-    { label: "クラスLINEを見る",  key: "line",       screen: "line_chat", desc: "みんなは何を考えてる？" },
-    { label: "模擬店を見る",      key: "shop",       screen: "shop",      desc: "準備の雰囲気は去年と違う？" },
-    { label: "装飾班を見る",      key: "decoration", screen: "decoration", desc: "今年の本気度は？" },
+    { label: "模擬店を取材する",  key: "shop",       screen: "shop",      desc: "試作品の様子を見てみよう" },
+    { label: "装飾班を取材する",  key: "decoration", screen: "decoration", desc: "今年の気合いを感じてみよう" },
+    { label: "クラスLINEを見る",  key: "line_chat",  screen: "line_chat", desc: "みんなの本音はどこにある？" },
   ];
+
   return (
     <div className="flex flex-col min-h-[calc(100svh-28px)] bg-white">
-      <ConceptImage panel="classroom_bg" className="w-full h-32" />
+      <ConceptImage panel="classroom_bg" className="w-full h-28" />
+      {/* ミッションヘッダー */}
       <div className="px-5 py-4 border-b border-gray-100">
-        <div className="text-xs text-gray-400 mb-1">現在地</div>
-        <h2 className="text-lg font-bold text-gray-900">教室</h2>
-        <p className="text-xs text-gray-500 mt-1">去年との差を探してみよう</p>
-      </div>
-      <div className="flex-1 px-5 py-4 space-y-2">
-        {areas.map((area) => (
-          <button key={area.key} onClick={() => onNavigate(area.key, area.screen)}
-            className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-left hover:border-gray-400 transition-colors active:scale-[0.98]">
-            <div>
-              <div className="text-sm font-medium text-gray-800">{area.label}</div>
-              <div className="text-xs text-gray-400 mt-0.5">{area.desc}</div>
-            </div>
-            <div className="flex items-center gap-2">
-              {visited.has(area.key) && <span className="text-xs text-green-600 bg-green-50 rounded-full px-2 py-0.5">確認済</span>}
-              <span className="text-gray-300 text-lg">›</span>
-            </div>
-          </button>
-        ))}
-      </div>
-      {canContinue ? (
-        <div className="px-5 pb-6">
-          <div className="text-xs text-gray-400 text-center mb-3">{visited.size}か所確認しました</div>
-          <ChoiceButton onClick={onContinue}>教室で続きを見る</ChoiceButton>
+        <div className="text-xs text-gray-400 mb-1 tracking-wider uppercase">Mission</div>
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-gray-900">文化祭の魅力を3つ見つけよう</h2>
+          <div className="flex items-center gap-1.5 bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+            <span>{doneCount}</span><span className="text-gray-400">/</span><span>3</span>
+          </div>
         </div>
-      ) : (
-        <div className="px-5 pb-6 text-center text-xs text-gray-400">あと{2 - visited.size}か所見てみよう</div>
-      )}
+        {/* 進捗ドット */}
+        <div className="flex gap-2 mt-3">
+          {REQUIRED.map((k) => (
+            <div key={k} className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${visited.has(k) ? "bg-gray-900" : "bg-gray-200"}`} />
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 px-5 py-4 space-y-2.5">
+        {areas.map((area) => {
+          const done = visited.has(area.key);
+          return (
+            <button key={area.key} onClick={() => onNavigate(area.key, area.screen)}
+              className={`w-full flex items-center justify-between border rounded-xl px-4 py-4 text-left transition-colors active:scale-[0.98] ${done ? "border-gray-300 bg-gray-50" : "border-gray-200 bg-white hover:border-gray-400"}`}>
+              <div>
+                <div className={`text-sm font-medium ${done ? "text-gray-500" : "text-gray-800"}`}>{area.label}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{done ? "取材メモを記録しました" : area.desc}</div>
+              </div>
+              <div className="flex items-center gap-2 ml-3">
+                {done
+                  ? <span className="text-green-600 text-lg">✓</span>
+                  : <span className="text-gray-300 text-lg">›</span>}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="px-5 pb-6 border-t border-gray-100 pt-4">
+        {canContinue ? (
+          <>
+            <div className="text-xs text-gray-500 text-center mb-3">取材メモが3つ集まりました！</div>
+            <ChoiceButton onClick={onContinue}>次に進む</ChoiceButton>
+          </>
+        ) : (
+          <div className="text-xs text-gray-400 text-center py-2">あと{3 - doneCount}か所取材しよう</div>
+        )}
+      </div>
     </div>
   );
 }
 
-// ─── SNS ────────────────────────────────────────────────────────────
-
-function SnsScreen({ onBack }: { onBack: () => void }) {
-  return (
-    <div className="flex flex-col min-h-[calc(100svh-28px)] bg-gray-50">
-      <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-3 flex items-center gap-3 z-10">
-        <button onClick={onBack} className="text-gray-500 text-sm">← 戻る</button>
-        <span className="text-sm font-semibold text-gray-800">SNSを見る</span>
-      </div>
-      <div className="flex-1 px-4 py-4">
-        <div className="bg-gray-800/80 rounded-xl px-4 py-3 mb-5 text-center">
-          <p className="text-sm text-white/90 leading-relaxed">「去年1位のA組は、何を投稿していたんだろう」</p>
-        </div>
-        <div className="mb-5">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">A</div>
-            <div>
-              <div className="text-sm font-semibold text-gray-900">A組 公式アカウント</div>
-              <div className="text-xs text-gray-400">去年 優勝</div>
-            </div>
-            <div className="ml-auto text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">1位</div>
-          </div>
-          {SNS_POSTS_A_CLASS.map((post) => (
-            <SnsPostCard key={post.id} title={post.title} description={post.description} likes={post.likes} comments={post.comments} />
-          ))}
-        </div>
-        <div className="mb-5">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-400">自</div>
-            <div>
-              <div className="text-sm font-semibold text-gray-700">自分たちのクラス</div>
-              <div className="text-xs text-gray-400">去年 8位</div>
-            </div>
-          </div>
-          {SNS_POSTS_OWN_CLASS.map((post) => (
-            <SnsPostCard key={post.id} title={post.title} description={post.description} likes={post.likes} comments={post.comments} isOwn />
-          ))}
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-gray-700 leading-relaxed text-center italic">「同じ文化祭でも、見せ方でこんなに違うんだ……」</p>
-        </div>
-      </div>
-      <div className="px-5 pb-6">
-        <ChoiceButton onClick={onBack} variant="secondary">教室に戻る</ChoiceButton>
-      </div>
-    </div>
-  );
-}
+// ─── SNS（自由探索版は削除・OP専用になったため不使用） ──────────────
 
 // ─── クラスLINE ─────────────────────────────────────────────────────
 
 function LineChatScreen({ onBack }: { onBack: () => void }) {
+  const memo = INTERVIEW_MEMOS["line_chat"];
   return (
     <div className="flex flex-col min-h-[calc(100svh-28px)] bg-gray-100">
       <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-3 flex items-center gap-3 z-10">
@@ -559,7 +634,16 @@ function LineChatScreen({ onBack }: { onBack: () => void }) {
           <span className="text-sm font-semibold text-gray-800">クラスLINEグループ</span>
         </div>
       </div>
-      <div className="flex-1 py-4"><LineChat messages={LINE_MESSAGES} /></div>
+      <div className="flex-1 py-4 overflow-y-auto">
+        <LineChat messages={LINE_MESSAGES} />
+        <div className="mx-4 mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-base">{memo.emoji}</span>
+            <span className="text-xs font-semibold text-amber-700 tracking-wider uppercase">取材メモ</span>
+          </div>
+          <p className="text-sm text-amber-900 leading-relaxed whitespace-pre-line">{memo.text}</p>
+        </div>
+      </div>
       <div className="bg-white border-t border-gray-200 px-4 py-3 flex items-center gap-2">
         <div className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-xs text-gray-400">メッセージを入力…</div>
         <button className="text-gray-400 text-sm">送信</button>
@@ -593,8 +677,12 @@ function ShopScreen({ onBack, alreadyCollected }: { onBack: () => void; alreadyC
           <ConceptImage panel="post_shop" className="w-full h-28 rounded-lg mb-2" label="模擬店の試作品" />
           <div className="text-xs text-gray-500 text-center">模擬店の試作品</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-gray-600 italic text-center">「失敗してるけど、なんか楽しそうだ。」</p>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-base">{INTERVIEW_MEMOS["shop"].emoji}</span>
+            <span className="text-xs font-semibold text-amber-700 tracking-wider uppercase">取材メモ</span>
+          </div>
+          <p className="text-sm text-amber-900 leading-relaxed whitespace-pre-line">{INTERVIEW_MEMOS["shop"].text}</p>
         </div>
       </div>
       <div className="px-5 pb-6">
@@ -626,8 +714,12 @@ function DecorationScreen({ onBack, alreadyCollected }: { onBack: () => void; al
           <ConceptImage panel="post_decoration" className="w-full h-28 rounded-lg mb-2" label="装飾制作風景" />
           <div className="text-xs text-gray-500 text-center">装飾制作風景</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-gray-600 italic text-center">「今年、意外とみんな本気なのかも。」</p>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-base">{INTERVIEW_MEMOS["decoration"].emoji}</span>
+            <span className="text-xs font-semibold text-amber-700 tracking-wider uppercase">取材メモ</span>
+          </div>
+          <p className="text-sm text-amber-900 leading-relaxed whitespace-pre-line">{INTERVIEW_MEMOS["decoration"].text}</p>
         </div>
       </div>
       <div className="px-5 pb-6">
@@ -1149,10 +1241,10 @@ export default function Home() {
       {/* OP / 自由探索 */}
       {screen === "op2_teacher"  && <Op2TeacherScreen  onNext={() => go("op2_ranking")} />}
       {screen === "op2_ranking"  && <Op2RankingScreen  onNext={() => go("op2_reaction")} />}
-      {screen === "op2_reaction" && <Op2ReactionScreen onNext={() => go("op2_goal")} />}
+      {screen === "op2_reaction" && <Op2ReactionScreen onNext={() => go("op2_sns")} />}
+      {screen === "op2_sns"      && <Op2SnsScreen      onNext={() => go("op2_goal")} />}
       {screen === "op2_goal"     && <Op2GoalScreen     onNext={() => go("classroom")} />}
       {screen === "classroom"    && <ClassroomScreen state={state} onNavigate={visitArea} onContinue={() => go("contest_announcement")} />}
-      {screen === "sns"          && <SnsScreen onBack={() => go("classroom")} />}
       {screen === "line_chat"    && <LineChatScreen onBack={() => go("classroom")} />}
       {screen === "shop"         && <ShopScreen onBack={() => go("classroom")} alreadyCollected={state.collectedMaterials.includes("模擬店の試作品")} />}
       {screen === "decoration"   && <DecorationScreen onBack={() => go("classroom")} alreadyCollected={state.collectedMaterials.includes("装飾制作風景")} />}
