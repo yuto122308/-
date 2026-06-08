@@ -50,7 +50,32 @@ const PANEL_MAP: Record<string, import("@/components/ConceptImage").PanelId> = {
 
 // ─── タイトル ────────────────────────────────────────────────────────
 
-function TitleScreen({ onNext }: { onNext: () => void }) {
+const DEV_DUMMY_STATE: Partial<GameState> = {
+  playerProfile: {
+    name: "テスト太郎", nickname: "たろう", icon: "🙂", comment: "テスト中",
+    festivalInterest: "sns", snsDistance: "post_often", motivation: "high",
+    festivalLabel: "SNS広報型", snsLabel: "発信タイプ", motivationLabel: "高め",
+  },
+  festivalAccount: {
+    accountName: "1年3組文化祭", profileText: "文化祭まであと7日！",
+    icon: "🏫", followers: 32, posts: 1, points: 12,
+  },
+  collectedMaterials: ["教室の様子"],
+  trust: 10, attention: 8, rank: 8, flameRisk: 0,
+};
+
+const DEV_DAYS: { label: string; screen: Screen }[] = [
+  { label: "Day 1",   screen: "scene_set" },
+  { label: "Day 2",   screen: "day2_start" },
+  { label: "Day 3",   screen: "day2_start" },
+  { label: "Day 4",   screen: "day2_start" },
+  { label: "Day 5",   screen: "day2_start" },
+  { label: "Day 6",   screen: "day2_start" },
+  { label: "Day 7",   screen: "day2_start" },
+];
+
+function TitleScreen({ onNext, onDevJump }: { onNext: () => void; onDevJump: (screen: Screen, extra?: Partial<GameState>) => void }) {
+  const [devMode, setDevMode] = useState(false);
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100svh-28px)] px-8 py-16 bg-white">
       <div className="text-center flex-1 flex flex-col items-center justify-center">
@@ -59,8 +84,23 @@ function TitleScreen({ onNext }: { onNext: () => void }) {
         <h1 className="text-5xl font-black tracking-tight text-red-500 mb-6">99+</h1>
         <p className="text-sm text-gray-500 leading-relaxed">文化祭SNS広報責任者の7日間</p>
       </div>
-      <div className="w-full">
+      <div className="w-full space-y-3">
         <ChoiceButton onClick={onNext}>はじめる</ChoiceButton>
+        {!devMode ? (
+          <button onClick={() => setDevMode(true)} className="w-full text-xs text-gray-300 py-2">dev</button>
+        ) : (
+          <div className="border border-dashed border-gray-300 rounded-xl p-3 space-y-2">
+            <div className="text-xs text-gray-400 text-center mb-1">開発者ジャンプ</div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {DEV_DAYS.map((d) => (
+                <button key={d.label} onClick={() => onDevJump(d.screen, d.label !== "Day 1" ? DEV_DUMMY_STATE : undefined)}
+                  className="text-xs border border-gray-200 rounded-lg py-2 text-gray-600 hover:bg-gray-50 active:bg-gray-100">
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1272,7 +1312,7 @@ export default function Home() {
 
   return (
     <PhoneFrame>
-      {screen === "title"       && <TitleScreen onNext={() => go("scene_set")} />}
+      {screen === "title"       && <TitleScreen onNext={() => go("scene_set")} onDevJump={(s, extra) => { setState((cur) => ({ ...cur, ...extra, screen: s })); window.scrollTo(0,0); }} />}
       {screen === "scene_set"   && <SceneSetScreen onNext={() => go("notify_intro")} />}
       {screen === "notify_intro" && <NotifyIntroScreen onNext={() => go("prologue")} />}
       {screen === "prologue"    && <PrologueScreen onNext={() => go("player_create")} />}
