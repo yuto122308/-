@@ -1,12 +1,13 @@
 export type Screen =
   | "title"
+  | "notify_intro"     // スマホ通知演出
+  | "prologue"         // 世界観プロローグ
   | "profile_create"   // アカウント作成（名前・アイコン）
   | "profile_q1"
   | "profile_q2"
   | "profile_q3"
   | "profile_q4"
   | "profile_result"   // プロフィール完成カード
-  | "op1_line"
   | "op2_teacher"
   | "op2_ranking"
   | "op2_reaction"
@@ -146,6 +147,24 @@ export function buildProfile(
 }
 
 // ─── ゲームデータ ──────────────────────────────────────────────────
+
+// スマホ通知演出
+export const NOTIFY_INTRO = [
+  { id: "n1", app: "1年3組 文化祭", sender: "委員長",      text: "文化祭まであと7日！" },
+  { id: "n2", app: "LINE",          sender: "親友",         text: "去年8位だったらしい" },
+  { id: "n3", app: "LINE",          sender: "ムードメーカー", text: "今年は勝つぞ笑" },
+];
+
+// プロローグテキスト（段落ごと）
+export const PROLOGUE_LINES = [
+  "あなたは高校1年生。",
+  "来週、学校最大のイベントである文化祭が開催される。",
+  "クラスでは模擬店や装飾の準備が進んでいる。",
+  "去年の文化祭は楽しかった。\nでも、SNS広報ランキングでは8位だった。",
+  "そして今年。\n新しく「SNS広報コンテスト」が始まる。",
+  "SNSで文化祭を最も盛り上げたクラスが表彰される。",
+  "まだこの時のあなたは知らない。\nこの7日間が、クラスを大きく変えることになることを。",
+];
 
 export const OP1_MESSAGES = [
   { id: "m1", sender: "委員長",      text: "去年の結果見た？" },

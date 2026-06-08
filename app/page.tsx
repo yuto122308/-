@@ -14,6 +14,8 @@ import {
   ICON_OPTIONS,
   SURVEY_QUESTIONS,
   buildProfile,
+  NOTIFY_INTRO,
+  PROLOGUE_LINES,
   OP1_MESSAGES,
   SNS_POSTS_A_CLASS,
   SNS_POSTS_OWN_CLASS,
@@ -58,6 +60,129 @@ function TitleScreen({ onNext }: { onNext: () => void }) {
       </div>
       <div className="w-full">
         <ChoiceButton onClick={onNext}>はじめる</ChoiceButton>
+      </div>
+    </div>
+  );
+}
+
+// ─── スマホ通知演出 ──────────────────────────────────────────────────
+
+function NotifyIntroScreen({ onNext }: { onNext: () => void }) {
+  const [visible, setVisible] = useState(0);
+  const [showMono, setShowMono] = useState(false);
+  const [fadeOut, setFadeOut] = useState(false);
+
+  useEffect(() => {
+    if (visible < NOTIFY_INTRO.length) {
+      const t = setTimeout(() => setVisible((n) => n + 1), 900);
+      return () => clearTimeout(t);
+    } else {
+      const t = setTimeout(() => setShowMono(true), 400);
+      return () => clearTimeout(t);
+    }
+  }, [visible]);
+
+  const handleNext = () => {
+    setFadeOut(true);
+    setTimeout(onNext, 400);
+  };
+
+  return (
+    <div
+      className={`flex flex-col min-h-[calc(100svh-28px)] bg-gray-950 transition-opacity duration-400 ${fadeOut ? "opacity-0" : "opacity-100"}`}
+    >
+      {/* ステータスバー風 */}
+      <div className="flex justify-between items-center px-5 pt-4 pb-2 text-xs text-gray-400">
+        <span>9:41</span>
+        <span>●●●</span>
+      </div>
+
+      <div className="flex-1 px-4 pt-4 space-y-3">
+        {NOTIFY_INTRO.slice(0, visible).map((n) => (
+          <div
+            key={n.id}
+            className="bg-white/10 backdrop-blur rounded-2xl px-4 py-3 border border-white/10 animate-in slide-in-from-top-4 duration-300"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-4 h-4 rounded-sm bg-green-500 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs font-bold leading-none">L</span>
+              </div>
+              <span className="text-xs text-gray-300 font-medium">{n.app}</span>
+            </div>
+            <div className="text-xs text-gray-400 mb-0.5">{n.sender}</div>
+            <div className="text-sm text-white font-medium">{n.text}</div>
+          </div>
+        ))}
+
+        {showMono && (
+          <div className="pt-6 text-center px-4">
+            <p className="text-base text-gray-300 leading-relaxed">
+              「文化祭まであと1週間か……」
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="px-5 pb-8 pt-4">
+        <button
+          onClick={handleNext}
+          disabled={!showMono}
+          className="w-full py-3.5 rounded-xl text-sm font-medium transition-all disabled:opacity-0 bg-white/10 text-white border border-white/20 hover:bg-white/20 active:scale-[0.98]"
+        >
+          次へ
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── プロローグ ──────────────────────────────────────────────────────
+
+function PrologueScreen({ onNext }: { onNext: () => void }) {
+  const [lineIndex, setLineIndex] = useState(0);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (lineIndex < PROLOGUE_LINES.length) {
+      const t = setTimeout(() => {
+        if (lineIndex === PROLOGUE_LINES.length - 1) setDone(true);
+        setLineIndex((n) => n + 1);
+      }, lineIndex === 0 ? 600 : 1400);
+      return () => clearTimeout(t);
+    }
+  }, [lineIndex]);
+
+  return (
+    <div className="flex flex-col min-h-[calc(100svh-28px)] bg-white relative overflow-hidden">
+      {/* 背景に教室画像をうっすら */}
+      <div className="absolute inset-0">
+        <ConceptImage panel="classroom_bg" className="w-full h-full" />
+        <div className="absolute inset-0 bg-white/85" />
+      </div>
+
+      <div className="relative flex-1 flex flex-col justify-center px-7 py-12 space-y-5">
+        {/* タイトル */}
+        <div className="mb-4">
+          <div className="text-xs text-gray-400 tracking-widest mb-1 uppercase">Prologue</div>
+          <h2 className="text-xl font-bold text-gray-900">文化祭まであと7日</h2>
+        </div>
+
+        {PROLOGUE_LINES.slice(0, lineIndex).map((line, i) => (
+          <p
+            key={i}
+            className={`text-sm text-gray-700 leading-relaxed whitespace-pre-line transition-opacity duration-500 ${
+              i === lineIndex - 1 ? "opacity-100" : "opacity-70"
+            } ${i === PROLOGUE_LINES.length - 1 ? "font-medium text-gray-900" : ""}`}
+          >
+            {line}
+          </p>
+        ))}
+      </div>
+
+      <div className="relative px-5 pb-8 pt-2">
+        <ChoiceButton onClick={onNext} disabled={!done}>
+          プロフィールを作る
+        </ChoiceButton>
       </div>
     </div>
   );
@@ -1065,17 +1190,18 @@ export default function Home() {
         <StatusBar followers={state.followers} prPoints={state.prPoints} classExpectation={state.classExpectation} />
       )}
 
-      {screen === "title"          && <TitleScreen onNext={() => go("profile_create")} />}
+      {screen === "title"          && <TitleScreen onNext={() => go("notify_intro")} />}
+      {screen === "notify_intro"   && <NotifyIntroScreen onNext={() => go("prologue")} />}
+      {screen === "prologue"       && <PrologueScreen onNext={() => go("profile_create")} />}
       {screen === "profile_create" && <ProfileCreateScreen onNext={handleBaseCreated} />}
       {screen === "profile_q1"     && <SurveyQuestionScreen questionIndex={0} onAnswer={(v) => handleSurveyAnswer("q1", v)} />}
       {screen === "profile_q2"     && <SurveyQuestionScreen questionIndex={1} onAnswer={(v) => handleSurveyAnswer("q2", v)} />}
       {screen === "profile_q3"     && <SurveyQuestionScreen questionIndex={2} onAnswer={(v) => handleSurveyAnswer("q3", v)} />}
       {screen === "profile_q4"     && <SurveyQuestionScreen questionIndex={3} onAnswer={(v) => handleSurveyAnswer("q4", v)} />}
       {screen === "profile_result" && state.playerProfile && (
-        <ProfileResultScreen profile={state.playerProfile} onNext={() => go("op1_line")} />
+        <ProfileResultScreen profile={state.playerProfile} onNext={() => go("op2_teacher")} />
       )}
 
-      {screen === "op1_line"     && <Op1LineScreen profile={state.playerProfile} onNext={() => go("op2_teacher")} />}
       {screen === "op2_teacher"  && <Op2TeacherScreen onNext={() => go("op2_ranking")} />}
       {screen === "op2_ranking"  && <Op2RankingScreen onNext={() => go("op2_reaction")} />}
       {screen === "op2_reaction" && <Op2ReactionScreen onNext={() => go("op2_goal")} />}
