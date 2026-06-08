@@ -24,6 +24,18 @@ export type Screen =
   | "role_decision"
   | "account_handover"
   | "festival_account_setup"
+  // ── Day2 ──
+  | "day2_start"
+  | "day2_comments"
+  | "day2_line"
+  | "day2_mission"
+  | "day2_classroom"
+  | "day2_interview"
+  | "day2_post"
+  | "day2_post_result"
+  | "day2_line2"
+  | "day2_rivals"
+  | "day2_end"
   // ── 投稿 ──
   | "first_post"
   | "post_result"
@@ -68,6 +80,14 @@ export interface GameState {
   selectedMaterial: string | null;
   selectedCaption: string | null;
   likes: number;
+  // ── Day2以降の共有ステータス ──
+  trust: number;
+  attention: number;
+  rank: number;
+  flameRisk: number;          // 非表示
+  day2Area: string | null;
+  day2Value: string | null;
+  day2Target: string | null;
 }
 
 // ─── アイコン選択肢 ───────────────────────────────────────────────────

@@ -7,6 +7,13 @@ import LineChat from "@/components/LineChat";
 import ChoiceButton from "@/components/ChoiceButton";
 import ConceptImage from "@/components/ConceptImage";
 import {
+  Day2MorningScreen, Day2CommentsScreen, Day2LineScreen,
+  Day2MissionScreen, Day2ClassroomScreen, Day2InterviewScreen,
+  Day2PostScreen, Day2PostResultScreen, Day2Line2Screen,
+  Day2RivalsScreen, Day2EndScreen,
+} from "@/components/Day2Screens";
+import { Day2AreaId, Day2ValueId, Day2TargetId, computeDay2Outcome } from "@/data/day2";
+import {
   Screen, GameState, PlayerProfile, FestivalAccount,
   PLAYER_ICONS, FESTIVAL_ICONS,
   PLAYER_QUESTIONS, buildPlayerProfile,
@@ -26,6 +33,13 @@ const INITIAL_STATE: GameState = {
   selectedMaterial: null,
   selectedCaption: null,
   likes: 0,
+  trust: 10,
+  attention: 8,
+  rank: 8,
+  flameRisk: 0,
+  day2Area: null,
+  day2Value: null,
+  day2Target: null,
 };
 
 const PANEL_MAP: Record<string, import("@/components/ConceptImage").PanelId> = {
@@ -1134,7 +1148,7 @@ function PostResultScreen({ state, onEnd }: { state: GameState; onEnd: () => voi
 
 // ─── Day1終了 ────────────────────────────────────────────────────────
 
-function Day1EndScreen({ onTitle }: { onTitle: () => void }) {
+function Day1EndScreen({ onDay2, onTitle }: { onDay2: () => void; onTitle: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100svh-28px)] px-8 py-16 bg-white">
       <div className="flex-1 flex flex-col items-center justify-center text-center w-full">
@@ -1150,7 +1164,8 @@ function Day1EndScreen({ onTitle }: { onTitle: () => void }) {
           <p className="text-sm text-gray-700 leading-relaxed">本格的なSNS広報が始まる。</p>
         </div>
       </div>
-      <div className="w-full mt-8">
+      <div className="w-full mt-8 space-y-3">
+        <ChoiceButton onClick={onDay2}>Day 2 へ進む</ChoiceButton>
         <ChoiceButton onClick={onTitle} variant="secondary">タイトルへ戻る</ChoiceButton>
       </div>
     </div>
@@ -1209,6 +1224,39 @@ export default function Home() {
     window.scrollTo(0, 0);
   }, []);
 
+  // ── Day2 ──────────────────────────────────────────────────────────
+
+  const handleDay2AreaSelect = useCallback((area: Day2AreaId) => {
+    setState((s) => ({ ...s, day2Area: area, screen: "day2_interview" }));
+    window.scrollTo(0, 0);
+  }, []);
+
+  const handleDay2AreaBack = useCallback(() => {
+    go("day2_classroom");
+  }, [go]);
+
+  const handleDay2Post = useCallback((value: Day2ValueId, target: Day2TargetId) => {
+    setState((s) => ({ ...s, day2Value: value, day2Target: target, screen: "day2_post_result" }));
+    window.scrollTo(0, 0);
+  }, []);
+
+  const handleDay2PostDone = useCallback((outcome: ReturnType<typeof computeDay2Outcome>) => {
+    setState((s) => ({
+      ...s,
+      festivalAccount: s.festivalAccount
+        ? { ...s.festivalAccount, followers: outcome.newFollowers }
+        : null,
+      trust:      s.trust + outcome.trustGain,
+      attention:  s.attention + outcome.attentionGain,
+      flameRisk:  s.flameRisk + outcome.flameRiskGain,
+      rank:       outcome.newRank,
+      screen:     "day2_line2",
+    }));
+    window.scrollTo(0, 0);
+  }, []);
+
+  // ── Day1 投稿 ──────────────────────────────────────────────────────
+
   const handlePost = useCallback((material: string, caption: string) => {
     setState((s) => ({
       ...s,
@@ -1257,7 +1305,28 @@ export default function Home() {
       {/* 投稿 */}
       {screen === "first_post"  && <FirstPostScreen state={state} onPost={handlePost} />}
       {screen === "post_result" && <PostResultScreen state={state} onEnd={() => go("day1_end")} />}
-      {screen === "day1_end"    && <Day1EndScreen onTitle={() => go("title")} />}
+      {screen === "day1_end"    && <Day1EndScreen onDay2={() => go("day2_start")} onTitle={() => go("title")} />}
+
+      {/* ── Day2 ── */}
+      {screen === "day2_start"      && <Day2MorningScreen   onNext={() => go("day2_comments")} />}
+      {screen === "day2_comments"   && <Day2CommentsScreen  state={state} onNext={() => go("day2_line")} />}
+      {screen === "day2_line"       && <Day2LineScreen      onNext={() => go("day2_mission")} />}
+      {screen === "day2_mission"    && <Day2MissionScreen   state={state} onNext={() => go("day2_classroom")} />}
+      {screen === "day2_classroom"  && (
+        <Day2ClassroomScreen
+          state={state}
+          onAreaSelect={handleDay2AreaSelect}
+          onContinue={() => go("day2_post")}
+        />
+      )}
+      {screen === "day2_interview"  && state.day2Area && (
+        <Day2InterviewScreen areaId={state.day2Area as Day2AreaId} onBack={handleDay2AreaBack} />
+      )}
+      {screen === "day2_post"       && <Day2PostScreen       state={state} onPost={handleDay2Post} />}
+      {screen === "day2_post_result" && <Day2PostResultScreen state={state} onDone={handleDay2PostDone} />}
+      {screen === "day2_line2"      && <Day2Line2Screen      state={state} onNext={() => go("day2_rivals")} />}
+      {screen === "day2_rivals"     && <Day2RivalsScreen     state={state} onNext={() => go("day2_end")} />}
+      {screen === "day2_end"        && <Day2EndScreen        state={state} onTitle={() => go("title")} />}
     </PhoneFrame>
   );
 }
