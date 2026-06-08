@@ -1,14 +1,15 @@
 export type Screen =
   | "title"
-  | "scene_set"        // 場面設定カード
-  | "notify_intro"     // スマホ通知演出
-  | "prologue"         // 世界観プロローグ
-  | "profile_create"   // アカウント作成（名前・アイコン）
-  | "profile_q1"
-  | "profile_q2"
-  | "profile_q3"
-  | "profile_q4"
-  | "profile_result"   // プロフィール完成カード
+  | "scene_set"
+  | "notify_intro"
+  | "prologue"
+  // ── プレイヤー自身のプロフィール ──
+  | "player_create"
+  | "player_q1"
+  | "player_q2"
+  | "player_q3"
+  | "player_result"
+  // ── OP / 自由探索 ──
   | "op2_teacher"
   | "op2_ranking"
   | "op2_reaction"
@@ -18,50 +19,65 @@ export type Screen =
   | "line_chat"
   | "shop"
   | "decoration"
+  // ── SNS広報担当〜アカウント設定 ──
   | "contest_announcement"
   | "role_decision"
-  | "account_check"
+  | "account_handover"
+  | "festival_account_setup"
+  // ── 投稿 ──
   | "first_post"
   | "post_result"
   | "day1_end";
 
+// ─── プレイヤー（高校生としての自分） ────────────────────────────────
+
 export interface PlayerProfile {
-  // アカウント作成
   name: string;
   nickname: string;
-  comment: string;
   icon: string;
-  // アンケート（raw値）
+  comment: string;
+  // アンケート raw
   festivalInterest: string;
-  snsInterest: string;
-  snsUsage: string;
+  snsDistance: string;
   motivation: string;
-  // 派生ラベル（Day2-7で利用）
+  // 派生ラベル（Day2-7 で利用）
   festivalLabel: string;
   snsLabel: string;
   motivationLabel: string;
 }
 
+// ─── 文化祭公式アカウント ─────────────────────────────────────────────
+
+export interface FestivalAccount {
+  accountName: string;
+  profileText: string;
+  icon: string;        // 絵文字プレースホルダー
+  followers: number;
+  posts: number;
+  points: number;
+}
+
+// ─── ゲーム全体の状態 ────────────────────────────────────────────────
+
 export interface GameState {
   screen: Screen;
   playerProfile: PlayerProfile | null;
+  festivalAccount: FestivalAccount | null;
   visitedAreas: Set<string>;
   collectedMaterials: string[];
   selectedMaterial: string | null;
   selectedCaption: string | null;
-  followers: number;
-  prPoints: number;
-  classExpectation: number;
   likes: number;
 }
 
-// ─── アイコン選択肢 ────────────────────────────────────────────────
+// ─── アイコン選択肢 ───────────────────────────────────────────────────
 
-export const ICON_OPTIONS = ["📸", "🎨", "🍟", "🎵", "🎭", "📚", "⭐", "🙂"];
+export const PLAYER_ICONS   = ["📸", "🎨", "🍟", "🎵", "🎭", "📚", "⭐", "🙂"];
+export const FESTIVAL_ICONS = ["🏫", "🎪", "🎉", "🌟"];
 
-// ─── アンケート質問 ────────────────────────────────────────────────
+// ─── プレイヤーアンケート ─────────────────────────────────────────────
 
-export const SURVEY_QUESTIONS = [
+export const PLAYER_QUESTIONS = [
   {
     id: "q1",
     text: "文化祭で一番気になるのは？",
@@ -75,17 +91,6 @@ export const SURVEY_QUESTIONS = [
   },
   {
     id: "q2",
-    text: "SNSでよく見るのは？",
-    options: [
-      { value: "funny",   label: "面白い投稿" },
-      { value: "useful",  label: "役立つ情報" },
-      { value: "friends", label: "友達の日常" },
-      { value: "fandom",  label: "推しや趣味" },
-      { value: "rarely",  label: "あまり見ない" },
-    ],
-  },
-  {
-    id: "q3",
     text: "SNSとの距離感は？",
     options: [
       { value: "post_often", label: "よく投稿する" },
@@ -94,7 +99,7 @@ export const SURVEY_QUESTIONS = [
     ],
   },
   {
-    id: "q4",
+    id: "q3",
     text: "文化祭への熱量は？",
     options: [
       { value: "high",   label: "めちゃくちゃ楽しみ" },
@@ -105,9 +110,23 @@ export const SURVEY_QUESTIONS = [
   },
 ] as const;
 
-// ─── ラベル変換 ────────────────────────────────────────────────────
+// ─── 文化祭アカウント設定選択肢 ──────────────────────────────────────
 
-const FESTIVAL_LABEL: Record<string, string> = {
+export const ACCOUNT_NAME_OPTIONS = [
+  "1年3組文化祭",
+  "1-3 Festival",
+  "Festival_13",
+];
+
+export const ACCOUNT_PROFILE_OPTIONS = [
+  "文化祭まであと7日！",
+  "1年3組公式アカウントです！",
+  "今年は上位を目指します！",
+];
+
+// ─── ラベル変換 ───────────────────────────────────────────────────────
+
+const FESTIVAL_LABEL_MAP: Record<string, string> = {
   together: "盛り上がり重視型",
   plan:     "企画派",
   sns:      "SNS広報型",
@@ -115,48 +134,45 @@ const FESTIVAL_LABEL: Record<string, string> = {
   none:     "クールな傍観者",
 };
 
-const SNS_LABEL: Record<string, string> = {
+const SNS_LABEL_MAP: Record<string, string> = {
   post_often: "発信タイプ",
   post_some:  "バランス型",
   view_only:  "閲覧中心",
 };
 
-const MOTIVATION_LABEL: Record<string, string> = {
+const MOTIVATION_LABEL_MAP: Record<string, string> = {
   high:   "高め",
   mid:    "まあまあ",
   normal: "普通",
   low:    "低め",
 };
 
-export function buildProfile(
-  base: { name: string; nickname: string; comment: string; icon: string },
-  answers: { q1: string; q2: string; q3: string; q4: string }
+export function buildPlayerProfile(
+  base: { name: string; nickname: string; icon: string; comment: string },
+  answers: { q1: string; q2: string; q3: string }
 ): PlayerProfile {
   return {
     name:     base.name     || "名無し",
     nickname: base.nickname || base.name || "名無し",
-    comment:  base.comment  || "",
     icon:     base.icon     || "🙂",
+    comment:  base.comment  || "",
     festivalInterest: answers.q1,
-    snsInterest:      answers.q2,
-    snsUsage:         answers.q3,
-    motivation:       answers.q4,
-    festivalLabel:   FESTIVAL_LABEL[answers.q1]   ?? "—",
-    snsLabel:        SNS_LABEL[answers.q3]         ?? "—",
-    motivationLabel: MOTIVATION_LABEL[answers.q4]  ?? "—",
+    snsDistance:      answers.q2,
+    motivation:       answers.q3,
+    festivalLabel:   FESTIVAL_LABEL_MAP[answers.q1]  ?? "—",
+    snsLabel:        SNS_LABEL_MAP[answers.q2]        ?? "—",
+    motivationLabel: MOTIVATION_LABEL_MAP[answers.q3] ?? "—",
   };
 }
 
-// ─── ゲームデータ ──────────────────────────────────────────────────
+// ─── ゲームデータ定数 ─────────────────────────────────────────────────
 
-// スマホ通知演出
 export const NOTIFY_INTRO = [
   { id: "n1", app: "1年3組 文化祭", sender: "委員長",      text: "文化祭まであと7日！" },
   { id: "n2", app: "LINE",          sender: "親友",         text: "去年8位だったらしい" },
   { id: "n3", app: "LINE",          sender: "ムードメーカー", text: "今年は勝つぞ笑" },
 ];
 
-// プロローグテキスト（段落ごと）
 export const PROLOGUE_LINES = [
   "あなたは高校1年生。",
   "来週、学校最大のイベントである文化祭が開催される。",
@@ -167,14 +183,8 @@ export const PROLOGUE_LINES = [
   "まだこの時のあなたは知らない。\nこの7日間が、クラスを大きく変えることになることを。",
 ];
 
-export const OP1_MESSAGES = [
-  { id: "m1", sender: "委員長",      text: "去年の結果見た？" },
-  { id: "m2", sender: "親友",         text: "8位かー" },
-  { id: "m3", sender: "ムードメーカー", text: "今年こそ勝ちたい笑" },
-];
-
 export const SNS_POSTS_A_CLASS = [
-  { id: "a1", title: "A組文化祭PV",   description: "1週間の準備を30秒にまとめた動画", likes: 824, comments: 91 },
+  { id: "a1", title: "A組文化祭PV",    description: "1週間の準備を30秒にまとめた動画", likes: 824, comments: 91 },
   { id: "a2", title: "ダンス部練習風景", description: "今年も全力で踊ります",           likes: 532, comments: 47 },
   { id: "a3", title: "先生インタビュー", description: "文化祭への想いを聞いてみた",       likes: 301, comments: 25 },
 ];
@@ -186,12 +196,12 @@ export const SNS_POSTS_OWN_CLASS = [
 ];
 
 export const LINE_MESSAGES = [
-  { id: "l1", sender: "委員長",      text: "今日放課後、残れる人いますか？", type: "left" as const },
-  { id: "l2", sender: "ムードメーカー", text: "眠すぎる",                   type: "left" as const },
-  { id: "l3", sender: "親友",         text: "まだ装飾終わってないんだけど",   type: "left" as const },
-  { id: "l4", sender: "クラスメイトA", text: "去年、人あんまり来なかったよな", type: "left" as const },
-  { id: "l5", sender: "ムードメーカー", text: "今年は勝とうぜ笑",            type: "left" as const },
-  { id: "l6", sender: "親友",         text: "見る専門です",                  type: "left" as const },
+  { id: "l1", sender: "委員長",       text: "今日放課後、残れる人いますか？", type: "left" as const },
+  { id: "l2", sender: "ムードメーカー", text: "眠すぎる",                    type: "left" as const },
+  { id: "l3", sender: "親友",          text: "まだ装飾終わってないんだけど",   type: "left" as const },
+  { id: "l4", sender: "クラスメイトA",  text: "去年、人あんまり来なかったよな", type: "left" as const },
+  { id: "l5", sender: "ムードメーカー", text: "今年は勝とうぜ笑",             type: "left" as const },
+  { id: "l6", sender: "親友",          text: "見る専門です",                  type: "left" as const },
 ];
 
 export const CAPTIONS = [
