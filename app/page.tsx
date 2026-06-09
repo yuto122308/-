@@ -9,10 +9,10 @@ import ConceptImage from "@/components/ConceptImage";
 import {
   Day2MorningScreen, Day2CommentsScreen, Day2LineScreen,
   Day2MissionScreen, Day2ClassroomScreen, Day2InterviewScreen,
-  Day2PostScreen, Day2PostResultScreen, Day2Line2Screen,
-  Day2RivalsScreen, Day2EndScreen,
+  Day2PostScreen, Day2PostWaitingScreen, Day2PostResultScreen,
+  Day2RankEventScreen, Day2Line2Screen, Day2RivalsScreen, Day2EndScreen,
 } from "@/components/Day2Screens";
-import { Day2AreaId, Day2ValueId, Day2TargetId, computeDay2Outcome } from "@/data/day2";
+import { Day2AreaId, computeDay2Outcome } from "@/data/day2";
 import {
   Screen, GameState, PlayerProfile, FestivalAccount,
   PLAYER_ICONS, FESTIVAL_ICONS,
@@ -38,8 +38,7 @@ const INITIAL_STATE: GameState = {
   rank: 8,
   flameRisk: 0,
   day2Area: null,
-  day2Value: null,
-  day2Target: null,
+  day2Angle: null,
 };
 
 const PANEL_MAP: Record<string, import("@/components/ConceptImage").PanelId> = {
@@ -62,6 +61,7 @@ const DEV_DUMMY_STATE: Partial<GameState> = {
   },
   collectedMaterials: ["教室の様子"],
   trust: 10, attention: 8, rank: 8, flameRisk: 0,
+  day2Area: null, day2Angle: null,
 };
 
 const DEV_DAYS: { label: string; screen: Screen }[] = [
@@ -1271,12 +1271,8 @@ export default function Home() {
     window.scrollTo(0, 0);
   }, []);
 
-  const handleDay2AreaBack = useCallback(() => {
-    go("day2_classroom");
-  }, [go]);
-
-  const handleDay2Post = useCallback((value: Day2ValueId, target: Day2TargetId) => {
-    setState((s) => ({ ...s, day2Value: value, day2Target: target, screen: "day2_post_result" }));
+  const handleDay2Angle = useCallback((angle: string) => {
+    setState((s) => ({ ...s, day2Angle: angle, screen: "day2_post_waiting" }));
     window.scrollTo(0, 0);
   }, []);
 
@@ -1290,7 +1286,7 @@ export default function Home() {
       attention:  s.attention + outcome.attentionGain,
       flameRisk:  s.flameRisk + outcome.flameRiskGain,
       rank:       outcome.newRank,
-      screen:     "day2_line2",
+      screen:     "day2_rank_event",
     }));
     window.scrollTo(0, 0);
   }, []);
@@ -1348,25 +1344,23 @@ export default function Home() {
       {screen === "day1_end"    && <Day1EndScreen onDay2={() => go("day2_start")} onTitle={() => go("title")} />}
 
       {/* ── Day2 ── */}
-      {screen === "day2_start"      && <Day2MorningScreen   onNext={() => go("day2_comments")} />}
-      {screen === "day2_comments"   && <Day2CommentsScreen  state={state} onNext={() => go("day2_line")} />}
-      {screen === "day2_line"       && <Day2LineScreen      onNext={() => go("day2_mission")} />}
-      {screen === "day2_mission"    && <Day2MissionScreen   state={state} onNext={() => go("day2_classroom")} />}
-      {screen === "day2_classroom"  && (
-        <Day2ClassroomScreen
-          state={state}
-          onAreaSelect={handleDay2AreaSelect}
-          onContinue={() => go("day2_post")}
-        />
+      {screen === "day2_start"        && <Day2MorningScreen   onNext={() => go("day2_comments")} />}
+      {screen === "day2_comments"     && <Day2CommentsScreen  state={state} onNext={() => go("day2_line")} />}
+      {screen === "day2_line"         && <Day2LineScreen      onNext={() => go("day2_mission")} />}
+      {screen === "day2_mission"      && <Day2MissionScreen   state={state} onNext={() => go("day2_classroom")} />}
+      {screen === "day2_classroom"    && (
+        <Day2ClassroomScreen state={state} onAreaSelect={handleDay2AreaSelect} onContinue={() => go("day2_post")} />
       )}
-      {screen === "day2_interview"  && state.day2Area && (
-        <Day2InterviewScreen areaId={state.day2Area as Day2AreaId} onBack={handleDay2AreaBack} />
+      {screen === "day2_interview"    && state.day2Area && (
+        <Day2InterviewScreen areaId={state.day2Area as Day2AreaId} onBack={() => go("day2_classroom")} />
       )}
-      {screen === "day2_post"       && <Day2PostScreen       state={state} onPost={handleDay2Post} />}
-      {screen === "day2_post_result" && <Day2PostResultScreen state={state} onDone={handleDay2PostDone} />}
-      {screen === "day2_line2"      && <Day2Line2Screen      state={state} onNext={() => go("day2_rivals")} />}
-      {screen === "day2_rivals"     && <Day2RivalsScreen     state={state} onNext={() => go("day2_end")} />}
-      {screen === "day2_end"        && <Day2EndScreen        state={state} onTitle={() => go("title")} />}
+      {screen === "day2_post"         && <Day2PostScreen        state={state} onPost={handleDay2Angle} />}
+      {screen === "day2_post_waiting" && <Day2PostWaitingScreen onNext={() => go("day2_post_result")} />}
+      {screen === "day2_post_result"  && <Day2PostResultScreen  state={state} onDone={handleDay2PostDone} />}
+      {screen === "day2_rank_event"   && <Day2RankEventScreen   state={state} onNext={() => go("day2_line2")} />}
+      {screen === "day2_line2"        && <Day2Line2Screen       state={state} onNext={() => go("day2_rivals")} />}
+      {screen === "day2_rivals"       && <Day2RivalsScreen      state={state} onNext={() => go("day2_end")} />}
+      {screen === "day2_end"          && <Day2EndScreen         state={state} onTitle={() => go("title")} />}
     </PhoneFrame>
   );
 }

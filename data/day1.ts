@@ -32,7 +32,9 @@ export type Screen =
   | "day2_classroom"
   | "day2_interview"
   | "day2_post"
+  | "day2_post_waiting"
   | "day2_post_result"
+  | "day2_rank_event"
   | "day2_line2"
   | "day2_rivals"
   | "day2_end"
@@ -86,8 +88,7 @@ export interface GameState {
   rank: number;
   flameRisk: number;          // 非表示
   day2Area: string | null;
-  day2Value: string | null;
-  day2Target: string | null;
+  day2Angle: string | null;
 }
 
 // ─── アイコン選択肢 ───────────────────────────────────────────────────
