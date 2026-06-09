@@ -14,6 +14,13 @@ import {
 } from "@/components/Day2Screens";
 import { Day2AreaId, computeDay2Outcome } from "@/data/day2";
 import {
+  Day3MorningScreen, Day3RankingScreen, Day3MeetupIntroScreen,
+  Day3MeetupScreen, Day3MeetupReflectScreen, Day3ClassroomScreen,
+  Day3InterviewScreen, Day3PostScreen, Day3PostWaitingScreen,
+  Day3PostResultScreen, Day3ResultScreen, Day3EndScreen,
+} from "@/components/Day3Screens";
+import { computeDay3Outcome } from "@/data/day3";
+import {
   Screen, GameState, PlayerProfile, FestivalAccount,
   PLAYER_ICONS, FESTIVAL_ICONS,
   PLAYER_QUESTIONS, buildPlayerProfile,
@@ -39,6 +46,9 @@ const INITIAL_STATE: GameState = {
   flameRisk: 0,
   day2Area: null,
   day2Angle: null,
+  day3MeetupIndex: 0,
+  day3Area: null,
+  day3PostTheme: null,
 };
 
 const PANEL_MAP: Record<string, import("@/components/ConceptImage").PanelId> = {
@@ -62,12 +72,13 @@ const DEV_DUMMY_STATE: Partial<GameState> = {
   collectedMaterials: ["教室の様子"],
   trust: 10, attention: 8, rank: 8, flameRisk: 0,
   day2Area: null, day2Angle: null,
+  day3MeetupIndex: 0, day3Area: null, day3PostTheme: null,
 };
 
 const DEV_DAYS: { label: string; screen: Screen }[] = [
   { label: "Day 1",   screen: "scene_set" },
   { label: "Day 2",   screen: "day2_start" },
-  { label: "Day 3",   screen: "day2_start" },
+  { label: "Day 3",   screen: "day3_morning" },
   { label: "Day 4",   screen: "day2_start" },
   { label: "Day 5",   screen: "day2_start" },
   { label: "Day 6",   screen: "day2_start" },
@@ -1291,6 +1302,44 @@ export default function Home() {
     window.scrollTo(0, 0);
   }, []);
 
+  // ── Day3 ──────────────────────────────────────────────────────────
+
+  const handleDay3MeetupNext = useCallback((rivalId: string) => {
+    setState((s) => {
+      const nextIndex = s.day3MeetupIndex + 1;
+      if (nextIndex >= 3) {
+        return { ...s, day3MeetupIndex: nextIndex, screen: "day3_meetup_reflect" };
+      }
+      return { ...s, day3MeetupIndex: nextIndex, screen: "day3_meetup" };
+    });
+    window.scrollTo(0, 0);
+  }, []);
+
+  const handleDay3AreaSelect = useCallback((areaId: string) => {
+    setState((s) => ({ ...s, day3Area: areaId, screen: "day3_interview" }));
+    window.scrollTo(0, 0);
+  }, []);
+
+  const handleDay3PostTheme = useCallback((themeId: string) => {
+    setState((s) => ({ ...s, day3PostTheme: themeId, screen: "day3_post_waiting" }));
+    window.scrollTo(0, 0);
+  }, []);
+
+  const handleDay3PostDone = useCallback((outcome: ReturnType<typeof computeDay3Outcome>) => {
+    setState((s) => ({
+      ...s,
+      festivalAccount: s.festivalAccount
+        ? { ...s.festivalAccount, followers: s.festivalAccount.followers + outcome.followerGain }
+        : null,
+      trust:     s.trust + outcome.trustGain,
+      attention: s.attention + outcome.attentionGain,
+      flameRisk: s.flameRisk + outcome.flameRiskGain,
+      rank:      outcome.newRank,
+      screen:    "day3_result",
+    }));
+    window.scrollTo(0, 0);
+  }, []);
+
   // ── Day1 投稿 ──────────────────────────────────────────────────────
 
   const handlePost = useCallback((material: string, caption: string) => {
@@ -1360,7 +1409,30 @@ export default function Home() {
       {screen === "day2_rank_event"   && <Day2RankEventScreen   state={state} onNext={() => go("day2_line2")} />}
       {screen === "day2_line2"        && <Day2Line2Screen       state={state} onNext={() => go("day2_rivals")} />}
       {screen === "day2_rivals"       && <Day2RivalsScreen      state={state} onNext={() => go("day2_end")} />}
-      {screen === "day2_end"          && <Day2EndScreen         state={state} onTitle={() => go("title")} />}
+      {screen === "day2_end"          && <Day2EndScreen         state={state} onDay3={() => go("day3_morning")} onTitle={() => go("title")} />}
+
+      {/* ── Day3 ───────────────────────────────────────────────── */}
+      {screen === "day3_morning"        && <Day3MorningScreen      onNext={() => go("day3_ranking")} />}
+      {screen === "day3_ranking"        && <Day3RankingScreen      state={state} onNext={() => go("day3_meetup_intro")} />}
+      {screen === "day3_meetup_intro"   && <Day3MeetupIntroScreen  onNext={() => { setState((s) => ({ ...s, day3MeetupIndex: 0, screen: "day3_meetup" })); window.scrollTo(0, 0); }} />}
+      {screen === "day3_meetup"         && (
+        <Day3MeetupScreen rivalIndex={state.day3MeetupIndex} onNext={handleDay3MeetupNext} />
+      )}
+      {screen === "day3_meetup_reflect" && (
+        <Day3MeetupReflectScreen
+          lastRivalId={["seto","mizuno","kurosaki"][Math.min(state.day3MeetupIndex - 1, 2)]}
+          onNext={() => go("day3_classroom")}
+        />
+      )}
+      {screen === "day3_classroom"      && <Day3ClassroomScreen   onArea={handleDay3AreaSelect} />}
+      {screen === "day3_interview"      && state.day3Area && (
+        <Day3InterviewScreen areaId={state.day3Area} onDone={() => go("day3_post")} />
+      )}
+      {screen === "day3_post"           && <Day3PostScreen         state={state} onPost={handleDay3PostTheme} />}
+      {screen === "day3_post_waiting"   && <Day3PostWaitingScreen  onNext={() => go("day3_post_result")} />}
+      {screen === "day3_post_result"    && <Day3PostResultScreen   state={state} onNext={handleDay3PostDone} />}
+      {screen === "day3_result"         && <Day3ResultScreen       state={state} onNext={() => go("day3_end")} />}
+      {screen === "day3_end"            && <Day3EndScreen          state={state} onDay4={() => go("title")} onTitle={() => go("title")} />}
     </PhoneFrame>
   );
 }

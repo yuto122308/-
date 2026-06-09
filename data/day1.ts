@@ -38,6 +38,19 @@ export type Screen =
   | "day2_line2"
   | "day2_rivals"
   | "day2_end"
+  // ── Day3 ──
+  | "day3_morning"
+  | "day3_ranking"
+  | "day3_meetup_intro"
+  | "day3_meetup"
+  | "day3_meetup_reflect"
+  | "day3_classroom"
+  | "day3_interview"
+  | "day3_post"
+  | "day3_post_waiting"
+  | "day3_post_result"
+  | "day3_result"
+  | "day3_end"
   // ── 投稿 ──
   | "first_post"
   | "post_result"
@@ -89,6 +102,10 @@ export interface GameState {
   flameRisk: number;          // 非表示
   day2Area: string | null;
   day2Angle: string | null;
+  // ── Day3 ──
+  day3MeetupIndex: number;
+  day3Area: string | null;
+  day3PostTheme: string | null;
 }
 
 // ─── アイコン選択肢 ───────────────────────────────────────────────────

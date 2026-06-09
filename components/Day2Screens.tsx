@@ -778,7 +778,7 @@ export function Day2RivalsScreen({ state, onNext }: { state: GameState; onNext: 
 
 // ─── 13. Day2終了 ────────────────────────────────────────────────────
 
-export function Day2EndScreen({ state, onTitle }: { state: GameState; onTitle: () => void }) {
+export function Day2EndScreen({ state, onDay3, onTitle }: { state: GameState; onDay3: () => void; onTitle: () => void }) {
   const followers = state.festivalAccount?.followers ?? 100;
   const char = DAY2_CHARACTERS[state.day2Area ?? "dance"];
 
@@ -822,7 +822,8 @@ export function Day2EndScreen({ state, onTitle }: { state: GameState; onTitle: (
           <div className="text-4xl font-black text-gray-900">5日</div>
         </div>
       </div>
-      <div className="w-full mt-8">
+      <div className="w-full mt-8 space-y-3">
+        <ChoiceButton onClick={onDay3}>Day3へ進む</ChoiceButton>
         <ChoiceButton onClick={onTitle} variant="secondary">タイトルへ戻る</ChoiceButton>
       </div>
     </div>
