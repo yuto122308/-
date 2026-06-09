@@ -53,6 +53,8 @@ export type Screen =
   | "day3_end"
   // ── Day4 ──
   | "day4_home"
+  // ── Day5 ──
+  | "day5_home"
   // ── 投稿 ──
   | "first_post"
   | "post_result"
@@ -110,6 +112,8 @@ export interface GameState {
   day3PostTheme: string | null;
   // ── Day4 ──
   day4FollowerGain: number;
+  // ── Day5 ──
+  day5FollowerGain: number;
 }
 
 // ─── アイコン選択肢 ───────────────────────────────────────────────────

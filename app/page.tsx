@@ -21,6 +21,7 @@ import {
 } from "@/components/Day3Screens";
 import { computeDay3Outcome } from "@/data/day3";
 import Day4Game, { Day4Result } from "@/components/Day4Game";
+import Day5Game, { Day5Result } from "@/components/Day5Game";
 import {
   Screen, GameState, PlayerProfile, FestivalAccount,
   PLAYER_ICONS, FESTIVAL_ICONS,
@@ -51,6 +52,7 @@ const INITIAL_STATE: GameState = {
   day3Area: null,
   day3PostTheme: null,
   day4FollowerGain: 0,
+  day5FollowerGain: 0,
 };
 
 const PANEL_MAP: Record<string, import("@/components/ConceptImage").PanelId> = {
@@ -76,6 +78,7 @@ const DEV_DUMMY_STATE: Partial<GameState> = {
   day2Area: null, day2Angle: null,
   day3MeetupIndex: 0, day3Area: null, day3PostTheme: null,
   day4FollowerGain: 0,
+  day5FollowerGain: 0,
 };
 
 const DEV_DAYS: { label: string; screen: Screen }[] = [
@@ -83,7 +86,7 @@ const DEV_DAYS: { label: string; screen: Screen }[] = [
   { label: "Day 2",   screen: "day2_start" },
   { label: "Day 3",   screen: "day3_morning" },
   { label: "Day 4",   screen: "day4_home" },
-  { label: "Day 5",   screen: "day2_start" },
+  { label: "Day 5",   screen: "day5_home" },
   { label: "Day 6",   screen: "day2_start" },
   { label: "Day 7",   screen: "day2_start" },
 ];
@@ -1447,10 +1450,31 @@ export default function Home() {
               festivalAccount: s.festivalAccount
                 ? { ...s.festivalAccount, followers: s.festivalAccount.followers + result.followerGain }
                 : null,
-              trust:           s.trust + result.trustGain,
-              rank:            result.newRank,
+              trust:            s.trust + result.trustGain,
+              rank:             result.newRank,
               day4FollowerGain: result.followerGain,
-              screen:          "title",
+              screen:           "day5_home",
+            }));
+            window.scrollTo(0, 0);
+          }}
+          onTitle={() => go("title")}
+        />
+      )}
+
+      {/* ── Day5 ───────────────────────────────────────────────── */}
+      {screen === "day5_home" && (
+        <Day5Game
+          state={state}
+          onComplete={(result: Day5Result) => {
+            setState(s => ({
+              ...s,
+              festivalAccount: s.festivalAccount
+                ? { ...s.festivalAccount, followers: s.festivalAccount.followers + result.followerGain }
+                : null,
+              trust:            s.trust + result.trustGain,
+              rank:             result.newRank,
+              day5FollowerGain: result.followerGain,
+              screen:           "title",
             }));
             window.scrollTo(0, 0);
           }}
