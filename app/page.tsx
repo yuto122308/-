@@ -20,6 +20,7 @@ import {
   Day3PostResultScreen, Day3ResultScreen, Day3EndScreen,
 } from "@/components/Day3Screens";
 import { computeDay3Outcome } from "@/data/day3";
+import Day4Game, { Day4Result } from "@/components/Day4Game";
 import {
   Screen, GameState, PlayerProfile, FestivalAccount,
   PLAYER_ICONS, FESTIVAL_ICONS,
@@ -49,6 +50,7 @@ const INITIAL_STATE: GameState = {
   day3MeetupIndex: 0,
   day3Area: null,
   day3PostTheme: null,
+  day4FollowerGain: 0,
 };
 
 const PANEL_MAP: Record<string, import("@/components/ConceptImage").PanelId> = {
@@ -73,13 +75,14 @@ const DEV_DUMMY_STATE: Partial<GameState> = {
   trust: 10, attention: 8, rank: 8, flameRisk: 0,
   day2Area: null, day2Angle: null,
   day3MeetupIndex: 0, day3Area: null, day3PostTheme: null,
+  day4FollowerGain: 0,
 };
 
 const DEV_DAYS: { label: string; screen: Screen }[] = [
   { label: "Day 1",   screen: "scene_set" },
   { label: "Day 2",   screen: "day2_start" },
   { label: "Day 3",   screen: "day3_morning" },
-  { label: "Day 4",   screen: "day2_start" },
+  { label: "Day 4",   screen: "day4_home" },
   { label: "Day 5",   screen: "day2_start" },
   { label: "Day 6",   screen: "day2_start" },
   { label: "Day 7",   screen: "day2_start" },
@@ -1432,7 +1435,28 @@ export default function Home() {
       {screen === "day3_post_waiting"   && <Day3PostWaitingScreen  onNext={() => go("day3_post_result")} />}
       {screen === "day3_post_result"    && <Day3PostResultScreen   state={state} onNext={handleDay3PostDone} />}
       {screen === "day3_result"         && <Day3ResultScreen       state={state} onNext={() => go("day3_end")} />}
-      {screen === "day3_end"            && <Day3EndScreen          state={state} onDay4={() => go("title")} onTitle={() => go("title")} />}
+      {screen === "day3_end"            && <Day3EndScreen          state={state} onDay4={() => go("day4_home")} onTitle={() => go("title")} />}
+
+      {/* ── Day4 ───────────────────────────────────────────────── */}
+      {screen === "day4_home" && (
+        <Day4Game
+          state={state}
+          onComplete={(result: Day4Result) => {
+            setState(s => ({
+              ...s,
+              festivalAccount: s.festivalAccount
+                ? { ...s.festivalAccount, followers: s.festivalAccount.followers + result.followerGain }
+                : null,
+              trust:           s.trust + result.trustGain,
+              rank:            result.newRank,
+              day4FollowerGain: result.followerGain,
+              screen:          "title",
+            }));
+            window.scrollTo(0, 0);
+          }}
+          onTitle={() => go("title")}
+        />
+      )}
     </PhoneFrame>
   );
 }
