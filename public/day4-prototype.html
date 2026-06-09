@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>通知99+ / Day4 プロトタイプ</title>
+<style>
+
+/* ================================================================
+   リセット & ベース
+   ================================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* カラーパレット */
+  --bg:          #f5f5f0;
+  --white:       #ffffff;
+  --gray-50:     #fafafa;
+  --gray-100:    #f0f0f0;
+  --gray-200:    #e0e0e0;
+  --gray-400:    #aaaaaa;
+  --gray-500:    #888888;
+  --gray-700:    #444444;
+  --gray-800:    #222222;
+  --gray-900:    #111111;
+  --yellow-300:  #fde047;
+  --green-500:   #22c55e;
+  --red-500:     #ef4444;
+  --blue-500:    #3b82f6;
+  --accent:      #111111;
+
+  /* タイポグラフィ */
+  --font-base: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-base);
+  background: var(--bg);
+  color: var(--gray-800);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ================================================================
+   レイアウト — フォンフレーム
+   スマホ縦持ちを想定した中央カラム
+   ================================================================ */
+#app {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 0;
+}
+
+#phone {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  min-height: 100vh;
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* デスクトップではフォン枠を表示 */
+@media (min-width: 440px) {
+  #app {
+    padding: 24px 0 48px;
+    background: #e8e8e4;
+    align-items: flex-start;
+  }
+  #phone {
+    min-height: auto;
+    height: calc(100vh - 72px);
+    border-radius: 40px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+}
+
+/* ================================================================
+   画面（scene）管理
+   data-scene 属性でどの画面を表示するか制御
+   ================================================================ */
+.scene {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scene.active {
+  display: flex;
+}
+
+/* ================================================================
+   学校パート（ノベルゲーム風）
+   ================================================================ */
+
+/* 上部ステータスバー */
+.school-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--gray-100);
+  position: sticky;
+  top: 0;
+  background: var(--white);
+  z-index: 10;
+}
+
+.school-header .day-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+}
+
+/* スマホボタン — 右上に固定 */
+#phone-btn {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+#phone-btn:hover { background: var(--gray-100); }
+
+/* 通知バッジ */
+#notif-badge {
+  display: none; /* 通知ゼロのときは非表示 */
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--red-500);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(4px, -4px);
+  pointer-events: none;
+}
+
+/* 会話ログエリア */
+.dialogue-log {
+  flex: 1;
+  padding: 20px 18px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+/* 1つの発話ブロック */
+.speech-block {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.speech-block.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* キャラ名 */
+.speaker-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-500);
+  margin-bottom: 5px;
+  letter-spacing: 0.05em;
+}
+
+/* セリフ本文 */
+.speech-text {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--gray-800);
+}
+
+/* ナレーション（キャラ名なし） */
+.narration {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--gray-500);
+  font-style: italic;
+}
+
+/* 選択肢エリア */
+.choices-area {
+  padding: 12px 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 選択肢ボタン */
+.choice-btn {
+  background: var(--white);
+  border: 1.5px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 14px;
+  font-family: var(--font-base);
+  color: var(--gray-800);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+  line-height: 1.5;
+}
+.choice-btn:hover {
+  border-color: var(--gray-800);
+  background: var(--gray-50);
+}
+.choice-btn.selected {
+  border-color: var(--gray-900);
+  background: var(--gray-900);
+  color: var(--white);
+}
+
+/* 進行ボタン（「続ける」「次へ」） */
+.next-btn {
+  display: block;
+  width: calc(100% - 36px);
+  margin: 0 18px 24px;
+  background: var(--gray-900);
+  color: var(--white);
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  font-size: 15px;
+  font-family: var(--font-base);
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, opacity 0.15s;
+}
+.next-btn:hover { background: var(--gray-700); }
+.next-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ================================================================
+   投稿プレビュー（選択肢選択後に表示）
+   ================================================================ */
+.post-preview {
+  margin: 8px 18px 16px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.post-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.post-preview-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+}
+
+.post-preview-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-800);
+}
+.post-preview-handle {
+  font-size: 11px;
+  color: var(--gray-400);
+}
+
+.post-preview-body {
+  padding: 14px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--gray-800);
+}
+
+.post-preview-img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+}
+
+/* ================================================================
+   スマホ画面
+   ================================================================ */
+.smartphone-scene {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  background: var(--gray-50);
+}
+.smartphone-scene.active {
+  display: flex;
+}
+
+/* スマホヘッダー */
+.sp-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px 12px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-100);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.sp-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--gray-700);
+  padding: 4px 10px 4px 0;
+  line-height: 1;
+}
+
+.sp-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gray-900);
+  flex: 1;
+}
+
+/* タブバー */
+.sp-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--gray-200);
+  background: var(--white);
+}
+
+.sp-tab {
+  flex: 1;
+  padding: 12px;
+  font-size: 13px;
+  font-family: var(--font-base);
+  font-weight: 600;
+  color: var(--gray-400);
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  text-align: center;
+}
+.sp-tab.active {
+  color: var(--gray-900);
+  border-bottom-color: var(--gray-900);
+}
+
+.sp-tab-content {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.sp-tab-content.active {
+  display: flex;
+}
+
+/* ================================================================
+   SNS投稿カード
+   ================================================================ */
+.sns-feed {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.post-card {
+  background: var(--white);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.post-card:active { transform: scale(0.98); }
+
+.post-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px 10px;
+}
+
+.post-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.post-card-meta {
+  flex: 1;
+  min-width: 0;
+}
+.post-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-800);
+}
+.post-card-time {
+  font-size: 11px;
+  color: var(--gray-400);
+}
+
+.post-card-body {
+  padding: 0 14px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--gray-700);
+}
+
+.post-card-img {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.post-card-stats {
+  display: flex;
+  gap: 16px;
+  padding: 0 14px 14px;
+}
+
+.post-stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+/* 新着バッジ（未読投稿） */
+.new-badge {
+  display: inline-flex;
+  align-items: center;
+  background: var(--red-500);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-left: 6px;
+}
+
+/* ================================================================
+   コメント画面（投稿タップ後）
+   ================================================================ */
+.comments-scene {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  background: var(--white);
+}
+.comments-scene.active {
+  display: flex;
+}
+
+.comments-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--gray-100);
+  position: sticky;
+  top: 0;
+  background: var(--white);
+  z-index: 10;
+}
+
+.comments-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.comment-item {
+  display: flex;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.comment-item.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.comment-bubble {
+  flex: 1;
+}
+.comment-user {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-400);
+  margin-bottom: 3px;
+}
+.comment-text {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--gray-800);
+  background: var(--gray-50);
+  border-radius: 12px;
+  padding: 9px 12px;
+  display: inline-block;
+}
+
+/* 「他N件」表示 */
+.more-comments {
+  text-align: center;
+  font-size: 12px;
+  color: var(--gray-400);
+  padding: 8px;
+}
+
+/* ================================================================
+   LINE画面
+   ================================================================ */
+.line-feed {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* LINE個別トーク一覧アイテム */
+.line-thread {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  background: var(--white);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.line-thread:hover { background: var(--gray-50); }
+
+.line-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.line-unread-dot {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red-500);
+  border: 2px solid var(--white);
+}
+
+.line-thread-meta {
+  flex: 1;
+  min-width: 0;
+}
+.line-thread-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-800);
+}
+.line-thread-preview {
+  font-size: 12px;
+  color: var(--gray-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* LINE個別チャット */
+.line-chat-scene {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  background: #e8f5e9;
+}
+.line-chat-scene.active {
+  display: flex;
+}
+
+.line-chat-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px 12px;
+  background: var(--green-500);
+  color: white;
+}
+
+.line-chat-back {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 20px;
+  padding: 0 10px 0 0;
+  line-height: 1;
+}
+
+.line-chat-name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.line-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* LINEメッセージ（左＝相手） */
+.line-msg {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+.line-msg.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.line-msg-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.line-msg-content {}
+.line-msg-name {
+  font-size: 10px;
+  color: rgba(0,0,0,0.5);
+  margin-bottom: 3px;
+}
+.line-msg-bubble {
+  background: var(--white);
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  padding: 9px 13px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--gray-800);
+  max-width: 230px;
+  display: inline-block;
+}
+
+/* 自分のメッセージ（右） */
+.line-msg.right {
+  flex-direction: row-reverse;
+}
+.line-msg.right .line-msg-bubble {
+  background: var(--yellow-300);
+  border-radius: 16px;
+  border-bottom-right-radius: 4px;
+}
+
+/* ================================================================
+   終了画面
+   ================================================================ */
+#scene-end {
+  display: none;
+  flex-direction: column;
+  padding: 40px 24px;
+  gap: 24px;
+}
+#scene-end.active {
+  display: flex;
+}
+
+.end-title {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--gray-900);
+  letter-spacing: -0.02em;
+}
+
+.end-subtitle {
+  font-size: 14px;
+  color: var(--gray-500);
+}
+
+.end-stats {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-100);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.end-stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+.end-stat-label { color: var(--gray-500); }
+.end-stat-value { font-weight: 700; color: var(--gray-900); }
+
+.end-message {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--gray-700);
+}
+
+.restart-btn {
+  display: block;
+  width: 100%;
+  background: var(--gray-900);
+  color: var(--white);
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  font-size: 15px;
+  font-family: var(--font-base);
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: auto;
+  transition: background 0.15s;
+}
+.restart-btn:hover { background: var(--gray-700); }
+
+/* ================================================================
+   ユーティリティ
+   ================================================================ */
+.hidden { display: none !important; }
+
+/* スクロールを一番下へ寄せるためのスペーサー */
+.scroll-anchor { height: 1px; }
+
+</style>
+</head>
+<body>
+
+<div id="app">
+<div id="phone">
+
+  <!-- ================================================================
+       学校パート（メイン画面）
+       scene = "school" のとき表示
+       ================================================================ -->
+  <div id="scene-school" class="scene active">
+
+    <!-- 上部ヘッダー（曜日・通知ボタン） -->
+    <div class="school-header">
+      <div class="day-label">Day 4 — 文化祭まであと3日</div>
+      <!-- スマホボタン。通知件数バッジ付き -->
+      <button id="phone-btn" onclick="openSmartphone()" aria-label="スマホを開く">
+        📱
+        <div id="notif-badge" style="display:none">0</div>
+      </button>
+    </div>
+
+    <!-- 会話ログ（発話ブロックを動的に追加） -->
+    <div id="dialogue-log" class="dialogue-log"></div>
+
+    <!-- 選択肢エリア（必要なときだけ中身を入れる） -->
+    <div id="choices-area" class="choices-area"></div>
+
+    <!-- 投稿プレビュー（選択後に表示） -->
+    <div id="post-preview" class="post-preview hidden"></div>
+
+    <!-- 進行ボタン -->
+    <button id="next-btn" class="next-btn hidden" onclick="advance()"></button>
+
+    <!-- スクロール基点 -->
+    <div id="scroll-anchor" class="scroll-anchor"></div>
+
+  </div><!-- /scene-school -->
+
+
+  <!-- ================================================================
+       スマホ画面
+       scene = "smartphone" のとき表示
+       ================================================================ -->
+  <div id="scene-smartphone" class="smartphone-scene">
+
+    <div class="sp-header">
+      <button class="sp-back-btn" onclick="closeSmartphone()">‹</button>
+      <span class="sp-title">スマホ</span>
+    </div>
+
+    <!-- タブ切り替え -->
+    <div class="sp-tabs">
+      <button class="sp-tab active" onclick="switchTab('sns', this)">SNS</button>
+      <button class="sp-tab" onclick="switchTab('line', this)">LINE</button>
+    </div>
+
+    <!-- SNSタブ -->
+    <div id="tab-sns" class="sp-tab-content active">
+      <div class="sns-feed" id="sns-feed">
+        <!-- 投稿カードは JavaScript で動的に生成 -->
+      </div>
+    </div>
+
+    <!-- LINEタブ -->
+    <div id="tab-line" class="sp-tab-content">
+      <div class="line-feed" id="line-feed">
+        <!-- トーク一覧は JavaScript で動的に生成 -->
+      </div>
+    </div>
+
+  </div><!-- /scene-smartphone -->
+
+
+  <!-- ================================================================
+       コメント詳細画面（投稿カードタップ後）
+       ================================================================ -->
+  <div id="scene-comments" class="comments-scene">
+
+    <div class="comments-header">
+      <button class="sp-back-btn" onclick="closeComments()">‹</button>
+      <span class="sp-title" id="comments-post-title">投稿のコメント</span>
+    </div>
+
+    <!-- 投稿本文の要約 -->
+    <div id="comments-post-summary" style="padding:14px; border-bottom:1px solid #eee; font-size:14px; color:#555; line-height:1.6;"></div>
+
+    <!-- コメント一覧 -->
+    <div class="comments-list" id="comments-list"></div>
+
+  </div><!-- /scene-comments -->
+
+
+  <!-- ================================================================
+       LINEチャット画面（トーク一覧タップ後）
+       ================================================================ -->
+  <div id="scene-line-chat" class="line-chat-scene">
+
+    <div class="line-chat-header">
+      <button class="line-chat-back" onclick="closeLineChat()">‹</button>
+      <span class="line-chat-name" id="line-chat-name"></span>
+    </div>
+
+    <div class="line-messages" id="line-messages"></div>
+
+  </div><!-- /scene-line-chat -->
+
+
+  <!-- ================================================================
+       終了画面
+       ================================================================ -->
+  <div id="scene-end">
+    <div>
+      <div class="end-title">Day 4 終了</div>
+      <div class="end-subtitle">文化祭まであと3日</div>
+    </div>
+
+    <div class="end-stats">
+      <div class="end-stat-row">
+        <span class="end-stat-label">今日の投稿</span>
+        <span class="end-stat-value" id="end-posts">2件</span>
+      </div>
+      <div class="end-stat-row">
+        <span class="end-stat-label">フォロワー増加</span>
+        <span class="end-stat-value" id="end-followers">+0人</span>
+      </div>
+      <div class="end-stat-row">
+        <span class="end-stat-label">いいね合計</span>
+        <span class="end-stat-value" id="end-likes">0</span>
+      </div>
+      <div class="end-stat-row">
+        <span class="end-stat-label">コメント合計</span>
+        <span class="end-stat-value" id="end-comments">0件</span>
+      </div>
+    </div>
+
+    <p class="end-message" id="end-message"></p>
+
+    <button class="restart-btn" onclick="restart()">もう一度プレイする</button>
+  </div><!-- /scene-end -->
+
+</div><!-- /phone -->
+</div><!-- /app -->
+
+
+<script>
+/* ================================================================
+
+   通知99+ Day4 プロトタイプ — メインスクリプト
+
+   ─────────────────────────────────────────────────────────────────
+   設計方針：
+   ・状態はすべて `state` オブジェクトに集約
+   ・シーンは advance() で順番に進む（シーン配列 SCENES）
+   ・通知カウントは addNotif() で増やし、バッジを更新
+   ・投稿データは POSTS 配列で管理。投稿ごとにコメントを持つ
+   ・選択肢によってプレビュー文・コメント内容が変わる
+
+   ================================================================ */
+
+
+/* ────────────────────────────────────────────────────────────────
+   グローバル状態
+   ──────────────────────────────────────────────────────────────── */
+const state = {
+  sceneIndex:    0,       // 現在の SCENES インデックス
+  notifCount:    0,       // 未読通知件数（バッジ表示用）
+  totalNotif:    0,       // 累計通知件数（スマホを開くたびリセットしない）
+  choice1:       null,    // 取材①の選択肢 ('A'|'B'|'C')
+  choice2:       null,    // 取材②の選択肢 ('A'|'B'|'C')
+  post1Done:     false,   // 投稿①完了フラグ
+  post2Done:     false,   // 投稿②完了フラグ
+  totalLikes:    0,       // いいね合計
+  totalComments: 0,       // コメント合計
+  followerGain:  0,       // フォロワー増加
+  lineRead: {             // 各LINEトークを既読にしたか
+    aoi: false, mitsuki: false, sho: false
+  },
+  posts: [],              // 投稿済みの投稿データ配列
+  smartphoneOpen: false,  // スマホ画面を開いているか
+  activeTab: 'sns',       // スマホのアクティブタブ
+};
+
+
+/* ────────────────────────────────────────────────────────────────
+   通知バッジ更新
+   ──────────────────────────────────────────────────────────────── */
+
+/**
+ * 通知を N 件追加する。
+ * バッジを表示・更新し、件数が多くなったら「99+」表示にする。
+ */
+function addNotif(n) {
+  state.notifCount  += n;
+  state.totalNotif  += n;
+  const badge = document.getElementById('notif-badge');
+  if (state.notifCount > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = state.notifCount > 99 ? '99+' : String(state.notifCount);
+  }
+}
+
+/** スマホを開いたとき通知をクリアする */
+function clearNotif() {
+  state.notifCount = 0;
+  const badge = document.getElementById('notif-badge');
+  badge.style.display = 'none';
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   画面切替（シーン）
+   ──────────────────────────────────────────────────────────────── */
+
+/**
+ * 全シーンを非表示にして target のみ表示する。
+ * smartphone・comments・line-chat は別扱い。
+ */
+function showScene(target) {
+  document.getElementById('scene-school').classList.remove('active');
+  document.getElementById('scene-smartphone').classList.remove('active');
+  document.getElementById('scene-comments').classList.remove('active');
+  document.getElementById('scene-line-chat').classList.remove('active');
+  document.getElementById('scene-end').classList.remove('active');
+
+  const el = document.getElementById('scene-' + target);
+  if (el) el.classList.add('active');
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   スマホ開閉
+   ──────────────────────────────────────────────────────────────── */
+
+function openSmartphone() {
+  clearNotif();
+  renderSnsFeed();
+  renderLineFeed();
+  showScene('smartphone');
+  state.smartphoneOpen = true;
+}
+
+function closeSmartphone() {
+  showScene('school');
+  state.smartphoneOpen = false;
+}
+
+/** SNS / LINE タブ切り替え */
+function switchTab(tab, btnEl) {
+  state.activeTab = tab;
+  document.querySelectorAll('.sp-tab').forEach(b => b.classList.remove('active'));
+  btnEl.classList.add('active');
+  document.querySelectorAll('.sp-tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   SNSフィード描画
+   ──────────────────────────────────────────────────────────────── */
+
+/**
+ * state.posts の内容をもとにSNSフィードを再描画する。
+ * 投稿のたびに呼ばれる。
+ */
+function renderSnsFeed() {
+  const feed = document.getElementById('sns-feed');
+  feed.innerHTML = '';
+
+  if (state.posts.length === 0) {
+    feed.innerHTML = '<p style="text-align:center; color:#aaa; padding:40px 20px; font-size:13px;">まだ投稿がありません</p>';
+    return;
+  }
+
+  // 新しい投稿を上に表示
+  const reversed = [...state.posts].reverse();
+  reversed.forEach(post => {
+    const card = document.createElement('div');
+    card.className = 'post-card';
+    card.onclick = () => openComments(post.id);
+
+    // 投稿が未読かどうかを判定（一度コメント画面を開いたら既読に）
+    const newBadge = post.unread ? '<span class="new-badge">NEW</span>' : '';
+
+    card.innerHTML = `
+      <div class="post-card-header">
+        <div class="post-card-icon">${post.icon}</div>
+        <div class="post-card-meta">
+          <div class="post-card-name">${post.accountName}${newBadge}</div>
+          <div class="post-card-time">${post.time}</div>
+        </div>
+      </div>
+      <div class="post-card-img">${post.imgEmoji}</div>
+      <div class="post-card-body">${post.caption}</div>
+      <div class="post-card-stats">
+        <div class="post-stat">❤️ <span id="likes-${post.id}">${post.likes}</span></div>
+        <div class="post-stat">💬 <span id="comments-count-${post.id}">${post.comments.length}</span></div>
+      </div>
+    `;
+    feed.appendChild(card);
+  });
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   コメント画面
+   ──────────────────────────────────────────────────────────────── */
+
+function openComments(postId) {
+  const post = state.posts.find(p => p.id === postId);
+  if (!post) return;
+
+  // 既読にする
+  post.unread = false;
+
+  document.getElementById('comments-post-title').textContent = post.accountName;
+  document.getElementById('comments-post-summary').textContent = post.caption;
+
+  const list = document.getElementById('comments-list');
+  list.innerHTML = '';
+
+  // コメントを順番にアニメーション表示
+  const visible = post.comments.slice(0, 5); // 最大5件表示
+  const hidden  = post.comments.length - visible.length;
+
+  visible.forEach((c, i) => {
+    const item = document.createElement('div');
+    item.className = 'comment-item';
+    item.innerHTML = `
+      <div class="comment-avatar">${c.avatar}</div>
+      <div class="comment-bubble">
+        <div class="comment-user">${c.user}</div>
+        <div class="comment-text">${c.text}</div>
+      </div>
+    `;
+    list.appendChild(item);
+
+    // 少し遅延させながら順番に表示
+    setTimeout(() => item.classList.add('visible'), i * 150 + 50);
+  });
+
+  if (hidden > 0) {
+    const more = document.createElement('div');
+    more.className = 'more-comments';
+    more.textContent = `他${hidden}件のコメント`;
+    list.appendChild(more);
+  }
+
+  showScene('comments');
+}
+
+function closeComments() {
+  // コメント画面からスマホのSNSタブに戻る
+  renderSnsFeed(); // 既読更新を反映
+  showScene('smartphone');
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   LINEフィード描画
+   ──────────────────────────────────────────────────────────────── */
+
+/** LINE トーク一覧を描画する */
+function renderLineFeed() {
+  const feed = document.getElementById('line-feed');
+  feed.innerHTML = '';
+
+  const threads = getLineThreads();
+  threads.forEach(thread => {
+    // そのスレッドが解放されているか（メッセージが1件以上あるか）
+    if (thread.messages.length === 0) return;
+
+    const item = document.createElement('div');
+    item.className = 'line-thread';
+    item.onclick = () => openLineChat(thread.id);
+
+    const unreadDot = !thread.read ? '<div class="line-unread-dot"></div>' : '';
+    const lastMsg = thread.messages[thread.messages.length - 1];
+
+    item.innerHTML = `
+      <div class="line-avatar">
+        ${thread.avatar}
+        ${unreadDot}
+      </div>
+      <div class="line-thread-meta">
+        <div class="line-thread-name">${thread.name}</div>
+        <div class="line-thread-preview">${lastMsg.text}</div>
+      </div>
+    `;
+    feed.appendChild(item);
+  });
+}
+
+/** 現在の state に応じてLINEスレッド一覧を返す */
+function getLineThreads() {
+  return [
+    {
+      id: 'aoi',
+      name: '葵（委員長）',
+      avatar: '👩',
+      read: state.lineRead.aoi,
+      messages: getAoiMessages(),
+    },
+    {
+      id: 'mitsuki',
+      name: '美月',
+      avatar: '💃',
+      read: state.lineRead.mitsuki,
+      messages: getMitsukiMessages(),
+    },
+    {
+      id: 'sho',
+      name: '翔（親友）',
+      avatar: '😄',
+      read: state.lineRead.sho,
+      messages: getShoMessages(),
+    },
+  ];
+}
+
+/** 葵のLINEメッセージ（進行状況に応じて変わる） */
+function getAoiMessages() {
+  const msgs = [
+    { sender: '葵', text: '今年、本当に上位狙えるかも', right: false },
+  ];
+  if (state.post1Done) {
+    msgs.push({ sender: '葵', text: '装飾の投稿、良かった！', right: false });
+  }
+  if (state.post2Done) {
+    msgs.push({ sender: '葵', text: '今日の投稿見た', right: false });
+    msgs.push({ sender: '葵', text: '本当にありがとう', right: false });
+    msgs.push({ sender: '葵', text: '今年いけるかも', right: false });
+  }
+  return msgs;
+}
+
+/** 美月のLINEメッセージ */
+function getMitsukiMessages() {
+  if (!state.post2Done) return [];
+  return [
+    { sender: '美月', text: '投稿ありがとう！', right: false },
+  ];
+}
+
+/** 翔のLINEメッセージ */
+function getShoMessages() {
+  const msgs = [
+    { sender: '翔', text: '最近結構伸びてるよな', right: false },
+  ];
+  if (state.post1Done) {
+    msgs.push({ sender: '翔', text: '通知来まくってるじゃん笑', right: false });
+  }
+  if (state.post2Done) {
+    msgs.push({ sender: '翔', text: 'めっちゃ反応来てるな', right: false });
+  }
+  return msgs;
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   LINEチャット開閉
+   ──────────────────────────────────────────────────────────────── */
+
+function openLineChat(threadId) {
+  const threads = getLineThreads();
+  const thread = threads.find(t => t.id === threadId);
+  if (!thread) return;
+
+  // 既読にする
+  state.lineRead[threadId] = true;
+
+  document.getElementById('line-chat-name').textContent = thread.name;
+
+  const msgArea = document.getElementById('line-messages');
+  msgArea.innerHTML = '';
+
+  thread.messages.forEach((msg, i) => {
+    const el = document.createElement('div');
+    el.className = 'line-msg' + (msg.right ? ' right' : '');
+    el.innerHTML = `
+      ${!msg.right ? `<div class="line-msg-avatar">${thread.avatar}</div>` : ''}
+      <div class="line-msg-content">
+        ${!msg.right && i === 0 ? `<div class="line-msg-name">${thread.name}</div>` : ''}
+        <div class="line-msg-bubble">${msg.text}</div>
+      </div>
+    `;
+    msgArea.appendChild(el);
+
+    // アニメーション
+    setTimeout(() => el.classList.add('visible'), i * 200 + 100);
+  });
+
+  showScene('line-chat');
+}
+
+function closeLineChat() {
+  renderLineFeed(); // 既読反映
+  showScene('smartphone');
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   投稿データ生成
+   ──────────────────────────────────────────────────────────────── */
+
+/**
+ * 選択肢に応じた投稿①（装飾班）のデータを返す。
+ * caption・コメント内容が選択肢によって変わる。
+ */
+function makePost1(choice) {
+  const data = {
+    A: {
+      caption: '誰も気づかない場所まで。装飾班の、見えない努力を記録しました。',
+      imgEmoji: '🎨',
+      likes: 34,
+      follower: 18,
+      comments: [
+        { user: '高校生', avatar: '🧑‍🎓', text: '「誰も見ない場所まで」って言葉が刺さった' },
+        { user: '卒業生', avatar: '🎓',   text: '懐かしい。こういう人たちがいるから文化祭っていいんだよな' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '見に行ったら絶対そこ探す' },
+        { user: '保護者', avatar: '🙂',   text: '頑張ってますね。応援してます' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '努力が伝わってきた' },
+        { user: '高校生', avatar: '🧑‍🎓', text: 'このクラス好きだな' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '当日絶対行く！' },
+      ],
+    },
+    B: {
+      caption: '笑いながら、でも真剣に。みんなで作る文化祭の装飾、現在進行中です。',
+      imgEmoji: '🎨',
+      likes: 41,
+      follower: 22,
+      comments: [
+        { user: '高校生', avatar: '🧑‍🎓', text: 'なんかいいな、こういう雰囲気' },
+        { user: '高校生', avatar: '🧑‍🎓', text: 'みんな楽しそう！' },
+        { user: '卒業生', avatar: '🎓',   text: 'うちの時もこんな感じだったな' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '完成したら見に行く' },
+        { user: '保護者', avatar: '🙂',   text: '青春だ〜' },
+        { user: '高校生', avatar: '🧑‍🎓', text: 'このノリ好きすぎる' },
+      ],
+    },
+    C: {
+      caption: '完成はまだ先。でも絶対すごいものになる。装飾班、本気の制作中。',
+      imgEmoji: '🎨',
+      likes: 28,
+      follower: 14,
+      comments: [
+        { user: '高校生', avatar: '🧑‍🎓', text: '完成楽しみ！' },
+        { user: '高校生', avatar: '🧑‍🎓', text: 'どんなのになるんだろ' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '見に行きます' },
+        { user: '保護者', avatar: '🙂',   text: '完成が待ち遠しいです' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '期待してるよ！' },
+      ],
+    },
+  }[choice];
+
+  state.totalLikes    += data.likes;
+  state.totalComments += data.comments.length;
+  state.followerGain  += data.follower;
+
+  return {
+    id:          'post1',
+    accountName: '1年3組文化祭',
+    icon:        '🏫',
+    imgEmoji:    data.imgEmoji,
+    caption:     data.caption,
+    time:        '今日 午後2:14',
+    likes:       data.likes,
+    comments:    data.comments,
+    unread:      true,
+    notifAdd:    5,   // このタイミングで追加する通知数
+  };
+}
+
+/**
+ * 選択肢に応じた投稿②（ダンス班 / 美月）のデータを返す。
+ */
+function makePost2(choice) {
+  const data = {
+    A: {
+      caption: '何度も何度も繰り返す。美月の、誰にも見せない練習時間を記録しました。',
+      imgEmoji: '💃',
+      likes: 87,
+      follower: 44,
+      comments: [
+        { user: '高校生', avatar: '🧑‍🎓', text: '泣きそう。頑張ってほしい' },
+        { user: '高校生', avatar: '🧑‍🎓', text: 'こういうの好き。絶対見に行く' },
+        { user: '卒業生', avatar: '🎓',   text: '美月ちゃん応援してます！！' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '本番楽しみすぎる' },
+        { user: '保護者', avatar: '🙂',   text: '頑張ってる姿に感動しました' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '絶対成功する' },
+        { user: '高校生', avatar: '🧑‍🎓', text: 'この投稿拡散した' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '応援してるよ！！' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '感動した' },
+      ],
+    },
+    B: {
+      caption: '失敗して、やり直して、笑顔になった瞬間。その一瞬を切り取りました。',
+      imgEmoji: '💃',
+      likes: 112,
+      follower: 58,
+      comments: [
+        { user: '高校生', avatar: '🧑‍🎓', text: 'その笑顔の写真ください笑' },
+        { user: '高校生', avatar: '🧑‍🎓', text: 'うわあ、この子めちゃ可愛い' },
+        { user: '卒業生', avatar: '🎓',   text: '見に行かなきゃ！！' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '感情が伝わってきた' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '拡散します' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '絶対当日行く！' },
+        { user: '保護者', avatar: '🙂',   text: '素晴らしい！' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '青春すぎる' },
+        { user: '高校生', avatar: '🧑‍🎓', text: 'この笑顔すき' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '来年も文化祭来るわ' },
+      ],
+    },
+    C: {
+      caption: '本番まであと3日。「絶対仕上げたい」という言葉が頭から離れません。',
+      imgEmoji: '💃',
+      likes: 75,
+      follower: 38,
+      comments: [
+        { user: '高校生', avatar: '🧑‍🎓', text: '楽しみにしてます！' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '応援してるよ' },
+        { user: '卒業生', avatar: '🎓',   text: '絶対見に行く' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '期待してる！！' },
+        { user: '保護者', avatar: '🙂',   text: '当日楽しみにしています' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '頑張れー！！' },
+        { user: '高校生', avatar: '🧑‍🎓', text: '見に行きます！' },
+      ],
+    },
+  }[choice];
+
+  state.totalLikes    += data.likes;
+  state.totalComments += data.comments.length;
+  state.followerGain  += data.follower;
+
+  return {
+    id:          'post2',
+    accountName: '1年3組文化祭',
+    icon:        '🏫',
+    imgEmoji:    data.imgEmoji,
+    caption:     data.caption,
+    time:        '今日 午後4:47',
+    likes:       data.likes,
+    comments:    data.comments,
+    unread:      true,
+    notifAdd:    12,
+  };
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   シーン定義
+   ──────────────────────────────────────────────────────────────────
+   各シーンは { type, ... } の形式。
+   type に応じて advance() 内で処理が分岐する。
+
+   type 一覧:
+     'dialogue'   — キャラセリフを追加して続けるボタン表示
+     'narration'  — ナレーションを追加して続けるボタン表示
+     'choice1'    — 取材①選択肢を表示
+     'post1'      — 投稿①を確定して投稿
+     'notif-anim' — 通知が段階的に増えるアニメーション後続ける
+     'choice2'    — 取材②選択肢を表示
+     'post2'      — 投稿②を確定して投稿
+     'line-hint'  — LINEを確認するよう誘導
+     'end'        — 終了画面へ
+
+   ──────────────────────────────────────────────────────────────── */
+
+const SCENES = [
+
+  /* ── 朝のシーン ─────────────────────────────────────────── */
+  {
+    type: 'narration',
+    text: '朝のホームルームが終わった。',
+  },
+  {
+    type: 'dialogue',
+    speaker: '葵（委員長）',
+    text: '今年、本当に上位狙えるかも。このまま伸ばしていこう。',
+  },
+  {
+    type: 'dialogue',
+    speaker: '翔（親友）',
+    text: '最近結構伸びてるよな。今日も何か出せそう？',
+  },
+  {
+    type: 'narration',
+    text: 'さっそく取材に向かうことにした。',
+    onEnter: () => {
+      // 朝の時点でLINE通知を1件入れる（葵と翔からの既読前メッセージ）
+      addNotif(2);
+    },
+  },
+
+  /* ── 取材①：装飾班 ────────────────────────────────────── */
+  {
+    type: 'narration',
+    text: '教室のすみ。装飾班が看板を作っていた。',
+  },
+  {
+    type: 'dialogue',
+    speaker: '装飾班の子',
+    text: 'ここ、当日は机で隠れるんだけど——気になるんだよね。ここまで作り込みたくて。',
+  },
+  {
+    type: 'dialogue',
+    speaker: 'あなた',
+    text: 'そこって…見えないよね？',
+  },
+  {
+    type: 'dialogue',
+    speaker: '装飾班の子',
+    text: 'うん。でも、なんか気になるんだよね。誰かが気づいてくれたら嬉しいし。',
+  },
+  {
+    type: 'narration',
+    text: '撮影を終えた。さて、何を伝えよう。',
+  },
+
+  /* 選択肢① */
+  {
+    type: 'choice1',
+    question: 'あなたは何を伝えたいですか？',
+    choices: [
+      { id: 'A', label: '見えない努力を伝える', desc: '誰も気づかない場所まで作り込む姿を伝える' },
+      { id: 'B', label: 'みんなで作る楽しさを伝える', desc: '笑いながら真剣に作る雰囲気を伝える' },
+      { id: 'C', label: '完成への期待を伝える', desc: 'まだ完成していない今だからこそのワクワク感を伝える' },
+    ],
+  },
+
+  /* 投稿① */
+  {
+    type: 'post1',
+  },
+
+  /* 投稿①後の会話 */
+  {
+    type: 'narration',
+    text: '投稿した。授業が始まった。',
+    onEnter: () => {
+      // 投稿直後は通知が静か
+    },
+  },
+  {
+    type: 'dialogue',
+    speaker: '翔（親友）',
+    text: '（小声で）投稿したの？こっちから見えた笑',
+  },
+  {
+    type: 'narration',
+    text: '先生の声が遠い。スマホが気になる。',
+    onEnter: () => {
+      // 少し経つと通知が来始める演出
+      setTimeout(() => addNotif(1), 800);
+      setTimeout(() => addNotif(2), 2200);
+    },
+  },
+  {
+    type: 'dialogue',
+    speaker: '翔（親友）',
+    text: '（小声で）なんか来てるっぽくない？',
+  },
+  {
+    type: 'narration',
+    text: 'スマホを確認したいが、授業中だ。',
+    onEnter: () => {
+      setTimeout(() => addNotif(2), 500);
+    },
+  },
+  /* ここでスマホを開くことを促す */
+  {
+    type: 'phone-hint',
+    text: '右上の 📱 を押してスマホを確認できます。コメントが届いているかもしれません。',
+    btnLabel: '授業が終わった。次の取材へ',
+  },
+
+  /* ── 取材②：ダンス班 ───────────────────────────────────── */
+  {
+    type: 'narration',
+    text: '放課後。体育館の隅で、美月がひとりで踊っていた。',
+  },
+  {
+    type: 'narration',
+    text: '失敗。やり直し。また失敗。そして——成功。笑顔。',
+  },
+  {
+    type: 'dialogue',
+    speaker: '美月',
+    text: 'まだ完成してないんだけどね。',
+  },
+  {
+    type: 'dialogue',
+    speaker: '美月',
+    text: '本番までには絶対仕上げたい。それだけ。',
+  },
+  {
+    type: 'dialogue',
+    speaker: '美月',
+    text: '投稿？任せるよ。あなたのこと、信頼してるから。',
+  },
+  {
+    type: 'narration',
+    text: '撮影を終えた。今日2回目の投稿。何を伝えよう。',
+  },
+
+  /* 選択肢② */
+  {
+    type: 'choice2',
+    question: 'あなたは何を伝えたいですか？',
+    choices: [
+      { id: 'A', label: '頑張っている姿を伝える', desc: '何度も繰り返す美月の姿そのものを伝える' },
+      { id: 'B', label: '感情が見える瞬間を伝える', desc: '失敗して、また笑顔になった瞬間を切り取る' },
+      { id: 'C', label: '本番への期待を伝える', desc: '「絶対仕上げたい」という言葉と共に期待感を高める' },
+    ],
+  },
+
+  /* 投稿② */
+  {
+    type: 'post2',
+  },
+
+  /* 投稿②後 */
+  {
+    type: 'narration',
+    text: '投稿した。',
+    onEnter: () => {
+      setTimeout(() => addNotif(3), 600);
+      setTimeout(() => addNotif(4), 1600);
+      setTimeout(() => addNotif(5), 2800);
+    },
+  },
+  {
+    type: 'narration',
+    text: 'スマホが震える。また震える。また。',
+    onEnter: () => {
+      setTimeout(() => addNotif(4), 400);
+    },
+  },
+  /* スマホを開くことを促す */
+  {
+    type: 'phone-hint',
+    text: '大きな反応が来ています。スマホを確認してみましょう。LINEにもメッセージが届いているかも。',
+    btnLabel: 'LINEも確認した。今日を終える',
+    isLast: true,
+  },
+
+  /* 終了 */
+  { type: 'end' },
+
+];
+
+
+/* ────────────────────────────────────────────────────────────────
+   会話ログへの追加
+   ──────────────────────────────────────────────────────────────── */
+
+/**
+ * 会話ログに発話ブロックを追加する。
+ * animate = true のときフェードイン。
+ */
+function appendSpeech(speaker, text) {
+  const log = document.getElementById('dialogue-log');
+  const block = document.createElement('div');
+  block.className = 'speech-block';
+
+  if (speaker) {
+    block.innerHTML = `
+      <div class="speaker-name">${speaker}</div>
+      <div class="speech-text">${text}</div>
+    `;
+  } else {
+    block.innerHTML = `<div class="narration">${text}</div>`;
+  }
+
+  log.appendChild(block);
+
+  // 少し遅らせてアニメーション
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => block.classList.add('visible'));
+  });
+
+  scrollToBottom();
+}
+
+function scrollToBottom() {
+  const log = document.getElementById('dialogue-log');
+  setTimeout(() => {
+    log.scrollTop = log.scrollHeight;
+  }, 100);
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   選択肢エリア
+   ──────────────────────────────────────────────────────────────── */
+
+/**
+ * 選択肢ボタンを表示する。
+ * 選んだら状態を保存し、プレビューを表示して次へボタンを出す。
+ */
+function showChoices(scene, stateKey) {
+  const area = document.getElementById('choices-area');
+  area.innerHTML = `<div style="font-size:14px; font-weight:700; color:#555; margin-bottom:8px;">${scene.question}</div>`;
+
+  scene.choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<strong>${c.id}. ${c.label}</strong><br><span style="font-size:12px; color:#888;">${c.desc}</span>`;
+    btn.onclick = () => {
+      // 選択状態を更新
+      area.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state[stateKey] = c.id;
+
+      // 選択した内容を会話ログに追加
+      appendSpeech('あなた（心の中）', c.label + '——それを伝えよう。');
+
+      // 投稿プレビューを表示
+      showPostPreview(stateKey);
+
+      // 投稿ボタンを有効化
+      const nextBtn = document.getElementById('next-btn');
+      nextBtn.textContent = '投稿する';
+      nextBtn.classList.remove('hidden');
+      nextBtn.disabled = false;
+
+      scrollToBottom();
+    };
+    area.appendChild(btn);
+  });
+
+  scrollToBottom();
+}
+
+/**
+ * 投稿プレビューを表示する。
+ * stateKey = 'choice1' or 'choice2'
+ */
+function showPostPreview(stateKey) {
+  const choice = state[stateKey];
+  if (!choice) return;
+
+  // 仮のプレビューテキスト
+  const previews = {
+    choice1: {
+      A: '誰も気づかない場所まで。装飾班の、見えない努力を記録しました。',
+      B: '笑いながら、でも真剣に。みんなで作る文化祭の装飾、現在進行中です。',
+      C: '完成はまだ先。でも絶対すごいものになる。装飾班、本気の制作中。',
+    },
+    choice2: {
+      A: '何度も何度も繰り返す。美月の、誰にも見せない練習時間を記録しました。',
+      B: '失敗して、やり直して、笑顔になった瞬間。その一瞬を切り取りました。',
+      C: '本番まであと3日。「絶対仕上げたい」という言葉が頭から離れません。',
+    },
+  };
+
+  const imgEmojis = { choice1: '🎨', choice2: '💃' };
+  const caption = previews[stateKey][choice];
+
+  const preview = document.getElementById('post-preview');
+  preview.innerHTML = `
+    <div class="post-preview-header">
+      <div class="post-preview-icon">🏫</div>
+      <div>
+        <div class="post-preview-name">1年3組文化祭</div>
+        <div class="post-preview-handle">プレビュー</div>
+      </div>
+    </div>
+    <div class="post-preview-img">${imgEmojis[stateKey]}</div>
+    <div class="post-preview-body">${caption}</div>
+  `;
+  preview.classList.remove('hidden');
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   advance() — メインの進行関数
+   ──────────────────────────────────────────────────────────────── */
+
+function advance() {
+  const scene = SCENES[state.sceneIndex];
+  if (!scene) return;
+
+  // 次のシーンへ
+  state.sceneIndex++;
+
+  // UIをリセット
+  document.getElementById('choices-area').innerHTML = '';
+  document.getElementById('post-preview').classList.add('hidden');
+  document.getElementById('next-btn').classList.add('hidden');
+
+  processScene();
+}
+
+/**
+ * 現在の sceneIndex のシーンを処理する。
+ * 自動進行するシーンはここから再帰的に呼ぶ。
+ */
+function processScene() {
+  const scene = SCENES[state.sceneIndex];
+  if (!scene) return;
+
+  // onEnter があれば実行（通知追加など副作用）
+  if (scene.onEnter) scene.onEnter();
+
+  switch (scene.type) {
+
+    /* ── ナレーション・セリフ —— テキスト追加して続けるボタン */
+    case 'narration':
+      appendSpeech(null, scene.text);
+      showNextBtn('続ける');
+      break;
+
+    case 'dialogue':
+      appendSpeech(scene.speaker, scene.text);
+      showNextBtn('続ける');
+      break;
+
+    /* ── 取材①選択肢 */
+    case 'choice1':
+      showChoices(scene, 'choice1');
+      // 次へボタンは選択後に有効化される（showChoices 内）
+      break;
+
+    /* ── 投稿① */
+    case 'post1': {
+      const post = makePost1(state.choice1 || 'A');
+      state.posts.push(post);
+      state.post1Done = true;
+      appendSpeech('システム', '📤 投稿が完了しました！');
+      // 投稿直後の通知は少し遅れて来る（後続シーンの onEnter で追加）
+      showNextBtn('続ける');
+      break;
+    }
+
+    /* ── 取材②選択肢 */
+    case 'choice2':
+      showChoices(scene, 'choice2');
+      break;
+
+    /* ── 投稿② */
+    case 'post2': {
+      const post = makePost2(state.choice2 || 'A');
+      state.posts.push(post);
+      state.post2Done = true;
+      appendSpeech('システム', '📤 投稿が完了しました！');
+      showNextBtn('続ける');
+      break;
+    }
+
+    /* ── スマホを開く促しシーン */
+    case 'phone-hint':
+      appendSpeech(null, scene.text);
+      showNextBtn(scene.btnLabel || '次へ');
+      // 最後のphone-hintはLINEも確認済みとして終了へ
+      break;
+
+    /* ── 終了 */
+    case 'end':
+      showEndScreen();
+      break;
+
+    default:
+      advance();
+      break;
+  }
+}
+
+/** 進行ボタンを表示する */
+function showNextBtn(label) {
+  const btn = document.getElementById('next-btn');
+  btn.textContent = label;
+  btn.classList.remove('hidden');
+  btn.disabled = false;
+  scrollToBottom();
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   終了画面
+   ──────────────────────────────────────────────────────────────── */
+
+function showEndScreen() {
+  document.getElementById('end-posts').textContent = '2件';
+  document.getElementById('end-followers').textContent = '+' + state.followerGain + '人';
+  document.getElementById('end-likes').textContent = state.totalLikes;
+  document.getElementById('end-comments').textContent = state.totalComments + '件';
+
+  // エンドメッセージは選択傾向で変える
+  const msgs = [
+    // 両方 A（努力系）を選んだとき
+    (state.choice1 === 'A' && state.choice2 === 'A')
+      ? '人の頑張りを伝えることを選んだ。コメント欄には「応援してる」という言葉が並んでいた。\n\n数字も大事だけど、あなたが伝えたかったものは——何だろう。'
+      : null,
+    // B系（感情・楽しさ）を多く選んだとき
+    (state.choice1 === 'B' || state.choice2 === 'B')
+      ? '感情が見える瞬間を伝えることを選んだ。いいねが伸び、たくさんのコメントが届いた。\n\n人は感情に反応する——そのことを少し実感した日だった。'
+      : null,
+    // デフォルト
+    '今日2回投稿した。数字が伸びた。人の反応が来た。\n\nそれが嬉しかった。でも——本当に伝えたかったものは、ちゃんと届いていただろうか。',
+  ].find(m => m !== null) || '今日2回投稿した。数字が伸びた。人の反応が来た。\n\nあと3日。';
+
+  document.getElementById('end-message').textContent = msgs;
+
+  showScene('end');
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   リスタート
+   ──────────────────────────────────────────────────────────────── */
+
+function restart() {
+  // 状態をリセット
+  state.sceneIndex    = 0;
+  state.notifCount    = 0;
+  state.totalNotif    = 0;
+  state.choice1       = null;
+  state.choice2       = null;
+  state.post1Done     = false;
+  state.post2Done     = false;
+  state.totalLikes    = 0;
+  state.totalComments = 0;
+  state.followerGain  = 0;
+  state.lineRead      = { aoi: false, mitsuki: false, sho: false };
+  state.posts         = [];
+  state.smartphoneOpen = false;
+
+  // UIをリセット
+  document.getElementById('dialogue-log').innerHTML = '';
+  document.getElementById('choices-area').innerHTML = '';
+  document.getElementById('post-preview').classList.add('hidden');
+  document.getElementById('next-btn').classList.add('hidden');
+  document.getElementById('notif-badge').style.display = 'none';
+
+  showScene('school');
+  processScene();
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   初期化 — ページ読み込み時にゲームを開始
+   ──────────────────────────────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  processScene();
+});
+
+</script>
+</body>
+</html>
